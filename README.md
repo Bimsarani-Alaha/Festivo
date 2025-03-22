@@ -64,31 +64,50 @@ Festivo/
 ├── src/
 │   ├── main/java/com/spring/
 │   │   ├── controller/         # API Controllers
-│   │   │   ├── UserController.java
-│   │   │   ├── EventController.java
-│   │   │   ├── SupplierController.java
-│   │   │   ├── PaymentController.java
+│   │   │   ├── usercontroller/
+│   │   │   │   ├── UserController.java
+│   │   │   ├── eventcontroller/
+│   │   │   │   ├── EventController.java
+│   │   │   ├── suppliercontroller/
+│   │   │   │   ├── SupplierController.java
+│   │   │   ├── paymentcontroller/
+│   │   │   │   ├── PaymentController.java
 │   │   ├── dto/                # Data Transfer Objects
-│   │   │   ├── UserRequestDTO.java & UserResponseDTO.java
-│   │   │   ├── EventRequestDTO.java & EventResponseDTO.java
-│   │   │   ├── SupplierRequestDTO.java & SupplierResponseDTO.java
-│   │   │   ├── PaymentRequestDTO.java & PaymentResponseDTO.java
+│   │   │   ├── userdto/
+│   │   │   │   ├── UserRequestDTO.java & UserResponseDTO.java
+│   │   │   ├── eventdto/
+│   │   │   │   ├── EventRequestDTO.java & EventResponseDTO.java
+│   │   │   ├── supplierdto/
+│   │   │   │   ├── SupplierRequestDTO.java & SupplierResponseDTO.java
+│   │   │   ├── paymentdto/
+│   │   │   │   ├── PaymentRequestDTO.java & PaymentResponseDTO.java
 │   │   ├── entity/             # Entity (Database models)
-│   │   │   ├── User.java
-│   │   │   ├── Event.java
-│   │   │   ├── Supplier.java
-│   │   │   ├── Payment.java
+│   │   │   ├── userentity/
+│   │   │   │   ├── User.java
+│   │   │   ├── evententity/
+│   │   │   │   ├── Event.java
+│   │   │   ├── supplierentity/
+│   │   │   │   ├── Supplier.java
+│   │   │   ├── paymententity/
+│   │   │   │   ├── Payment.java
 │   │   ├── repository/         # MongoDB Repositories
-│   │   │   ├── UserRepository.java
-│   │   │   ├── EventRepository.java
-│   │   │   ├── SupplierRepository.java
-│   │   │   ├── PaymentRepository.java
+│   │   │   ├── userrepository/
+│   │   │   │   ├── UserRepository.java
+│   │   │   ├── eventrepository/
+│   │   │   │   ├── EventRepository.java
+│   │   │   ├── supplierrepository/
+│   │   │   │   ├── SupplierRepository.java
+│   │   │   ├── paymentrepository/
+│   │   │   │   ├── PaymentRepository.java
 │   │   ├── service/            # Business Logic
-│   │   │   ├── UserService.java
-│   │   │   ├── EventService.java
-│   │   │   ├── SupplierService.java
-│   │   │   ├── PaymentService.java
-```
+│   │   │   ├── userservice/
+│   │   │   │   ├── UserService.java
+│   │   │   ├── eventservice/
+│   │   │   │   ├── EventService.java
+│   │   │   ├── supplierservice/
+│   │   │   │   ├── SupplierService.java
+│   │   │   ├── paymentservice/
+│   │   │   │   ├── PaymentService.java
 
 ---
 
