@@ -37,7 +37,6 @@ Festivo is a web-based event management system that facilitates user management,
 ### **Backend** (Server - Spring Boot)
 - Spring Boot (Java)
 - Spring Data MongoDB
-- Spring Security
 - RESTful APIs
 
 ---
