@@ -114,6 +114,7 @@ Festivo/
 │   │   │   │   ├── SupplierService.java
 │   │   │   ├── paymentservice/
 │   │   │   │   ├── PaymentService.java
+```
 
 ## Installation
 ### **Frontend Setup**
