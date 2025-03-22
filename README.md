@@ -115,8 +115,6 @@ Festivo/
 │   │   │   ├── paymentservice/
 │   │   │   │   ├── PaymentService.java
 
----
-
 ## Installation
 ### **Frontend Setup**
 1. Clone the repository:
