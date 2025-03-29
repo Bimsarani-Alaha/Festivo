@@ -60,15 +60,15 @@ Src/
 ### **Backend (Server - Spring Boot)**
 ### **Package Structure**
 ```
-src/main/java/com/spring/controller/
-src/main/java/com/spring/dto/
-src/main/java/com/spring/entity/
-src/main/java/com/spring/repository/
-src/main/java/com/spring/service/
+src/main/java/com/example/festivo/controller/
+src/main/java/com/example/festivo/dto/
+src/main/java/com/example/festivo/entity/
+src/main/java/com/example/festivo/repository/
+src/main/java/com/example/festivo/service/
 
 Festivo/
 ├── src/
-│   ├── main/java/com/spring/
+│   ├── main/java/com/example/festivo/
 │   │   ├── controller/         # API Controllers
 │   │   │   ├── usercontroller/
 │   │   │   │   ├── UserController.java
