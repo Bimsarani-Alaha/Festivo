@@ -150,7 +150,8 @@ function UserManagementPage() {
         name: editingUser.name,
         email: editingUser.email,
         phoneNumber: editingUser.phoneNumber || "",
-        role: editingUser.role
+        role: editingUser.role,
+        password: "" // Add empty password or handle it differently if required
       };
 
       const response = await UserService.updateUser(editingUser.id, userUpdateData, token);
@@ -391,12 +392,7 @@ function UserManagementPage() {
                 >
                   <FaFilePdf className="mr-2" /> Export PDF
                 </button>
-                <Link
-                  to="/register"
-                  className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center"
-                >
-                  <FaUserPlus className="mr-2" /> Add User
-                </Link>
+               
               </div>
             </div>
 
