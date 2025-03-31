@@ -1,17 +1,59 @@
 import { useState } from 'react';
 
+interface FeedbackData {
+  rate: number;
+  review: string;
+}
+
 const FeedbackPage = () => {
   const [review, setReview] = useState('');
   const [rating, setRating] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ rating, review });
-    setIsSubmitted(true);
-    setReview('');
-    setRating(null);
-    setTimeout(() => setIsSubmitted(false), 3000);
+    
+    if (!rating || !review) {
+      setError('Please provide both a rating and review');
+      return;
+    }
+
+    const feedbackData: FeedbackData = {
+      rate: rating,
+      review: review
+    };
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('http://localhost:8080/public/addFeedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(feedbackData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit feedback');
+      }
+
+      const result = await response.json();
+      console.log('Feedback submitted:', result);
+      setIsSubmitted(true);
+      setReview('');
+      setRating(null);
+      setTimeout(() => setIsSubmitted(false), 3000);
+      
+    } catch (err) {
+      setError(err.message || 'An error occurred while submitting feedback');
+      console.error('Error submitting feedback:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -21,13 +63,19 @@ const FeedbackPage = () => {
         <div className="max-w-4xl mx-auto">
           {/* Feedback Form */}
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="p-8">
-          <h2 className="text-3xl font-bold text-yellow-600 mb-2">Share Your Feedback</h2>
+            <div className="p-8">
+              <h2 className="text-3xl font-bold text-yellow-600 mb-2">Share Your Feedback</h2>
               <p className="text-gray-600 mb-6">We value your experience with Festivo</p>
               
               {isSubmitted && (
                 <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg">
                   Thank you for your feedback! We appreciate your input.
+                </div>
+              )}
+
+              {error && (
+                <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
+                  {error}
                 </div>
               )}
 
@@ -100,10 +148,10 @@ const FeedbackPage = () => {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={!rating || !review}
+                  disabled={!rating || !review || isLoading}
                   className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-yellow-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
                 >
-                  Submit Feedback
+                  {isLoading ? 'Submitting...' : 'Submit Feedback'}
                 </button>
               </form>
             </div>
