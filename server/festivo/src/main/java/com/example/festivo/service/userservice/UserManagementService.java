@@ -1,8 +1,8 @@
-package com.example.festivo.service;
+package com.example.festivo.service.userservice;
 
 import com.example.festivo.dto.userdto.ReqRes;
-import com.example.festivo.entity.OurUsers;
-import com.example.festivo.repository.UsersRepo;
+import com.example.festivo.entity.userentity.OurUsers;
+import com.example.festivo.repository.userrepository.UsersRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -201,3 +201,4 @@ public class UserManagementService {
         return reqRes;
     }
 }
+

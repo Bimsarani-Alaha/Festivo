@@ -1,4 +1,4 @@
-package com.example.festivo.service;
+package com.example.festivo.service.userservice;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -64,4 +64,5 @@ public class JWTUtils {
     }
 
 }
+
 

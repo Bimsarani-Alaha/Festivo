@@ -1,5 +1,5 @@
 package com.example.festivo.dto.userdto;
-import com.example.festivo.entity.OurUsers;
+import com.example.festivo.entity.userentity.OurUsers;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 

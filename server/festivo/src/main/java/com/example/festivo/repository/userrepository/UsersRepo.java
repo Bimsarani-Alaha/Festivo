@@ -1,6 +1,6 @@
-package com.example.festivo.repository;
+package com.example.festivo.repository.userrepository;
 
-import com.example.festivo.entity.OurUsers;
+import com.example.festivo.entity.userentity.OurUsers;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
