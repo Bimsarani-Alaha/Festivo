@@ -21,8 +21,8 @@ const FeedbackPage = () => {
         <div className="max-w-4xl mx-auto">
           {/* Feedback Form */}
           <div className="bg-white rounded-xl shadow-md overflow-hidden">
-            <div className="p-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">Share Your Feedback</h2>
+          <div className="p-8">
+          <h2 className="text-3xl font-bold text-yellow-600 mb-2">Share Your Feedback</h2>
               <p className="text-gray-600 mb-6">We value your experience with Festivo</p>
               
               {isSubmitted && (

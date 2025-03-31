@@ -19,6 +19,7 @@ public class OurUsers implements UserDetails {
     private String password;
     private String phoneNumber;
     private String role;
+    private String gender;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -98,5 +99,13 @@ public class OurUsers implements UserDetails {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 }
