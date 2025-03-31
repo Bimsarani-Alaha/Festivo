@@ -1,6 +1,5 @@
 package com.example.festivo.config;
-import com.example.festivo.service.OurUserDetailsService;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import com.example.festivo.service.userservice.OurUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

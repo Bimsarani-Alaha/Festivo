@@ -1,7 +1,8 @@
-package com.example.festivo.controller;
+package com.example.festivo.controller.usercontroller;
+
 import com.example.festivo.dto.userdto.ReqRes;
-import com.example.festivo.entity.OurUsers;
-import com.example.festivo.service.UserManagementService;
+import com.example.festivo.entity.userentity.OurUsers;
+import com.example.festivo.service.userservice.UserManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,3 +59,4 @@ public class UserController {
         return ResponseEntity.ok(userManagementService.deleteUser(userId));
     }
 }
+

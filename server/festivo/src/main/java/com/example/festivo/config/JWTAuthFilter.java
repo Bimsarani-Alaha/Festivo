@@ -1,7 +1,7 @@
 package com.example.festivo.config;
 
-import com.example.festivo.service.JWTUtils;
-import com.example.festivo.service.OurUserDetailsService;
+import com.example.festivo.service.userservice.JWTUtils;
+import com.example.festivo.service.userservice.OurUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

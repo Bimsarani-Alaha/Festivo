@@ -1,6 +1,6 @@
-package com.example.festivo.service;
+package com.example.festivo.service.userservice;
 
-import com.example.festivo.repository.UsersRepo;
+import com.example.festivo.repository.userrepository.UsersRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
