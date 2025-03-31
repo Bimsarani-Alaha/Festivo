@@ -92,8 +92,6 @@ class UserService {
         localStorage.removeItem("email");
     }
 
-    
-
     static isAuthenticated(): boolean {
         return !!localStorage.getItem("token");
     }
