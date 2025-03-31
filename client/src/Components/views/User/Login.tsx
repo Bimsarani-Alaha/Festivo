@@ -67,6 +67,8 @@ export default function LoginForm() {
           localStorage.setItem('user', JSON.stringify(response.user));
           localStorage.setItem('name', response.user.name || '');
           localStorage.setItem('email', response.user.email || '');
+          localStorage.setItem('phoneNumber', response.user.phoneNumber || '');
+          localStorage.setItem('gender', response.user.gender || '');
         }
 
         console.log('Stored Token:', localStorage.getItem('token'));

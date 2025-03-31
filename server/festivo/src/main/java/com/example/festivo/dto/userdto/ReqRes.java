@@ -22,6 +22,7 @@ public class ReqRes {
     private String phoneNumber;
     private String role;
     private String email;
+    private String gender;
     private String password;
     private OurUsers ourUsers;
     private List<OurUsers>ourUsersList;
@@ -128,6 +129,14 @@ public class ReqRes {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 }
 

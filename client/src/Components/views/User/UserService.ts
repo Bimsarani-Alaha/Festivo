@@ -3,6 +3,7 @@ import axios, { AxiosResponse } from "axios";
 interface UserData {
     name?: string;
     email: string;
+    gender: string;
     password: string;
     age?: number;
 }

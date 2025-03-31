@@ -36,6 +36,7 @@ public class UserManagementService {
             ourUser.setPhoneNumber(registrationRequest.getPhoneNumber());
             ourUser.setRole(registrationRequest.getRole());
             ourUser.setName(registrationRequest.getName());
+            ourUser.setGender(registrationRequest.getGender());
             ourUser.setPassword(passwordEncoder.encode(registrationRequest.getPassword()));
             OurUsers ourUsersResult = usersRepo.save(ourUser);
 
@@ -64,6 +65,10 @@ public class UserManagementService {
             response.setStatusCode(200);
             response.setToken(jwt);
             response.setRole(user.getRole());
+            response.setGender(user.getGender());
+            response.setEmail(user.getEmail());
+            response.setName(user.getName());
+            response.setPhoneNumber(user.getPhoneNumber());
             response.setRefreshToken(refreshToken);
             response.setExpirationTime("24Hrs");
             response.setMessage("Successfully logged in");
