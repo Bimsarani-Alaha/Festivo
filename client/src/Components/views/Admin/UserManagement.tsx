@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import UserService from "../User/UserService";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { FaFilePdf, FaUserPlus, FaTrash, FaEdit, FaEye, FaBars, FaTimes, FaHome, FaUsers, FaCog, FaSave, FaArrowLeft, FaCheckCircle } from "react-icons/fa";
+import { FaFilePdf, FaUserPlus, FaTrash, FaEdit, FaEye, FaBars, FaTimes, FaHome, FaUsers, FaCog, FaSave, FaArrowLeft, FaCheckCircle, FaSearch } from "react-icons/fa";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -13,16 +13,22 @@ interface User {
   email: string;
   phoneNumber: string;
   role: string;
+  gender: string;
 }
 
 function UserManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [viewingUser, setViewingUser] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isViewing, setIsViewing] = useState<boolean>(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const navigate = useNavigate();
   const tableRef = useRef<HTMLTableElement>(null);
   const { userId } = useParams();
@@ -30,6 +36,10 @@ function UserManagementPage() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    filterUsers();
+  }, [users, searchTerm, roleFilter]);
 
   const fetchUsers = async (): Promise<void> => {
     try {
@@ -44,7 +54,9 @@ function UserManagementPage() {
 
       const response = await UserService.getAllUsers(token);
       
-      if (response && response.ourUsersList) {
+      if (response && Array.isArray(response)) {
+        setUsers(response);
+      } else if (response && response.ourUsersList) {
         setUsers(response.ourUsersList);
       } else {
         console.error("Unexpected API response format:", response);
@@ -56,6 +68,28 @@ function UserManagementPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const filterUsers = () => {
+    let results = users;
+
+    // Apply search term filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      results = results.filter(user => 
+        user.name.toLowerCase().includes(term) || 
+        user.email.toLowerCase().includes(term) ||
+        (user.phoneNumber && user.phoneNumber.toLowerCase().includes(term)) ||
+        user.role.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply role filter
+    if (roleFilter !== "all") {
+      results = results.filter(user => user.role === roleFilter);
+    }
+
+    setFilteredUsers(results);
   };
 
   const deleteUser = async (userId: string): Promise<void> => {
@@ -75,7 +109,6 @@ function UserManagementPage() {
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("Failed to delete user. Please try again.");
-      fetchUsers();
     }
   };
 
@@ -93,7 +126,7 @@ function UserManagementPage() {
       
       autoTable(doc, {
         head: [["ID", "Name", "Email", "Phone", "Role"]],
-        body: users.map(user => [
+        body: filteredUsers.map(user => [
           user.id,
           user.name,
           user.email,
@@ -133,6 +166,17 @@ function UserManagementPage() {
     }
   };
 
+  const handleView = (userId: string) => {
+    const userToView = users.find(user => user.id === userId);
+    if (userToView) {
+      setViewingUser({ ...userToView });
+      setIsViewing(true);
+    } else {
+      console.error("User not found for viewing");
+      toast.error("User data not available for viewing. Please try again.");
+    }
+  };
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
@@ -151,7 +195,8 @@ function UserManagementPage() {
         email: editingUser.email,
         phoneNumber: editingUser.phoneNumber || "",
         role: editingUser.role,
-        password: "" // Add empty password or handle it differently if required
+        gender: editingUser.gender || "other",
+        password: ""
       };
 
       const response = await UserService.updateUser(editingUser.id, userUpdateData, token);
@@ -261,6 +306,24 @@ function UserManagementPage() {
               />
             </div>
 
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="gender">
+                Gender
+              </label>
+              <select
+                id="gender"
+                name="gender"
+                value={editingUser.gender || "other"}
+                onChange={handleInputChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                required
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
             <div className="mb-6">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
                 Role
@@ -304,9 +367,70 @@ function UserManagementPage() {
     );
   };
 
+  const renderViewModal = () => {
+    if (!viewingUser) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold">User Details</h3>
+            <button 
+              onClick={() => {
+                setIsViewing(false);
+                setViewingUser(null);
+              }}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <FaTimes size={20} />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-sm font-medium text-gray-500">Name</h4>
+              <p className="mt-1 text-sm text-gray-900">{viewingUser.name}</p>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-500">Email</h4>
+              <p className="mt-1 text-sm text-gray-900">{viewingUser.email}</p>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-500">Phone Number</h4>
+              <p className="mt-1 text-sm text-gray-900">{viewingUser.phoneNumber || "N/A"}</p>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-500">Gender</h4>
+              <p className="mt-1 text-sm text-gray-900">{viewingUser.gender || "Not specified"}</p>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-500">Role</h4>
+              <p className="mt-1 text-sm text-gray-900 capitalize">{viewingUser.role}</p>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <button
+                onClick={() => {
+                  setIsViewing(false);
+                  setViewingUser(null);
+                }}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Toast Notifications */}
       <ToastContainer 
         position="top-right"
         autoClose={5000}
@@ -319,7 +443,7 @@ function UserManagementPage() {
         pauseOnHover
       />
 
-      {/* Gold-colored Sidebar */}
+      {/* Sidebar */}
       <div 
         className={`fixed inset-y-0 left-0 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
         md:relative md:translate-x-0 transition-transform duration-200 ease-in-out 
@@ -392,7 +516,39 @@ function UserManagementPage() {
                 >
                   <FaFilePdf className="mr-2" /> Export PDF
                 </button>
-               
+              </div>
+            </div>
+
+            {/* Search and Filter Bar */}
+            <div className="mb-6 bg-white p-4 rounded-lg shadow">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FaSearch className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    className="pl-10 w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <select
+                    className="w-full rounded-lg border-gray-300 focus:border-yellow-500 focus:ring-yellow-500"
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="user">User</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div className="flex justify-end">
+                 
+                </div>
               </div>
             </div>
 
@@ -444,8 +600,8 @@ function UserManagementPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {users.length > 0 ? (
-                      users.map((user: User) => (
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map((user: User) => (
                         <tr key={user.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {user.id}
@@ -472,24 +628,21 @@ function UserManagementPage() {
                               <button
                                 onClick={() => deleteUser(user.id)}
                                 className="text-red-600 hover:text-red-900 bg-red-100 hover:bg-red-200 px-3 py-1 rounded-md text-sm font-medium transition duration-200 flex items-center"
-                                aria-label={`Delete user ${user.name}`}
                               >
                                 <FaTrash className="mr-1" /> Delete
                               </button>
                               <button
                                 onClick={() => handleEdit(user.id)}
                                 className="text-blue-600 hover:text-blue-900 bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded-md text-sm font-medium transition duration-200 flex items-center"
-                                aria-label={`Edit user ${user.name}`}
                               >
                                 <FaEdit className="mr-1" /> Edit
                               </button>
-                              <Link
-                                to={`/user-details/${user.id}`}
+                              <button
+                                onClick={() => handleView(user.id)}
                                 className="text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-md text-sm font-medium transition duration-200 flex items-center"
-                                aria-label={`View details of ${user.name}`}
                               >
                                 <FaEye className="mr-1" /> View
-                              </Link>
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -497,7 +650,7 @@ function UserManagementPage() {
                     ) : (
                       <tr>
                         <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
-                          No users found. Click "Add User" to create a new one.
+                          No users found matching your criteria.
                         </td>
                       </tr>
                     )}
@@ -511,6 +664,9 @@ function UserManagementPage() {
 
       {/* Edit User Modal */}
       {isEditing && renderEditForm()}
+
+      {/* View User Modal */}
+      {isViewing && renderViewModal()}
     </div>
   );
 }
