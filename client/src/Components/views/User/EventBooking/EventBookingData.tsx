@@ -1,16 +1,15 @@
-// EventBookingsTable.tsx
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { FaEye, FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
+import { FaEye, FaEdit, FaTrash, FaSearch, FaSpinner, FaTimes, FaFilePdf, FaCheck } from 'react-icons/fa';
+import { usePDF } from 'react-to-pdf';
 
 interface BookingData {
   id?: string;
   eventName: string;
   eventTheme: string;
   eventType: string;
-  guestCount: number;
+  noOfGuest: number;
   specialRequest: string;
-  selectedPackage: string | null;
+  eventPackage: string | null;
   eventDate: string;
 }
 
@@ -18,53 +17,126 @@ const EventBookingsTable = () => {
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBooking, setSelectedBooking] = useState<BookingData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState<BookingData>({
+    eventName: '',
+    eventTheme: '',
+    eventType: '',
+    noOfGuest: 0,
+    specialRequest: '',
+    eventPackage: null,
+    eventDate: ''
+  });
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // PDF generation hook
+  const { toPDF, targetRef } = usePDF({
+    filename: 'event-bookings-report.pdf',
+    page: {
+      margin: 20,
+      format: 'A4',
+      orientation: 'landscape'
+    }
+  });
+
+  // Fetch all events from API
+  const fetchEvents = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const response = await fetch('http://localhost:8080/public/getAllEvent');
+      if (!response.ok) {
+        throw new Error('Failed to fetch events');
+      }
+      const data = await response.json();
+      setBookings(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      console.error('Error fetching events:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const savedBookings = localStorage.getItem('eventBookings');
-    if (savedBookings) {
-      const parsedBookings = JSON.parse(savedBookings);
-      const bookingsWithIds = parsedBookings.map((booking: BookingData, index: number) => ({
-        ...booking,
-        id: booking.id || `booking-${index}-${Date.now()}`
-      }));
-      setBookings(bookingsWithIds);
-    } else {
-      setBookings([
-        {
-          id: 'booking-1',
-          eventName: 'Birthday Party',
-          eventTheme: 'Superhero',
-          eventType: 'Indoor',
-          guestCount: 50,
-          specialRequest: 'Need a cake with superhero logo',
-          selectedPackage: 'Premium',
-          eventDate: '2023-12-15'
-        },
-        {
-          id: 'booking-2',
-          eventName: 'Corporate Meeting',
-          eventTheme: 'Professional',
-          eventType: 'Indoor',
-          guestCount: 30,
-          specialRequest: 'Projector and whiteboards needed',
-          selectedPackage: 'Basic',
-          eventDate: '2023-11-20'
-        }
-      ]);
-    }
+    fetchEvents();
   }, []);
 
-  const filteredBookings = bookings.filter(booking =>
-    booking.eventName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    booking.eventTheme.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    booking.selectedPackage?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter bookings based on search term
+  const filteredBookings = bookings.filter(booking => {
+    const term = searchTerm.toLowerCase();
+    return (
+      (booking.eventName?.toLowerCase() || '').includes(term) ||
+      (booking.eventTheme?.toLowerCase() || '').includes(term) ||
+      (booking.eventPackage?.toLowerCase() || '').includes(term)
+    );
+  });
 
-  const handleDelete = (id: string) => {
+  // Delete event
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this booking?')) {
-      const updatedBookings = bookings.filter(booking => booking.id !== id);
-      setBookings(updatedBookings);
-      localStorage.setItem('eventBookings', JSON.stringify(updatedBookings));
+      try {
+        const response = await fetch(`http://localhost:8080/public/deleteEvent/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete event');
+        }
+        
+        await fetchEvents();
+        setSuccessMessage('Booking deleted successfully!');
+        setShowSuccess(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete event');
+        console.error('Error deleting event:', err);
+      }
+    }
+  };
+
+  // Open edit form
+  const handleEdit = (booking: BookingData) => {
+    setEditFormData(booking);
+    setIsEditing(true);
+  };
+
+  // Handle form input changes
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Submit updated event
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editFormData.id) return;
+
+    try {
+      const response = await fetch(`http://localhost:8080/public/updateEvent/${editFormData.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update event');
+      }
+
+      await fetchEvents();
+      setIsEditing(false);
+      setSuccessMessage('Booking updated successfully!');
+      setShowSuccess(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update event');
+      console.error('Error updating event:', err);
     }
   };
 
@@ -72,9 +144,9 @@ const EventBookingsTable = () => {
     setSelectedBooking(booking);
   };
 
-  const handleEdit = (id: string) => {
-    // In a real app, you would navigate to an edit page with this ID
-    alert(`Editing booking with ID: ${id}`);
+  // Generate PDF report
+  const generateReport = () => {
+    toPDF();
   };
 
   return (
@@ -100,89 +172,166 @@ const EventBookingsTable = () => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Link 
-                    to="/event-booking" 
-                    className="bg-white text-yellow-600 px-4 py-2 rounded-md hover:bg-gray-100 transition-colors text-center"
+                  <button
+                    onClick={generateReport}
+                    className="bg-white text-yellow-600 px-4 py-2 rounded-md hover:bg-gray-100 transition-colors flex items-center"
                   >
-                    Create New Booking
-                  </Link>
+                    <FaFilePdf className="mr-2" />
+                    Generate PDF
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Table */}
-            <div className="p-6 overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Theme</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guests</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredBookings.length > 0 ? (
-                    filteredBookings.map((booking, index) => (
-                      <tr key={booking.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+                <p>{error}</p>
+              </div>
+            )}
+
+            {/* Success Message Popup */}
+            {showSuccess && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                      <FaCheck className="text-green-600 text-2xl" />
+                    </div>
+                    <h2 className="text-xl font-bold mb-2">Success!</h2>
+                    <p className="mb-6">{successMessage}</p>
+                    <button
+                      onClick={() => setShowSuccess(false)}
+                      className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      OK
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Loading Indicator */}
+            {isLoading && (
+              <div className="flex justify-center items-center p-8">
+                <FaSpinner className="animate-spin text-yellow-600 text-2xl" />
+                <span className="ml-2">Loading bookings...</span>
+              </div>
+            )}
+
+            {/* Table for PDF (hidden but included in PDF) */}
+            <div ref={targetRef} style={{ position: 'absolute', left: '-9999px' }}>
+              <div className="p-6">
+                <h2 className="text-xl font-bold mb-4 text-center">Event Bookings Report</h2>
+                <p className="text-sm text-gray-500 mb-4 text-center">
+                  Generated on: {new Date().toLocaleDateString()}
+                </p>
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Theme</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guests</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredBookings.map((booking) => (
+                      <tr key={booking.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.eventName}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.eventTheme}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.eventType}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(booking.eventDate).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.guestCount}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            booking.selectedPackage === 'Basic' 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : booking.selectedPackage === 'Premium' 
-                                ? 'bg-purple-100 text-purple-800' 
-                                : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {booking.selectedPackage}
-                          </span>
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.noOfGuest}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleView(booking)}
-                              className="text-blue-600 hover:text-blue-800 p-1"
-                              title="View"
-                            >
-                              <FaEye />
-                            </button>
-                            <button
-                              onClick={() => handleEdit(booking.id!)}
-                              className="text-yellow-600 hover:text-yellow-800 p-1"
-                              title="Edit"
-                            >
-                              <FaEdit />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(booking.id!)}
-                              className="text-red-600 hover:text-red-800 p-1"
-                              title="Delete"
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
+                          {booking.eventPackage || 'None'}
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
-                        No bookings found. {searchTerm && 'Try a different search term.'}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            {/* Main Table */}
+            {!isLoading && (
+              <div className="p-6 overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Theme</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guests</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredBookings.length > 0 ? (
+                      filteredBookings.map((booking) => (
+                        <tr key={booking.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.eventName}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.eventTheme}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.eventType}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(booking.eventDate).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.noOfGuest}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                              booking.eventPackage === 'Basic' 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : booking.eventPackage === 'Premium' 
+                                  ? 'bg-purple-100 text-purple-800' 
+                                  : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {booking.eventPackage || 'None'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleView(booking)}
+                                className="text-blue-600 hover:text-blue-800 p-1"
+                                title="View"
+                              >
+                                <FaEye />
+                              </button>
+                              <button
+                                onClick={() => handleEdit(booking)}
+                                className="text-yellow-600 hover:text-yellow-800 p-1"
+                                title="Edit"
+                              >
+                                <FaEdit />
+                              </button>
+                              <button
+                                onClick={() => booking.id && handleDelete(booking.id)}
+                                className="text-red-600 hover:text-red-800 p-1"
+                                title="Delete"
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
+                          {bookings.length === 0 ? 'No bookings found.' : 'No matching bookings found.'}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 
@@ -197,46 +346,170 @@ const EventBookingsTable = () => {
                     onClick={() => setSelectedBooking(null)}
                     className="text-gray-500 hover:text-gray-700"
                   >
-                    ✕
+                    <FaTimes />
                   </button>
                 </div>
                 <div className="space-y-4">
-                  <div>
-                    <h3 className="font-medium text-gray-700">Event Name:</h3>
-                    <p>{selectedBooking.eventName}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-700">Theme:</h3>
-                    <p>{selectedBooking.eventTheme}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-700">Type:</h3>
-                    <p>{selectedBooking.eventType}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-700">Date:</h3>
-                    <p>{new Date(selectedBooking.eventDate).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-700">Number of Guests:</h3>
-                    <p>{selectedBooking.guestCount}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-700">Package:</h3>
-                    <p>{selectedBooking.selectedPackage}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="font-medium text-gray-700">Event Name:</h3>
+                      <p className="mt-1">{selectedBooking.eventName}</p>
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-700">Theme:</h3>
+                      <p className="mt-1">{selectedBooking.eventTheme}</p>
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-700">Type:</h3>
+                      <p className="mt-1">{selectedBooking.eventType}</p>
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-700">Date:</h3>
+                      <p className="mt-1">{new Date(selectedBooking.eventDate).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}</p>
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-700">Number of Guests:</h3>
+                      <p className="mt-1">{selectedBooking.noOfGuest}</p>
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-700">Package:</h3>
+                      <p className="mt-1">{selectedBooking.eventPackage || 'None'}</p>
+                    </div>
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-700">Special Requests:</h3>
-                    <p className="whitespace-pre-line">{selectedBooking.specialRequest}</p>
+                    <p className="mt-1 whitespace-pre-line bg-gray-50 p-3 rounded-md">
+                      {selectedBooking.specialRequest || 'No special requests'}
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         )}
-      </main>
 
-      {/* Gold Themed Footer */}
+        {/* Edit Modal */}
+        {isEditing && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-start">
+                  <h2 className="text-xl font-bold mb-4">Edit Booking</h2>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+                <form onSubmit={handleEditSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Event Name:</label>
+                      <input
+                        type="text"
+                        name="eventName"
+                        value={editFormData.eventName}
+                        onChange={handleEditFormChange}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Theme:</label>
+                      <input
+                        type="text"
+                        name="eventTheme"
+                        value={editFormData.eventTheme}
+                        onChange={handleEditFormChange}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Type:</label>
+                      <select
+                        name="eventType"
+                        value={editFormData.eventType}
+                        onChange={handleEditFormChange}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        required
+                      >
+                        <option value="">Select Type</option>
+                        <option value="Indoor">Indoor</option>
+                        <option value="Outdoor">Outdoor</option>
+                        <option value="Pool">Pool</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Date:</label>
+                      <input
+                        type="date"
+                        name="eventDate"
+                        value={editFormData.eventDate}
+                        onChange={handleEditFormChange}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Number of Guests:</label>
+                      <input
+                        type="number"
+                        name="noOfGuest"
+                        value={editFormData.noOfGuest}
+                        onChange={handleEditFormChange}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        required
+                        min="1"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Package:</label>
+                      <select
+                        name="eventPackage"
+                        value={editFormData.eventPackage || ''}
+                        onChange={handleEditFormChange}
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                        required
+                      >
+                        <option value="">Select Package</option>
+                        <option value="Basic">Basic</option>
+                        <option value="Premium">Premium</option>
+                        <option value="Luxury">Luxury</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Special Requests:</label>
+                    <textarea
+                      name="specialRequest"
+                      value={editFormData.specialRequest}
+                      onChange={handleEditFormChange}
+                      className="w-full p-2 border border-gray-300 rounded-md h-24"
+                    />
+                  </div>
+                  <div className="mt-6">
+                    <button
+                      type="submit"
+                      className="w-full bg-yellow-600 text-white py-2 px-4 rounded-md hover:bg-yellow-700 transition-colors"
+                    >
+                      Update Booking
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+      
+      {/* Footer */}
       <footer className="bg-gradient-to-b from-yellow-600 to-yellow-800 text-white">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -253,23 +526,6 @@ const EventBookingsTable = () => {
               <p className="mb-4 text-yellow-100">
                 Creating unforgettable experiences with golden touches since 2015.
               </p>
-              <div className="flex space-x-4">
-                <a href="#" className="text-white hover:text-yellow-200">
-                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-                  </svg>
-                </a>
-                <a href="#" className="text-white hover:text-yellow-200">
-                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-                  </svg>
-                </a>
-                <a href="#" className="text-white hover:text-yellow-200">
-                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd" />
-                  </svg>
-                </a>
-              </div>
             </div>
 
             {/* Quick Links */}
@@ -278,21 +534,7 @@ const EventBookingsTable = () => {
               <ul className="space-y-2">
                 <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Home</a></li>
                 <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Services</a></li>
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Gallery</a></li>
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Testimonials</a></li>
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Blog</a></li>
-              </ul>
-            </div>
-
-            {/* Event Services */}
-            <div>
-              <h4 className="text-lg font-semibold mb-4 border-b border-yellow-500 pb-2">Our Services</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Weddings</a></li>
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Corporate Events</a></li>
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Birthdays</a></li>
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Conferences</a></li>
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Exhibitions</a></li>
+                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Feedback</a></li>
               </ul>
             </div>
 
@@ -326,7 +568,6 @@ const EventBookingsTable = () => {
           {/* Copyright */}
           <div className="border-t border-yellow-500 mt-8 pt-8 text-center text-yellow-200">
             <p>&copy; {new Date().getFullYear()} Festivo Event Planners. All rights reserved.</p>
-            <p className="mt-2 text-sm">Creating golden moments that last forever</p>
           </div>
         </div>
       </footer>
