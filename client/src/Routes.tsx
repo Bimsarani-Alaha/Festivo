@@ -10,6 +10,8 @@ import HomePage from "./views/homePage/HomePage";
 import AdminDashboard from "./views/adminPage/AdminPage";
 import { getRole } from "./customHooks/roleExtract";
 import getUserDetails from "./customHooks/extractJwt";
+import CheckoutPage from "../src/Components/views/Payment/Paymentform";
+import DataTable from "../src/Components/views/Payment/PaymentData"
 
 const AdminProtectedRoute = () => {
   const role = getRole();
@@ -42,12 +44,14 @@ const AppRoutes = () => {
       <Route element={<UserProtectedRoute />}>
         <Route path="/FeedbackPage" element={<FeedbackPage />} />
         <Route path="/Eventbooking" element={<Eventbooking />} />
+        <Route path="/CheckoutPage" element={<CheckoutPage />} />
       </Route>
 
       <Route element={<AdminProtectedRoute />}>
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/FeedbackList" element={<FeedbackList />} />
         <Route path="/EventBookingsTable" element={<EventBookingsTable />} />
+        <Route path="/DataTable" element={<DataTable />} />
         <Route
           path="/UserManagementDashboard"
           element={<UserManagementDashboard />}

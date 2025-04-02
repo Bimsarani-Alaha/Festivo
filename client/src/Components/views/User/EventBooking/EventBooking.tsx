@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface EventData {
   eventName: string;
@@ -11,6 +12,7 @@ interface EventData {
 }
 
 const EventBooking = () => {
+  const navigate = useNavigate();
   const [eventName, setEventName] = useState('Birthday');
   const [eventTheme, setEventTheme] = useState('Fairy Tale Magic');
   const [eventType, setEventType] = useState<'Indoor' | 'Outdoor' | 'Pool' | ''>('');
@@ -20,7 +22,6 @@ const EventBooking = () => {
   const [eventDate, setEventDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showSuccess, setShowSuccess] = useState(false);
   const [minDate, setMinDate] = useState('');
   const [touchedFields, setTouchedFields] = useState({
     eventName: false,
@@ -134,8 +135,13 @@ const EventBooking = () => {
       const result = await response.json();
       console.log('Booking successful:', result);
       
-      // Show success message
-      setShowSuccess(true);
+      // Navigate to checkout page with the booking data
+      navigate('/CheckoutPage', { 
+        state: { 
+          bookingData: eventData,
+          bookingId: result.id || Date.now() // Fallback to timestamp if no ID
+        } 
+      });
       
     } catch (err) {
       if (err instanceof Error) {
@@ -166,7 +172,6 @@ const EventBooking = () => {
       guestCount: false,
       package: false
     });
-    setShowSuccess(false);
   };
 
   return (
@@ -188,61 +193,6 @@ const EventBooking = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <p>{error}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Advanced Success Popup */}
-          {showSuccess && (
-            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 backdrop-blur-sm">
-              <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all duration-300 animate-pop-in">
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Booking Confirmed!</h2>
-                  <p className="text-gray-600 mb-6">Your event has been successfully booked. We've sent a confirmation to your email.</p>
-                  
-                  <div className="w-full bg-gray-50 rounded-lg p-4 mb-6">
-                    <h3 className="font-medium text-gray-700 mb-3">Booking Summary</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Event:</span>
-                        <span className="font-medium">{eventName}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Theme:</span>
-                        <span className="font-medium">{eventTheme}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Date:</span>
-                        <span className="font-medium">{new Date(eventDate).toLocaleDateString('en-US', { 
-                          weekday: 'long', 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Package:</span>
-                        <span className="font-medium">{selectedPackage}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Guests:</span>
-                        <span className="font-medium">{guestCount}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={resetForm}
-                    className="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium shadow-md hover:shadow-lg"
-                  >
-                    Create Another Booking
-                  </button>
-                </div>
               </div>
             </div>
           )}
@@ -578,7 +528,6 @@ const EventBooking = () => {
           </div>
         </div>
       </footer>
-     
     </div>
   );
 };
