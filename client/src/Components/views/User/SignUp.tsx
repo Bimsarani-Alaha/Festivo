@@ -126,7 +126,7 @@ const SignUp = () => {
 
   const closeSuccessModal = () => {
     setShowSuccessModal(false);
-    navigate("/login");
+    navigate("/LoginForm");
   };
 
   return (
