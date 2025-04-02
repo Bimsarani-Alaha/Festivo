@@ -78,7 +78,7 @@ export default function LoginForm() {
         if (response.role === 'ADMIN') {
           navigate('/admin/dashboard');
         } else {
-          navigate('/home');
+          navigate('/');
         }
       } else {
         console.warn('Login successful but no token received');

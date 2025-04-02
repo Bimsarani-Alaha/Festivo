@@ -1,33 +1,16 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import "./index.css";
+import { BrowserRouter } from "react-router";
+import AppRoutes from "./Routes.tsx";
+import { QueryClientProvider } from "@tanstack/react-query";
+import queryClient from "./state/queryClients.ts";
 
-// User Components
-import SignUp from './Components/views/User/SignUp';
-import LoginForm from './Components/views/User/Login';
-import FeedbackPage from './Components/views/User/Feedback/Feedback';
-import UserManagementDashboard from './Components/views/Admin/UserManagement';
-import Eventbooking from './Components/views/User/EventBooking/EventBooking';
-import EventBookingsTable from './Components/views/User/EventBooking/EventBookingData';
-import FeedbackList from './Components/views/User/Feedback/FeedbackData';
-
-
-const App = () => {
+function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/SignUp" element={<SignUp />} />
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/FeedbackPage" element={<FeedbackPage />} />
-        <Route path="/UserManagementDashboard" element={<UserManagementDashboard />} />
-        <Route path="/Eventbooking" element={<Eventbooking />} />
-        <Route path="/EventBookingsTable" element={<EventBookingsTable />} />
-        <Route path="/FeedbackList" element={<FeedbackList />} />
-
-
-      </Routes>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </QueryClientProvider>
   );
-};
+}
 
 export default App;

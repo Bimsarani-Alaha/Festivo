@@ -462,7 +462,7 @@ function UserManagementPage() {
           <ul className="space-y-2">
             <li>
               <Link 
-                to="/dashboard" 
+                to="/admin/dashboard" 
                 className="flex items-center p-2 rounded hover:bg-yellow-500 hover:bg-opacity-30 transition-colors duration-200"
               >
                 <FaHome className="mr-3 text-yellow-300" /> Dashboard
