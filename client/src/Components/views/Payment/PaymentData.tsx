@@ -19,11 +19,10 @@ interface DataItem {
 }
 
 interface DataTableProps {
-  onView?: (item: DataItem) => void;
   onDelete?: (item: DataItem) => void;
 }
 
-const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
+const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
   const [data, setData] = useState<DataItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -34,9 +33,10 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  
+  const [viewItem, setViewItem] = useState<DataItem | null>(null);
+ 
   const { toPDF, targetRef } = usePDF({ filename: 'payment-record.pdf' });
-  
+ 
   // Fetch data from API
   const fetchData = async () => {
     try {
@@ -70,6 +70,11 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
       amount: item.amount
     });
     setSuccessMessage(null);
+  };
+
+  // Handle view button click
+  const handleView = (item: DataItem) => {
+    setViewItem(item);
   };
 
   // Handle form input changes
@@ -144,7 +149,6 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
     setIsSharing(true);
     setSelectedItem(item);
     try {
-      // Check if Web Share API is supported
       if (navigator && navigator.share) {
         await navigator.share({
           title: `Payment Record - ${item.name}`,
@@ -152,22 +156,23 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
           url: window.location.href,
         });
       } else {
-        // Fallback for browsers that don't support Web Share API
         const text = `Payment Record Details:
 Name: ${item.name}
 Email: ${item.email}
 Phone: ${formatPhoneNumber(item.phoneNumber)}
+Address: ${item.address || 'N/A'}
 Amount: ${formatCurrency(item.amount)}
 Card Type: ${item.cardType}
-Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}`;
-        
-        // Check if clipboard API is available
+Card Number: ${maskCardNumber(item.cardNumber)}
+Expiration Date: ${item.expDate}
+CVV: ${item.cvv ? '•••' : 'N/A'}
+Order Summary: ${item.orderSummery || 'N/A'}`;
+       
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(text);
           setCopiedId(item.id);
           setTimeout(() => setCopiedId(null), 2000);
         } else {
-          // Fallback for older browsers
           const textArea = document.createElement('textarea');
           textArea.value = text;
           document.body.appendChild(textArea);
@@ -198,8 +203,8 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Payment Records</h1>
-        <button 
-          onClick={fetchData} 
+        <button
+          onClick={fetchData}
           className="flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           disabled={loading}
         >
@@ -222,8 +227,8 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
       {error && (
         <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
           {error}
-          <button 
-            onClick={fetchData} 
+          <button
+            onClick={fetchData}
             className="ml-4 text-blue-600 hover:underline"
           >
             Retry
@@ -237,6 +242,86 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
         </div>
       )}
 
+      {/* View Modal */}
+      {viewItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div className="flex justify-between items-center border-b p-4">
+              <h2 className="text-xl font-semibold">Payment Details</h2>
+              <button
+                onClick={() => setViewItem(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Customer Information</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-500">Name</p>
+                      <p className="text-gray-900">{viewItem.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="text-gray-900">{viewItem.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Phone</p>
+                      <p className="text-gray-900">{formatPhoneNumber(viewItem.phoneNumber)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Address</p>
+                      <p className="text-gray-900">{viewItem.address || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Information</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-gray-500">Card Type</p>
+                      <p className="text-gray-900">{viewItem.cardType || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Card Number</p>
+                      <p className="text-gray-900">{maskCardNumber(viewItem.cardNumber)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Expiration Date</p>
+                      <p className="text-gray-900">{viewItem.expDate || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">CVV</p>
+                      <p className="text-gray-900">{viewItem.cvv ? '•••' : 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Order Summary</p>
+                      <p className="text-gray-900">{viewItem.orderSummery || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Amount</p>
+                      <p className="text-xl font-bold text-gray-900">{formatCurrency(viewItem.amount)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => generatePdfForRecord(viewItem)}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center"
+                >
+                  <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+                  Generate PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* PDF Content (hidden) */}
       <div ref={targetRef} className="p-4 hidden">
         {selectedItem && (
@@ -246,7 +331,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
               <p className="text-sm text-gray-500">Transaction ID: {selectedItem.id}</p>
               <p className="text-lg font-semibold">{selectedItem.name}</p>
             </div>
-            
+           
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <p className="text-sm text-gray-500">Email</p>
@@ -256,8 +341,12 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                 <p className="text-sm text-gray-500">Phone</p>
                 <p>{formatPhoneNumber(selectedItem.phoneNumber)}</p>
               </div>
+              <div>
+                <p className="text-sm text-gray-500">Address</p>
+                <p>{selectedItem.address || 'N/A'}</p>
+              </div>
             </div>
-            
+           
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <p className="text-sm text-gray-500">Card Type</p>
@@ -267,24 +356,26 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                 <p className="text-sm text-gray-500">Card Number</p>
                 <p>{maskCardNumber(selectedItem.cardNumber)}</p>
               </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <p className="text-sm text-gray-500">Exp Date</p>
                 <p>{selectedItem.expDate}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Order Summary</p>
-                <p>{selectedItem.orderSummery}</p>
+                <p className="text-sm text-gray-500">CVV</p>
+                <p>{selectedItem.cvv ? '•••' : 'N/A'}</p>
               </div>
             </div>
-            
+           
+            <div className="mb-4">
+              <p className="text-sm text-gray-500">Order Summary</p>
+              <p>{selectedItem.orderSummery || 'N/A'}</p>
+            </div>
+           
             <div className="border-t pt-4">
               <p className="text-sm text-gray-500">Amount</p>
               <p className="text-xl font-bold">{formatCurrency(selectedItem.amount)}</p>
             </div>
-            
+           
             <div className="mt-8 text-xs text-gray-500">
               <p>Generated on: {new Date().toLocaleString()}</p>
             </div>
@@ -298,7 +389,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
             <div className="flex justify-between items-center border-b p-4">
               <h2 className="text-xl font-semibold">Edit Payment Record</h2>
-              <button 
+              <button
                 onClick={() => setEditingItem(null)}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -484,23 +575,20 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                       <td className="px-6 py-4 text-sm text-gray-500">{maskCardNumber(item.cardNumber)}</td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{formatCurrency(item.amount)}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        <button onClick={() => onView?.(item)} className="text-blue-600 hover:text-blue-800 mx-1">
+                        <button onClick={() => handleView(item)} className="text-blue-600 hover:text-blue-800 mx-1">
                           <FontAwesomeIcon icon={faEye} />
                         </button>
                         <button onClick={() => handleEdit(item)} className="text-yellow-600 hover:text-yellow-800 mx-1">
                           <FontAwesomeIcon icon={faEdit} />
                         </button>
-                        <button 
-                          onClick={() => {
-                            setSelectedItem(item);
-                            setTimeout(() => toPDF(), 100);
-                          }} 
+                        <button
+                          onClick={() => generatePdfForRecord(item)}
                           className="text-red-600 hover:text-red-800 mx-1"
                         >
                           <FontAwesomeIcon icon={faFilePdf} />
                         </button>
-                        <button 
-                          onClick={() => handleShare(item)} 
+                        <button
+                          onClick={() => handleShare(item)}
                           className={`text-green-600 hover:text-green-800 mx-1 relative`}
                           disabled={isSharing}
                         >
@@ -536,11 +624,6 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
 const App = () => {
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleView = (item: DataItem) => {
-    console.log('View item:', item);
-    // Implement view functionality
-  };
-
   const handleDelete = async (item: DataItem) => {
     try {
       if (window.confirm('Are you sure you want to delete this record?')) {
@@ -555,8 +638,7 @@ const App = () => {
 
   return (
     <div key={refreshKey}>
-      <DataTable 
-        onView={handleView}
+      <DataTable
         onDelete={handleDelete}
       />
     </div>

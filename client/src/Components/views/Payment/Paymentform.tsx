@@ -85,16 +85,16 @@ const CheckoutPage: React.FC = () => {
 
   // Countdown timer for success message
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: number;
     if (success.show) {
       if (countdown > 0) {
-        timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+        timer = window.setTimeout(() => setCountdown(countdown - 1), 1000);
       } else {
         navigateToSuccessPage();
       }
     }
     return () => {
-      if (timer) clearTimeout(timer);
+      if (timer) window.clearTimeout(timer);
     };
   }, [success.show, countdown]);
 
@@ -139,8 +139,8 @@ const CheckoutPage: React.FC = () => {
   const validateCardNumber = (cardNumber: string) => {
     if (!cardNumber) return "Card number is required";
     const cleaned = cardNumber.replace(/\s/g, '');
-    if (!/^\d{13,19}$/.test(cleaned)) return "Card number must be 13-19 digits";
-    if (!luhnCheck(cleaned)) return "Invalid card number";
+    // Simple validation - just check if it's 16 digits
+    if (!/^\d{16}$/.test(cleaned)) return "Card number must be 16 digits";
     return "";
   };
 
@@ -169,20 +169,6 @@ const CheckoutPage: React.FC = () => {
     return "";
   };
 
-  // Luhn algorithm for card validation
-  const luhnCheck = (cardNumber: string): boolean => {
-    let sum = 0;
-    for (let i = 0; i < cardNumber.length; i++) {
-      let digit = parseInt(cardNumber[i]);
-      if ((cardNumber.length - i) % 2 === 0) {
-        digit *= 2;
-        if (digit > 9) digit -= 9;
-      }
-      sum += digit;
-    }
-    return sum % 10 === 0;
-  };
-
   const validateField = (name: string, value: string) => {
     switch (name) {
       case 'name': return validateName(value);
@@ -205,7 +191,8 @@ const CheckoutPage: React.FC = () => {
       formattedValue = value
         .replace(/\s/g, '')
         .replace(/(\d{4})/g, '$1 ')
-        .trim();
+        .trim()
+        .substring(0, 19); // Limit to 16 digits + 3 spaces
     }
     // Format expiration date with slash
     else if (name === 'expDate') {
@@ -617,6 +604,7 @@ const CheckoutPage: React.FC = () => {
                         touched.cardNumber && errors.cardNumber ? 'border-red-500' : 'border-gray-300'
                       }`}
                       required
+                      maxLength={19}
                     />
                     {touched.cardNumber && errors.cardNumber && (
                       <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>
