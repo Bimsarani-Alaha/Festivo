@@ -107,6 +107,10 @@ class UserService {
         return localStorage.getItem("role") === "USER";
     }
 
+    static isSupplier(): boolean {
+        return localStorage.getItem("role") === "Supplier";
+    }
+
     static adminOnly(): boolean {
         return this.isAuthenticated() && this.isAdmin();
     }
