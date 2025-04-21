@@ -1,7 +1,7 @@
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Divider, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { Dashboard as DashboardIcon, People as PeopleIcon, ShoppingCart as ShoppingCartIcon, BarChart as BarChartIcon, Settings as SettingsIcon } from '@mui/icons-material';
-
+import ContrastIcon from '@mui/icons-material/Contrast';
 const drawerWidth = 240;
 
 const menuItems = [
@@ -10,6 +10,7 @@ const menuItems = [
   { text: 'Orders', icon: <ShoppingCartIcon />, path: '/admin/orders' },
   { text: 'Reports', icon: <BarChartIcon />, path: '/admin/reports' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/admin/settings' },
+  { text: 'Event Theme', icon: <ContrastIcon />, path: '/admin/EventTheme' },
 ];
 
 interface AdminSideBarProps {

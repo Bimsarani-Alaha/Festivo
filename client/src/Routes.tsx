@@ -12,6 +12,8 @@ import { getRole } from "./customHooks/roleExtract";
 import getUserDetails from "./customHooks/extractJwt";
 import CheckoutPage from "../src/Components/views/Payment/Paymentform";
 import DataTable from "../src/Components/views/Payment/PaymentData"
+import CreateEventPage from "./views/eventThemePage/EventThemePage";
+import DisplayEventTheme from "./views/eventThemePage/DisplayEventTheme";
 
 const AdminProtectedRoute = () => {
   const role = getRole();
@@ -55,6 +57,14 @@ const AppRoutes = () => {
         <Route
           path="/UserManagementDashboard"
           element={<UserManagementDashboard />}
+        />
+        <Route
+          path="/admin/EventTheme"
+          element={<CreateEventPage />}
+        />
+        <Route
+          path="/admin/DisplayEventTheme/:eventName"
+          element={<DisplayEventTheme />}
         />
       </Route>
     </Routes>

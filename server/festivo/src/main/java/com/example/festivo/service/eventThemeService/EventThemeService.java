@@ -22,7 +22,9 @@ public class EventThemeService {
         EventTheme eventTheme = new EventTheme();
         eventTheme.setEventName(req.getEventName());
         eventTheme.setThemeName(req.getThemeName());
+        eventTheme.setColor(req.getColor());
         eventTheme.setPrice(req.getPrice());
+        eventTheme.setImg(req.getImg());
 
         EventTheme saved = eventThemeRepository.save(eventTheme);
 
@@ -34,5 +36,8 @@ public class EventThemeService {
 
     public List<EventTheme> getAllEventThemes() {
         return eventThemeRepository.findAll();
+    }
+    public List<EventTheme> getThemeByEvent(String Event) {
+        return eventThemeRepository.findByEventName(Event);
     }
 }
