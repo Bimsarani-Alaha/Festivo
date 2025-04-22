@@ -7,7 +7,7 @@ const drawerWidth = 240;
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
   { text: 'Customers', icon: <PeopleIcon />, path: '/UserManagementDashboard' },
-  { text: 'Orders', icon: <ShoppingCartIcon />, path: '/admin/orders' },
+  { text: 'Orders', icon: <ShoppingCartIcon />, path: '/EventBookingsTable' },
   { text: 'Reports', icon: <BarChartIcon />, path: '/admin/reports' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/admin/settings' },
   { text: 'Event Theme', icon: <ContrastIcon />, path: '/admin/EventTheme' },
