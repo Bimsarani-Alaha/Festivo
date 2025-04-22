@@ -58,8 +58,8 @@ const Header = () => {
             src="/logofes.png"
             alt="Festivo Logo"
             sx={{
-              height: 45,
-              mr: 1,
+              height: 60,
+              mr: 5,
               filter: "drop-shadow(0px 1px 2px rgba(0,0,0,0.1))",
             }}
           />

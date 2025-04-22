@@ -1,16 +1,26 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Autocomplete,
-  TextareaAutosize,
   TextField,
   Button,
+  Typography,
+  Box,
+  Paper,
+  Container,
+  InputAdornment,
+  Stack,
+  Chip,
+  Snackbar,
+  Alert
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { EventData } from "../../api/sampleData";
 import { EventThemeSchema } from "../../api/eventThemeApi";
 import { useMutation } from "@tanstack/react-query";
 import queryClient from "../../state/queryClients";
-import { createEventTheme } from "../../api/eventThemeApi"; // make sure this exists
+import { createEventTheme } from "../../api/eventThemeApi";
+import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 
 type CreateEventPageProps = {
   defaultValues?: EventThemeSchema;
@@ -26,11 +36,13 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
     handleSubmit,
     control,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<EventThemeSchema>({
     defaultValues,
     mode: "onChange",
   });
+
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   useEffect(() => {
     if (defaultValues) reset(defaultValues);
@@ -38,10 +50,11 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
 
   const { mutate: createEventThemeMutation } = useMutation({
     mutationFn: createEventTheme,
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["EventTheme"] });
-      if (onSubmit) onSubmit(defaultValues!); // optional callback
-      reset(); // reset the form after submission
+      if (onSubmit) onSubmit(data);
+      reset();
+      setOpenSnackbar(true);
     },
     onError: (error) => {
       console.error("Failed to create event theme", error);
@@ -52,89 +65,153 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
     createEventThemeMutation(data);
   };
 
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") return;
+    setOpenSnackbar(false);
+  };
+
   return (
-    <form onSubmit={handleSubmit(submitHandler)}>
-      <Controller
-        name="eventName"
-        control={control}
-        render={({ field }) => (
-          <Autocomplete
-            size="small"
-            options={EventData.map((event) => event.name)}
-            value={field.value || ""}
-            onChange={(_, value) => field.onChange(value)}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Event"
-                error={!!errors.eventName}
-                helperText={errors.eventName?.message}
-                required
-                margin="normal"
-                fullWidth
-              />
-            )}
-          />
-        )}
-      />
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+        <Typography variant="h4" gutterBottom fontWeight={500} color="primary">
+          Create New Event
+        </Typography>
 
-      <TextField
-        {...register("themeName")}
-        label="Theme Name"
-        fullWidth
-        margin="normal"
-        error={!!errors.themeName}
-        helperText={errors.themeName?.message}
-      />
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+          Fill in the details below to create a new themed event.
+        </Typography>
 
-      <TextField
-        {...register("price", { valueAsNumber: true })}
-        label="Price"
-        type="number"
-        fullWidth
-        margin="normal"
-        error={!!errors.price}
-        helperText={errors.price?.message}
-      />
+        <Box component="form" onSubmit={handleSubmit(submitHandler)} noValidate>
+          <Stack spacing={3}>
+            <Controller
+              name="eventName"
+              control={control}
+              rules={{ required: "Event name is required" }}
+              render={({ field }) => (
+                <Autocomplete
+                  options={EventData.map((event) => event.name)}
+                  value={field.value || null}
+                  onChange={(_, value) => field.onChange(value)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Event Type"
+                      error={!!errors.eventName}
+                      helperText={errors.eventName?.message}
+                      required
+                      fullWidth
+                    />
+                  )}
+                />
+              )}
+            />
 
-      <TextareaAutosize
-        {...register("description")}
-        minRows={3}
-        placeholder="Description"
-        style={{ width: "100%", marginTop: "1rem", padding: "0.5rem" }}
-      />
-      {errors.description && (
-        <p style={{ color: "red" }}>{errors.description.message}</p>
-      )}
+            <TextField
+              {...register("themeName", { required: "Theme name is required" })}
+              label="Theme Name"
+              fullWidth
+              error={!!errors.themeName}
+              helperText={errors.themeName?.message}
+              placeholder="Enter a catchy theme name"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Chip label="THEME" size="small" color="primary" variant="outlined" />
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-      <TextField
-        {...register("img", { valueAsNumber: true })}
-        label="Image"
-        fullWidth
-        margin="normal"
-        error={!!errors.img}
-        helperText={errors.img?.message}
-      />
+            <TextField
+              {...register("price", {
+                valueAsNumber: true,
+                required: "Price is required",
+                min: { value: 0, message: "Price cannot be negative" },
+              })}
+              label="Price"
+              type="number"
+              fullWidth
+              error={!!errors.price}
+              helperText={errors.price?.message}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <AttachMoneyIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-      <TextField
-        {...register("color")}
-        label="Theme Color"
-        fullWidth
-        margin="normal"
-        error={!!errors.color}
-        helperText={errors.color?.message}
-      />
+            <TextField
+              {...register("description", {
+                required: "Description is required",
+                minLength: {
+                  value: 20,
+                  message: "Description must be at least 20 characters",
+                },
+              })}
+              label="Description"
+              multiline
+              minRows={4}
+              fullWidth
+              error={!!errors.description}
+              helperText={errors.description?.message}
+              placeholder="Describe your event theme in detail..."
+            />
 
-      <Button
-        type="submit"
-        variant="contained"
-        color="primary"
-        sx={{ mt: 2 }}
-        
+            <Controller
+              name="img"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Image URL"
+                  fullWidth
+                  error={!!errors.img}
+                  helperText={errors.img?.message || "Enter an image URL or ID"}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AddPhotoAlternateIcon />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
+            />
+
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
+              <Button variant="outlined" onClick={() => reset()} sx={{ width: "48%" }}>
+                Reset
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={isSubmitting}
+                sx={{ width: "48%" }}
+              >
+                Create Event
+              </Button>
+            </Box>
+          </Stack>
+        </Box>
+      </Paper>
+
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        Submit
-      </Button>
-    </form>
+        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: "100%" }}>
+          Event theme created successfully!
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 };
 
