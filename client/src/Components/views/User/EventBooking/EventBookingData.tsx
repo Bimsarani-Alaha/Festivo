@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { FaEye, FaEdit, FaTrash, FaSearch, FaSpinner, FaTimes, FaFilePdf, FaCheck } from 'react-icons/fa';
+import { FaEye, FaEdit, FaTrash, FaSearch, FaSpinner, FaTimes, FaFilePdf, FaCheck, FaTruck } from 'react-icons/fa';
 import { usePDF } from 'react-to-pdf';
+import { sendOrderToSupplier } from '../../../../api/supplierOrder';
 
 interface BookingData {
   id?: string;
@@ -101,6 +102,11 @@ const EventBookingsTable = () => {
   const handleEdit = (booking: BookingData) => {
     setEditFormData(booking);
     setIsEditing(true);
+  };
+
+  const handleToSupplier = (booking: BookingData) => {
+    alert("Are You want to send this order to supplier")
+    sendOrderToSupplier(booking);
   };
 
   // Handle form input changes
@@ -316,6 +322,13 @@ const EventBookingsTable = () => {
                                 title="Delete"
                               >
                                 <FaTrash />
+                              </button>
+                              <button
+                                onClick={() => booking.id && handleToSupplier(booking)}
+                                className="text-red-600 hover:text-red-800 p-1"
+                                title="Delete"
+                              >
+                                <FaTruck />
                               </button>
                             </div>
                           </td>
