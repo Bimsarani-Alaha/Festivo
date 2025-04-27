@@ -46,11 +46,11 @@ export default function LoginForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
+  
     try {
       const response = await UserService.login(email, password) as LoginResponse;
       console.log('Login API Response:', response);
-
+  
       if (response.token) {
         console.log('JWT Token:', response.token);
         
@@ -59,10 +59,15 @@ export default function LoginForm() {
           console.log('Decoded Token Payload:', decodedToken);
           console.log('Token Expiration:', new Date(decodedToken.exp * 1000));
         }
-
+  
         localStorage.setItem('token', response.token);
         localStorage.setItem('role', response.role);
-        
+  
+        if (response.role === 'SUPPLIER') {
+          // If the user is a SUPPLIER, prevent the login
+          throw new Error('Suppliers are not allowed to log in.');
+        }
+  
         if (response.user) {
           localStorage.setItem('user', JSON.stringify(response.user));
           localStorage.setItem('name', response.user.name || '');
@@ -70,11 +75,11 @@ export default function LoginForm() {
           localStorage.setItem('phoneNumber', response.user.phoneNumber || '');
           localStorage.setItem('gender', response.user.gender || '');
         }
-
+  
         console.log('Stored Token:', localStorage.getItem('token'));
         console.log('Stored Role:', localStorage.getItem('role'));
         console.log('Stored User:', localStorage.getItem('user'));
-
+  
         if (response.role === 'ADMIN') {
           navigate('/admin/dashboard');
         } else {
@@ -91,7 +96,7 @@ export default function LoginForm() {
         request: err.request,
         message: err.message
       });
-
+  
       if (err.response) {
         setError(err.response.data?.message || `Login failed (Status: ${err.response.status})`);
       } else if (err.request) {
@@ -103,6 +108,7 @@ export default function LoginForm() {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex flex-col relative" style={{
@@ -202,14 +208,21 @@ export default function LoginForm() {
             </form>
 
             {/* Sign Up Link */}
-            <div className="mt-6 text-center text-sm">
+            <div className="mt-6 text-center text-sm space-y-2">
               <p className="text-gray-600">
                 Don't have an account?{' '}
                 <Link to="/SignUp" className="text-[#C58940] hover:text-[#B17A3A] font-semibold underline underline-offset-4">
                   Create Account
                 </Link>
               </p>
+              <p className="text-gray-600">
+                If you are a supplier,{' '}
+                <Link to="/SupplierLogin" className="text-[#C58940] hover:text-[#B17A3A] font-semibold underline underline-offset-4">
+                  click here
+                </Link>
+              </p>
             </div>
+
           </motion.div>
         </div>
       </div>

@@ -18,18 +18,16 @@ import {
     CircularProgress,
     Snackbar,
     Alert,
-    Grid,
     ThemeProvider,
     createTheme
 } from "@mui/material";
 import {
-    Business as BusinessIcon,
     Person as PersonIcon,
     Email as EmailIcon,
     Phone as PhoneIcon,
     Lock as LockIcon,
     CheckCircle as CheckCircleIcon,
-    AdminPanelSettings as AdminIcon
+    StorefrontOutlined as SupplierIcon
 } from "@mui/icons-material";
 
 import logo from '../../../assets/logoremasted.png'
@@ -102,7 +100,8 @@ type FormData = {
     gender: string;
     phoneNumber: string;
     password: string;
-    role: "USER" | "SUPPLIER";
+    confirmPassword: string;
+    role: "SUPPLIER";
 };
 
 type FormErrors = {
@@ -111,6 +110,7 @@ type FormErrors = {
     gender?: string;
     phoneNumber?: string;
     password?: string;
+    confirmPassword?: string;
 };
 
 const SupplierSignup = () => {
@@ -121,7 +121,8 @@ const SupplierSignup = () => {
         gender: "",
         phoneNumber: "",
         password: "",
-        role: "SUPPLIER" // Force as SUPPLIER
+        confirmPassword: "",
+        role: "SUPPLIER" // Default role is SUPPLIER
     });
 
     const [errors, setErrors] = useState<FormErrors>({});
@@ -129,9 +130,6 @@ const SupplierSignup = () => {
     const [apiError, setApiError] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [openSnackbar, setOpenSnackbar] = useState(false);
-    const [showSecretKeyModal, setShowSecretKeyModal] = useState(true);
-    const [secretKeyInput, setSecretKeyInput] = useState("");
-    const [secretKeyError, setSecretKeyError] = useState("");
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -163,18 +161,12 @@ const SupplierSignup = () => {
         if (formData.password.length < 8) {
             newErrors.password = "Password must be at least 8 characters";
         }
+        if (formData.password !== formData.confirmPassword) {
+            newErrors.confirmPassword = "Passwords do not match";
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    };
-
-    const verifySecretKey = () => {
-        if (secretKeyInput === "festivo") {
-            setShowSecretKeyModal(false);
-            setSecretKeyError("");
-        } else {
-            setSecretKeyError("Invalid secret key. Please try again.");
-        }
     };
 
     const handleSubmit = async (e: FormEvent) => {
@@ -186,7 +178,9 @@ const SupplierSignup = () => {
         setApiError("");
 
         try {
-            await UserService.register(formData);
+            // Remove confirmPassword before sending to API
+            const { confirmPassword, ...dataToSubmit } = formData;
+            await UserService.register(dataToSubmit);
             setShowSuccessModal(true);
         } catch (error: any) {
             console.error("Registration error:", error);
@@ -199,7 +193,7 @@ const SupplierSignup = () => {
 
     const handleCloseSuccessModal = () => {
         setShowSuccessModal(false);
-        navigate("/login");
+        navigate("/SupplierLogin");
     };
 
     const handleCloseSnackbar = () => {
@@ -209,262 +203,258 @@ const SupplierSignup = () => {
     return (
         <ThemeProvider theme={theme}>
             <Container component="main" maxWidth="lg" sx={{ py: 6 }}>
-                {/* Secret Key Modal */}
-                <Dialog open={showSecretKeyModal} onClose={() => navigate("/")} PaperProps={{ elevation: 8 }}>
-                    <Stack spacing={2} sx={{ p: 4 }}>
-                        <Avatar sx={{
-                            mx: 'auto',
-                            bgcolor: 'primary.main',
-                            width: 60,
-                            height: 60,
-                            boxShadow: '0px 4px 10px rgba(97, 74, 41, 0.3)'
-                        }}>
-                            <img src={logo} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'fill' }} />
-                        </Avatar>
-
-                        <Typography variant="h5" sx={{ textAlign: 'center', fontWeight: 600 }}>
-                            Admin Verification
-                        </Typography>
-                        <Typography sx={{ textAlign: 'center' }}>
-                            This area is restricted to Festivo administrators only.
-                            Please enter your admin key to access supplier registration.
-                        </Typography>
-                        <TextField
-                            fullWidth
-                            label="Admin Key"
-                            type="password"
-                            value={secretKeyInput}
-                            onChange={(e) => setSecretKeyInput(e.target.value)}
-                            error={!!secretKeyError}
-                            helperText={secretKeyError}
-                            autoFocus
-                            variant="outlined"
-                        />
-                        <Stack direction="row" spacing={2} justifyContent="center" sx={{ pt: 2 }}>
-                            <Button
-                                variant="outlined"
-                                onClick={() => navigate("/")}
-                                sx={{ px: 4 }}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="contained"
-                                onClick={verifySecretKey}
-                                disabled={!secretKeyInput}
-                                sx={{ px: 4 }}
-                            >
-                                Verify
-                            </Button>
-                        </Stack>
-                    </Stack>
-                </Dialog>
-
-                {/* Main Content - Split Layout */}
-                <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden', height: '100%' }}>
-                    <Stack direction="row" spacing={2} sx={{maxHeight: '600px'}} >
-                        {/* Left Side - Introduction and Logo */}
-                        <Grid  item xs={12} md={5}
-                              sx={{
-                                  bgcolor: 'primary.main',
-                                  backgroundImage: 'linear-gradient(135deg, #614a29 0%, #8b6d3d 100%)',
-                                  color: 'white',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  justifyContent: 'center',
-                                  position: 'relative',
-                                  p: 6
-                              }}
-                        >
-                            <Box sx={{ position: 'relative', zIndex: 2, maxWidth:'550px' }}>
-                                {/* Logo */}
-                                <Box sx={{ mb: 6, textAlign: 'center' }}>
-                                    <Avatar sx={{
-                                        mx: 'auto',
-                                        bgcolor: '#ffffff',
-                                        width: 120,
-                                        height: 120,
-                                        boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.15)'
-                                    }}>
-                                        <img src={logo} alt="Festivo logo" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
-                                    </Avatar>
-                                </Box>
-
-                                {/* Introduction Text */}
-                                <Typography variant="h4" fontWeight="bold" gutterBottom>
-                                    Supplier Registration Portal
-                                </Typography>
-
-                                <Typography variant="body1" sx={{ mt: 3, mb: 4, lineHeight: 1.8 }}>
-                                    As a Festivo administrator, you can register new suppliers who will provide
-                                    services for events. Once registered, suppliers will receive their login
-                                    credentials and access to the supplier dashboard.
-                                </Typography>
-
-                                {/* Decorative Elements */}
-                                <Box sx={{
+                <Stack spacing={4}>
+                    {/* Main Content */}
+                    <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
+                        <Stack direction={{ xs: 'column', md: 'row' }} sx={{ minHeight: '600px' }}>
+                            {/* Left Side - Introduction */}
+                            <Box
+                                sx={{
+                                    bgcolor: 'primary.main',
+                                    backgroundImage: 'linear-gradient(135deg, #614a29 0%, #8b6d3d 100%)',
+                                    color: 'white',
                                     display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 2,
-                                    mt: 4,
-                                    p: 3,
-                                    borderRadius: 2,
-                                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                                    backdropFilter: 'blur(10px)'
-                                }}>
-                                    <BusinessIcon sx={{ fontSize: 40 }} />
-                                    <Box>
-                                        <Typography variant="h6" fontWeight={500}>
-                                            Expand Your Network
-                                        </Typography>
-                                        <Typography variant="body2">
-                                            Help suppliers join the Festivo ecosystem and grow their business
-                                        </Typography>
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    position: 'relative',
+                                    p: { xs: 4, md: 6 },
+                                    flex: { xs: '0 0 auto', md: '0 0 40%' }
+                                }}
+                            >
+                                <Stack spacing={4} sx={{ position: 'relative', zIndex: 2, maxWidth: '550px' }}>
+                                    {/* Logo */}
+                                    <Box sx={{ textAlign: 'center' }}>
+                                        <Avatar sx={{
+                                            mx: 'auto',
+                                            bgcolor: '#ffffff',
+                                            width: 100,
+                                            height: 100,
+                                            boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.15)'
+                                        }}>
+                                            <img src={logo} alt="Festivo logo" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+                                        </Avatar>
                                     </Box>
-                                </Box>
-                            </Box>
 
-                            {/* Decorative Background Pattern */}
-                            <Box sx={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                opacity: 0.1,
-                                backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
-                                backgroundSize: '20px 20px',
-                                zIndex: 1
-                            }} />
-                        </Grid>
-
-                        {/* Right Side - Form */}
-                        <Grid item xs={12} md={7}>
-                            <Box sx={{ p: 6 }}>
-                                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 4 }}>
-                                    <AdminIcon color="primary" />
-                                    <Typography variant="h6" color="primary" fontWeight={500}>
-                                        Admin: Create New Supplier Account
+                                    {/* Introduction Text */}
+                                    <Typography variant="h4" fontWeight="bold" textAlign="center">
+                                        Supplier Registration
                                     </Typography>
+
+                                    <Typography variant="body1" sx={{ lineHeight: 1.8 }}>
+                                        Join the Festivo network as a supplier and grow your event service business. 
+                                        Create your account today to connect with event planners and showcase your services.
+                                    </Typography>
+
+                                    {/* Benefits */}
+                                    <Stack spacing={2}>
+                                        <Box sx={{
+                                            p: 2,
+                                            borderRadius: 2,
+                                            bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                            backdropFilter: 'blur(10px)'
+                                        }}>
+                                            <Typography fontWeight={500}>
+                                                ✓ Access to event planners looking for your services
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{
+                                            p: 2,
+                                            borderRadius: 2,
+                                            bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                            backdropFilter: 'blur(10px)'
+                                        }}>
+                                            <Typography fontWeight={500}>
+                                                ✓ Simple dashboard to manage your offerings
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{
+                                            p: 2,
+                                            borderRadius: 2,
+                                            bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                            backdropFilter: 'blur(10px)'
+                                        }}>
+                                            <Typography fontWeight={500}>
+                                                ✓ Grow your business with our platform
+                                            </Typography>
+                                        </Box>
+                                    </Stack>
                                 </Stack>
 
-                                <Box component="form" onSubmit={handleSubmit}>
-                                    <Stack spacing={3}>
-                                        <TextField
-                                            required
-                                            fullWidth
-                                            label="Supplier Full Name"
-                                            name="name"
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            error={!!errors.name}
-                                            helperText={errors.name}
-                                            InputProps={{
-                                                startAdornment: <PersonIcon color="action" sx={{ mr: 1 }} />
-                                            }}
-                                        />
+                                {/* Background Pattern */}
+                                <Box sx={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    opacity: 0.1,
+                                    backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+                                    backgroundSize: '20px 20px',
+                                    zIndex: 1
+                                }} />
+                            </Box>
 
-                                        <TextField
-                                            required
-                                            fullWidth
-                                            label="Supplier Email Address"
-                                            name="email"
-                                            type="email"
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            error={!!errors.email}
-                                            helperText={errors.email}
-                                            InputProps={{
-                                                startAdornment: <EmailIcon color="action" sx={{ mr: 1 }} />
-                                            }}
-                                        />
+                            {/* Right Side - Form */}
+                            <Box sx={{ flex: 1, p: { xs: 3, sm: 6 } }}>
+                                <Stack spacing={4}>
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                        <SupplierIcon color="primary" />
+                                        <Typography variant="h6" color="primary" fontWeight={500}>
+                                            Create Your Supplier Account
+                                        </Typography>
+                                    </Stack>
 
-                                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
-                                            <FormControl fullWidth required error={!!errors.gender}>
-                                                <InputLabel>Gender</InputLabel>
-                                                <Select
-                                                    label="Gender"
-                                                    name="gender"
-                                                    value={formData.gender}
-                                                    onChange={handleChange}
-                                                >
-                                                    <MenuItem value="MALE">Male</MenuItem>
-                                                    <MenuItem value="FEMALE">Female</MenuItem>
-                                                    <MenuItem value="OTHER">Other</MenuItem>
-                                                </Select>
-                                                {errors.gender && <Typography variant="caption" color="error">{errors.gender}</Typography>}
-                                            </FormControl>
+                                    <Box component="form" onSubmit={handleSubmit}>
+                                        <Stack spacing={3}>
+                                            <TextField
+                                                required
+                                                fullWidth
+                                                label="Full Name"
+                                                name="name"
+                                                value={formData.name}
+                                                onChange={handleChange}
+                                                error={!!errors.name}
+                                                helperText={errors.name}
+                                                InputProps={{
+                                                    startAdornment: <PersonIcon color="action" sx={{ mr: 1 }} />
+                                                }}
+                                            />
 
                                             <TextField
                                                 required
                                                 fullWidth
-                                                label="Phone Number"
-                                                name="phoneNumber"
-                                                value={formData.phoneNumber}
-                                                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                                                    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-                                                    handleChange({
-                                                        target: {
-                                                            name: e.target.name,
-                                                            value: value
-                                                        }
-                                                    } as unknown as ChangeEvent<HTMLInputElement>);
-                                                }}
-                                                error={!!errors.phoneNumber}
-                                                helperText={errors.phoneNumber}
+                                                label="Email Address"
+                                                name="email"
+                                                type="email"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                error={!!errors.email}
+                                                helperText={errors.email}
                                                 InputProps={{
-                                                    startAdornment: <PhoneIcon color="action" sx={{ mr: 1 }} />
-                                                }}
-                                                inputProps={{
-                                                    maxLength: 10,
-                                                    inputMode: 'numeric'
+                                                    startAdornment: <EmailIcon color="action" sx={{ mr: 1 }} />
                                                 }}
                                             />
-                                        </Stack>
 
-                                        <TextField
-                                            required
-                                            fullWidth
-                                            label="Password"
-                                            name="password"
-                                            type="password"
-                                            value={formData.password}
-                                            onChange={handleChange}
-                                            error={!!errors.password}
-                                            helperText={errors.password || "Supplier will use this to log in initially (minimum 8 characters)"}
-                                            InputProps={{
-                                                startAdornment: <LockIcon color="action" sx={{ mr: 1 }} />
-                                            }}
-                                        />
+                                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                                                <FormControl fullWidth required error={!!errors.gender}>
+                                                    <InputLabel>Gender</InputLabel>
+                                                    <Select
+                                                        label="Gender"
+                                                        name="gender"
+                                                        value={formData.gender}
+                                                        onChange={(e) => {
+                                                            handleChange({
+                                                                target: {
+                                                                    name: 'gender',
+                                                                    value: e.target.value
+                                                                }
+                                                            } as ChangeEvent<HTMLInputElement>);
+                                                        }}
+                                                    >
+                                                        <MenuItem value="MALE">Male</MenuItem>
+                                                        <MenuItem value="FEMALE">Female</MenuItem>
+                                                        <MenuItem value="OTHER">Other</MenuItem>
+                                                    </Select>
+                                                    {errors.gender && (
+                                                        <Typography variant="caption" color="error">
+                                                            {errors.gender}
+                                                        </Typography>
+                                                    )}
+                                                </FormControl>
 
-                                        <Button
-                                            type="submit"
-                                            fullWidth
-                                            variant="contained"
-                                            size="large"
-                                            sx={{ py: 1.5 }}
-                                            disabled={isSubmitting || showSecretKeyModal}
-                                            startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <BusinessIcon />}
-                                        >
-                                            {isSubmitting ? "Registering Supplier..." : "Register New Supplier"}
-                                        </Button>
+                                                <TextField
+                                                    required
+                                                    fullWidth
+                                                    label="Phone Number"
+                                                    name="phoneNumber"
+                                                    value={formData.phoneNumber}
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                                                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                        handleChange({
+                                                            target: {
+                                                                name: e.target.name,
+                                                                value: value
+                                                            }
+                                                        } as ChangeEvent<HTMLInputElement>);
+                                                    }}
+                                                    error={!!errors.phoneNumber}
+                                                    helperText={errors.phoneNumber}
+                                                    InputProps={{
+                                                        startAdornment: <PhoneIcon color="action" sx={{ mr: 1 }} />
+                                                    }}
+                                                    inputProps={{
+                                                        maxLength: 10,
+                                                        inputMode: 'numeric'
+                                                    }}
+                                                />
+                                            </Stack>
 
-                                        <Box sx={{ textAlign: 'center', mt: 2 }}>
+                                            <TextField
+                                                required
+                                                fullWidth
+                                                label="Password"
+                                                name="password"
+                                                type="password"
+                                                value={formData.password}
+                                                onChange={handleChange}
+                                                error={!!errors.password}
+                                                helperText={errors.password || "Must be at least 8 characters"}
+                                                InputProps={{
+                                                    startAdornment: <LockIcon color="action" sx={{ mr: 1 }} />
+                                                }}
+                                            />
+
+                                            <TextField
+                                                required
+                                                fullWidth
+                                                label="Confirm Password"
+                                                name="confirmPassword"
+                                                type="password"
+                                                value={formData.confirmPassword}
+                                                onChange={handleChange}
+                                                error={!!errors.confirmPassword}
+                                                helperText={errors.confirmPassword}
+                                                InputProps={{
+                                                    startAdornment: <LockIcon color="action" sx={{ mr: 1 }} />
+                                                }}
+                                            />
+
                                             <Button
-                                                variant="outlined"
-                                                color="secondary"
-                                                onClick={() => navigate("/admin-dashboard")}
-                                                sx={{ px: 4 }}
+                                                type="submit"
+                                                fullWidth
+                                                variant="contained"
+                                                size="large"
+                                                sx={{ py: 1.5, mt: 2 }}
+                                                disabled={isSubmitting}
+                                                startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <SupplierIcon />}
                                             >
-                                                Return to Admin Dashboard
+                                                {isSubmitting ? "Creating Account..." : "Sign Up as Supplier"}
                                             </Button>
-                                        </Box>
+                                        </Stack>
+                                    </Box>
+
+                                    <Stack direction="row" justifyContent="center" spacing={1}>
+                                        <Typography variant="body2">
+                                            Already have an account?
+                                        </Typography>
+                                        <Typography 
+                                            variant="body2" 
+                                            color="secondary" 
+                                            sx={{ 
+                                                fontWeight: 600, 
+                                                cursor: 'pointer',
+                                                '&:hover': { textDecoration: 'underline' }
+                                            }}
+                                            onClick={() => navigate("/SupplierLogin")}
+                                        >
+                                            Log in
+                                        </Typography>
                                     </Stack>
-                                </Box>
+                                </Stack>
                             </Box>
-                        </Grid>
-                    </Stack>
-                </Paper>
+                        </Stack>
+                    </Paper>
+                </Stack>
 
                 {/* Success Dialog */}
                 <Dialog
@@ -474,7 +464,7 @@ const SupplierSignup = () => {
                         sx: { borderRadius: 3, p: 1 }
                     }}
                 >
-                    <Stack spacing={2} sx={{ p: 4, textAlign: 'center' }}>
+                    <Stack spacing={3} sx={{ p: 4, textAlign: 'center' }}>
                         <Avatar sx={{
                             mx: 'auto',
                             bgcolor: '#4caf50',
@@ -485,14 +475,13 @@ const SupplierSignup = () => {
                             <CheckCircleIcon sx={{ fontSize: 50 }} />
                         </Avatar>
                         <Typography variant="h5" fontWeight={600}>
-                            Supplier Registered!
+                            Registration Successful!
                         </Typography>
                         <Typography>
-                            The supplier account has been created successfully.
+                            Your supplier account has been created successfully.
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            Login credentials will be sent to the provided email address.
-                            The supplier can now access the Festivo platform.
+                            You can now log in with your credentials to access the Festivo supplier dashboard.
                         </Typography>
                         <Button
                             variant="contained"
@@ -500,7 +489,7 @@ const SupplierSignup = () => {
                             onClick={handleCloseSuccessModal}
                             sx={{ mt: 2, px: 4, mx: 'auto' }}
                         >
-                            Return to Admin Dashboard
+                            Go to Login
                         </Button>
                     </Stack>
                 </Dialog>
