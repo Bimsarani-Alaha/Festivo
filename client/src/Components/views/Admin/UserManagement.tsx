@@ -202,10 +202,16 @@ function UserManagementPage() {
       const response = await UserService.updateUser(editingUser.id, userUpdateData, token);
       
       if (response && response.status === "OK") {
-        setUsers(users.map(user => user.id === editingUser.id ? { ...user, ...userUpdateData } : user));
+        // Update the users list with the updated user data
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === editingUser.id ? { ...user, ...userUpdateData } : user
+          )
+        );
         toast.success("User updated successfully!");
         setIsEditing(false);
         setEditingUser(null);
+        // No need to call fetchUsers() here since we're updating the state directly
       } else {
         throw new Error(response?.message || "Invalid response from server");
       }
