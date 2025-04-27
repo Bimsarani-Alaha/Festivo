@@ -16,6 +16,8 @@ import CreateEventPage from "./views/eventThemePage/EventThemePage";
 import DisplayEventTheme from "./views/eventThemePage/DisplayEventTheme";
 import SupplierSignup from "./Components/views/Supplier/SupplierSignup.tsx";
 import SupplierLogin from "./Components/views/Supplier/SupplierLogin.tsx";
+import AllEventThemes from "./views/eventThemePage/allEventThemes.tsx";
+
 
 const AdminProtectedRoute = () => {
     const role = getRole();
@@ -67,11 +69,16 @@ const AppRoutes = () => {
                     element={<CreateEventPage/>}
                 />
                 <Route
+                    path="/admin/allEventThemes"
+                    element={<AllEventThemes/>}
+                />
+                <Route
                     path="/admin/DisplayEventTheme/:eventName"
                     element={<DisplayEventTheme/>}
                 />
                 <Route path="/SupplierSignup" element={<SupplierSignup/>}/>
             </Route>
+            
         </Routes>
     );
 };

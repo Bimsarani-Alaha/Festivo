@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,7 +28,7 @@ public class EventThemeController {
     private final EventThemeService eventThemeService;
 
     @PostMapping
-    public ResponseEntity<EventThemeResponseDTO> createProducts(
+    public ResponseEntity<EventThemeResponseDTO> createEventTheme(
             @RequestBody EventThemeRequestDTO req) {
         EventThemeResponseDTO res = eventThemeService.createEventTheme(req);
         if (res.getError() != null) {
@@ -47,4 +49,25 @@ public class EventThemeController {
         return eventThemeService.getThemeByEvent(event);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<EventThemeResponseDTO> updateEventTheme(
+            @PathVariable String id,
+            @RequestBody EventThemeRequestDTO req) {
+        EventThemeResponseDTO res = eventThemeService.updateEventTheme(id, req);
+        if (res.getError() != null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+        } else {
+            return ResponseEntity.ok(res);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteEventTheme(@PathVariable String id) {
+        boolean deleted = eventThemeService.deleteEventTheme(id);
+        if (deleted) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
 }
