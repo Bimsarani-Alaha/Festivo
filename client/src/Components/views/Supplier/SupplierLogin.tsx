@@ -109,7 +109,7 @@ export default function SupplierLogin() {
                 if (response.role === 'ADMIN') {
                     navigate('/admin/dashboard');
                 } else if (response.role === 'SUPPLIER') {
-                    navigate('/supplier/dashboard');
+                    navigate('/supplier/SupplierPage');
                 } else {
                     navigate('/');
                 }
@@ -445,7 +445,7 @@ export default function SupplierLogin() {
                                             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                                 <Button
                                                     component={Link}
-                                                    to="/supplier/register"
+                                                    to="/SupplierSignup"
                                                     variant="outlined"
                                                     startIcon={<BusinessIcon />}
                                                     sx={{
@@ -462,7 +462,7 @@ export default function SupplierLogin() {
                                                         },
                                                     }}
                                                 >
-                                                    Apply to become a supplier
+                                                    Sign Up as Supplier
                                                 </Button>
                                             </motion.div>
                                         </Box>
@@ -479,8 +479,7 @@ export default function SupplierLogin() {
                         <Link to="/terms" style={{
                             color: themeColors.primary,
                             textDecoration: 'none',
-                            fontWeight: 600,
-                            '&:hover': { textDecoration: 'underline' }
+                            fontWeight: 600
                         }}>
                             Terms of Service
                         </Link>{' '}
@@ -488,8 +487,7 @@ export default function SupplierLogin() {
                         <Link to="/privacy" style={{
                             color: themeColors.primary,
                             textDecoration: 'none',
-                            fontWeight: 600,
-                            '&:hover': { textDecoration: 'underline' }
+                            fontWeight: 600
                         }}>
                             Privacy Policy
                         </Link>

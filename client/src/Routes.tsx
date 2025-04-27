@@ -16,11 +16,22 @@ import CreateEventPage from "./views/eventThemePage/EventThemePage";
 import DisplayEventTheme from "./views/eventThemePage/DisplayEventTheme";
 import SupplierSignup from "./Components/views/Supplier/SupplierSignup.tsx";
 import SupplierLogin from "./Components/views/Supplier/SupplierLogin.tsx";
+import SupplierPage from "./views/supplierPage/SupplierPage.tsx"
 
 const AdminProtectedRoute = () => {
     const role = getRole();
 
     if (role != "ADMIN") {
+        return <Navigate to="/"/>;
+    }
+
+    return <Outlet/>;
+};
+
+const SupplierProtectedRoute = () => {
+    const role = getRole();
+
+    if (role != "SUPPLIER") {
         return <Navigate to="/"/>;
     }
 
@@ -45,6 +56,7 @@ const AppRoutes = () => {
             <Route path="/SignUp" element={<SignUp/>}/>
             <Route path="/LoginForm" element={<LoginForm/>}/>
             <Route path="/SupplierLogin" element={<SupplierLogin/>}/>
+            <Route path="/SupplierSignup" element={<SupplierSignup/>}/>
 
 
             <Route element={<UserProtectedRoute/>}>
@@ -70,8 +82,12 @@ const AppRoutes = () => {
                     path="/admin/DisplayEventTheme/:eventName"
                     element={<DisplayEventTheme/>}
                 />
-                <Route path="/SupplierSignup" element={<SupplierSignup/>}/>
+                
             </Route>
+            <Route element={<SupplierProtectedRoute/>}>
+                <Route path="/supplier/SupplierPage" element={<SupplierPage/>}/>
+            </Route>
+            
         </Routes>
     );
 };
