@@ -17,8 +17,8 @@ public class SupplierEntity {
     @Indexed
     private String id;
 
+    private String email;
     private String companyName;
     private String category;
-    private String contactNumber;
     private String address;
 }
