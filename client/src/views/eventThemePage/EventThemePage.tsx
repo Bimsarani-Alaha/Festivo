@@ -11,7 +11,7 @@ import {
   Stack,
   Chip,
   Snackbar,
-  Alert
+  Alert,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { EventData } from "../../api/sampleData";
@@ -21,6 +21,7 @@ import queryClient from "../../state/queryClients";
 import { createEventTheme } from "../../api/eventThemeApi";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import { Link } from "react-router-dom";
 
 type CreateEventPageProps = {
   defaultValues?: EventThemeSchema;
@@ -119,7 +120,12 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Chip label="THEME" size="small" color="primary" variant="outlined" />
+                    <Chip
+                      label="THEME"
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
                   </InputAdornment>
                 ),
               }}
@@ -183,8 +189,14 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
               )}
             />
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
-              <Button variant="outlined" onClick={() => reset()} sx={{ width: "48%" }}>
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}
+            >
+              <Button
+                variant="outlined"
+                onClick={() => reset()}
+                sx={{ width: "48%" }}
+              >
                 Reset
               </Button>
               <Button
@@ -195,6 +207,16 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
                 sx={{ width: "48%" }}
               >
                 Create Event
+              </Button>
+              <Button component={Link} to="/admin/allEventThemes">
+                All Themes
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => reset()}
+                sx={{ width: "48%" }}
+              >
+                Reset
               </Button>
             </Box>
           </Stack>
@@ -207,7 +229,11 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: "100%" }}>
+        <Alert
+          onClose={handleSnackbarClose}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
           Event theme created successfully!
         </Alert>
       </Snackbar>
