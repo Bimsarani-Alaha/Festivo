@@ -27,6 +27,7 @@ public class SupplierOrderReqService {
         supplierReq.setSpecialRequest(req.getSpecialRequest());
         supplierReq.setEventDate(req.getEventDate());
         supplierReq.setEventId(req.getEventId());
+        supplierReq.setSupplierCategory(req.getSupplierCategory());
 
         SupplierReq saved = supplierOrderReqRepository.save(supplierReq);
 
