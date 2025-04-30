@@ -13,6 +13,6 @@ public class EventThemeRequestDTO {
     private String themeName;
     private String color;
     private Double price;
-    private String description;
+    private String description; 
     private String img;
 }

@@ -1,7 +1,22 @@
-import { useEffect, useState } from 'react';
-import { FaEye, FaEdit, FaTrash, FaSearch, FaSpinner, FaTimes, FaFilePdf, FaCheck, FaTruck } from 'react-icons/fa';
-import { usePDF } from 'react-to-pdf';
-import { sendOrderToSupplier } from '../../../../api/supplierOrder';
+import { useEffect, useState } from "react";
+import {
+  FaEye,
+  FaEdit,
+  FaTrash,
+  FaSearch,
+  FaSpinner,
+  FaTimes,
+  FaFilePdf,
+  FaCheck,
+  FaTruck,
+} from "react-icons/fa";
+import { usePDF } from "react-to-pdf";
+import {
+  sendOrderToSupplier,
+  supplierCategoryData,
+} from "../../../../api/supplierOrder";
+import { Autocomplete, TextField } from "@mui/material";
+import { Controller, useForm } from "react-hook-form";
 
 interface BookingData {
   id?: string;
@@ -14,49 +29,74 @@ interface BookingData {
   eventDate: string;
 }
 
+interface SendSupplier {
+  id?: string;
+  eventName: string;
+  eventTheme: string;
+  eventType: string;
+  noOfGuest: number;
+  specialRequest: string;
+  eventPackage: string | null;
+  eventDate: string;
+  supplierCategory: string;
+}
+
 const EventBookingsTable = () => {
   const [bookings, setBookings] = useState<BookingData[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedBooking, setSelectedBooking] = useState<BookingData | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedBooking, setSelectedBooking] = useState<BookingData | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState<BookingData>({
-    eventName: '',
-    eventTheme: '',
-    eventType: '',
+    eventName: "",
+    eventTheme: "",
+    eventType: "",
     noOfGuest: 0,
-    specialRequest: '',
+    specialRequest: "",
     eventPackage: null,
-    eventDate: ''
+    eventDate: "",
   });
   const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
 
   // PDF generation hook
   const { toPDF, targetRef } = usePDF({
-    filename: 'event-bookings-report.pdf',
+    filename: "event-bookings-report.pdf",
     page: {
       margin: 20,
-      format: 'A4',
-      orientation: 'landscape'
-    }
+      format: "A4",
+      orientation: "landscape",
+    },
   });
-
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<SendSupplier>({
+    mode: "onChange",
+  });
   // Fetch all events from API
   const fetchEvents = async () => {
     setIsLoading(true);
-    setError('');
+    setError("");
     try {
-      const response = await fetch('http://localhost:8080/public/getAllEvent');
+      const response = await fetch("http://localhost:8080/public/getAllEvent");
       if (!response.ok) {
-        throw new Error('Failed to fetch events');
+        throw new Error("Failed to fetch events");
       }
       const data = await response.json();
       setBookings(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      console.error('Error fetching events:', err);
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+      console.error("Error fetching events:", err);
     } finally {
       setIsLoading(false);
     }
@@ -67,33 +107,36 @@ const EventBookingsTable = () => {
   }, []);
 
   // Filter bookings based on search term
-  const filteredBookings = bookings.filter(booking => {
+  const filteredBookings = bookings.filter((booking) => {
     const term = searchTerm.toLowerCase();
     return (
-      (booking.eventName?.toLowerCase() || '').includes(term) ||
-      (booking.eventTheme?.toLowerCase() || '').includes(term) ||
-      (booking.eventPackage?.toLowerCase() || '').includes(term)
+      (booking.eventName?.toLowerCase() || "").includes(term) ||
+      (booking.eventTheme?.toLowerCase() || "").includes(term) ||
+      (booking.eventPackage?.toLowerCase() || "").includes(term)
     );
   });
 
   // Delete event
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this booking?')) {
+    if (window.confirm("Are you sure you want to delete this booking?")) {
       try {
-        const response = await fetch(`http://localhost:8080/public/deleteEvent/${id}`, {
-          method: 'DELETE',
-        });
-        
+        const response = await fetch(
+          `http://localhost:8080/public/deleteEvent/${id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
         if (!response.ok) {
-          throw new Error('Failed to delete event');
+          throw new Error("Failed to delete event");
         }
-        
+
         await fetchEvents();
-        setSuccessMessage('Booking deleted successfully!');
+        setSuccessMessage("Booking deleted successfully!");
         setShowSuccess(true);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to delete event');
-        console.error('Error deleting event:', err);
+        setError(err instanceof Error ? err.message : "Failed to delete event");
+        console.error("Error deleting event:", err);
       }
     }
   };
@@ -104,17 +147,30 @@ const EventBookingsTable = () => {
     setIsEditing(true);
   };
 
+  const supplierCategory = watch("supplierCategory");
+
   const handleToSupplier = (booking: BookingData) => {
-    alert("Are You want to send this order to supplier")
-    sendOrderToSupplier(booking);
+    alert("Are you sure you want to send this order to the supplier?");
+
+    if (supplierCategory) {
+      const updatedBooking = {
+        ...booking,
+        supplierCategory: supplierCategory,
+      };
+      sendOrderToSupplier(updatedBooking);
+    }
   };
 
   // Handle form input changes
-  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleEditFormChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -124,25 +180,28 @@ const EventBookingsTable = () => {
     if (!editFormData.id) return;
 
     try {
-      const response = await fetch(`http://localhost:8080/public/updateEvent/${editFormData.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editFormData),
-      });
+      const response = await fetch(
+        `http://localhost:8080/public/updateEvent/${editFormData.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(editFormData),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to update event');
+        throw new Error("Failed to update event");
       }
 
       await fetchEvents();
       setIsEditing(false);
-      setSuccessMessage('Booking updated successfully!');
+      setSuccessMessage("Booking updated successfully!");
       setShowSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update event');
-      console.error('Error updating event:', err);
+      setError(err instanceof Error ? err.message : "Failed to update event");
+      console.error("Error updating event:", err);
     }
   };
 
@@ -170,6 +229,7 @@ const EventBookingsTable = () => {
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FaSearch className="text-gray-400" />
                     </div>
+
                     <input
                       type="text"
                       placeholder="Search bookings..."
@@ -178,6 +238,34 @@ const EventBookingsTable = () => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
+                  <Controller
+                    name="supplierCategory"
+                    control={control}
+                    rules={{ required: "Supplier Category Data" }}
+                    render={({ field }) => (
+                      <Autocomplete
+                        sx={{
+                          width: "300px",
+                          backgroundColor: "white"
+                        }}
+                        options={supplierCategoryData.map(
+                          (event) => event.name
+                        )}
+                        value={field.value || null}
+                        onChange={(_, value) => field.onChange(value)}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Supplier Category"
+                            error={!!errors.supplierCategory}
+                            helperText={errors.supplierCategory?.message}
+                            required
+                            fullWidth
+                          />
+                        )}
+                      />
+                    )}
+                  />
                   <button
                     onClick={generateReport}
                     className="bg-white text-yellow-600 px-4 py-2 rounded-md hover:bg-gray-100 transition-colors flex items-center"
@@ -226,35 +314,60 @@ const EventBookingsTable = () => {
             )}
 
             {/* Table for PDF (hidden but included in PDF) */}
-            <div ref={targetRef} style={{ position: 'absolute', left: '-9999px' }}>
+            <div
+              ref={targetRef}
+              style={{ position: "absolute", left: "-9999px" }}
+            >
               <div className="p-6">
-                <h2 className="text-xl font-bold mb-4 text-center">Event Bookings Report</h2>
+                <h2 className="text-xl font-bold mb-4 text-center">
+                  Event Bookings Report
+                </h2>
                 <p className="text-sm text-gray-500 mb-4 text-center">
                   Generated on: {new Date().toLocaleDateString()}
                 </p>
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Theme</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guests</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Event Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Theme
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Guests
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Package
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredBookings.map((booking) => (
                       <tr key={booking.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.eventName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.eventTheme}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.eventType}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {booking.eventName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {booking.eventTheme}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {booking.eventType}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(booking.eventDate).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.noOfGuest}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {booking.eventPackage || 'None'}
+                          {booking.noOfGuest}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {booking.eventPackage || "None"}
                         </td>
                       </tr>
                     ))}
@@ -269,35 +382,59 @@ const EventBookingsTable = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Theme</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guests</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Event Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Theme
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Guests
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Package
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredBookings.length > 0 ? (
                       filteredBookings.map((booking) => (
                         <tr key={booking.id}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{booking.eventName}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.eventTheme}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.eventType}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {booking.eventName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {booking.eventTheme}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {booking.eventType}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(booking.eventDate).toLocaleDateString()}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{booking.noOfGuest}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {booking.noOfGuest}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              booking.eventPackage === 'Basic' 
-                                ? 'bg-blue-100 text-blue-800' 
-                                : booking.eventPackage === 'Premium' 
-                                  ? 'bg-purple-100 text-purple-800' 
-                                  : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {booking.eventPackage || 'None'}
+                            <span
+                              className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                booking.eventPackage === "Basic"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : booking.eventPackage === "Premium"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
+                              {booking.eventPackage || "None"}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -317,27 +454,39 @@ const EventBookingsTable = () => {
                                 <FaEdit />
                               </button>
                               <button
-                                onClick={() => booking.id && handleDelete(booking.id)}
+                                onClick={() =>
+                                  booking.id && handleDelete(booking.id)
+                                }
                                 className="text-red-600 hover:text-red-800 p-1"
                                 title="Delete"
                               >
                                 <FaTrash />
                               </button>
-                              <button
-                                onClick={() => booking.id && handleToSupplier(booking)}
-                                className="text-red-600 hover:text-red-800 p-1"
-                                title="Delete"
-                              >
-                                <FaTruck />
-                              </button>
+
+                              {supplierCategory && (
+                                <button
+                                  onClick={() =>
+                                    booking.id && handleToSupplier(booking)
+                                  }
+                                  className="text-red-600 hover:text-red-800 p-1"
+                                  title="Send to Supplier"
+                                >
+                                  <FaTruck />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
-                          {bookings.length === 0 ? 'No bookings found.' : 'No matching bookings found.'}
+                        <td
+                          colSpan={7}
+                          className="px-6 py-4 text-center text-sm text-gray-500"
+                        >
+                          {bookings.length === 0
+                            ? "No bookings found."
+                            : "No matching bookings found."}
                         </td>
                       </tr>
                     )}
@@ -378,26 +527,37 @@ const EventBookingsTable = () => {
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-700">Date:</h3>
-                      <p className="mt-1">{new Date(selectedBooking.eventDate).toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}</p>
+                      <p className="mt-1">
+                        {new Date(selectedBooking.eventDate).toLocaleDateString(
+                          "en-US",
+                          {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-700">Number of Guests:</h3>
+                      <h3 className="font-medium text-gray-700">
+                        Number of Guests:
+                      </h3>
                       <p className="mt-1">{selectedBooking.noOfGuest}</p>
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-700">Package:</h3>
-                      <p className="mt-1">{selectedBooking.eventPackage || 'None'}</p>
+                      <p className="mt-1">
+                        {selectedBooking.eventPackage || "None"}
+                      </p>
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-medium text-gray-700">Special Requests:</h3>
+                    <h3 className="font-medium text-gray-700">
+                      Special Requests:
+                    </h3>
                     <p className="mt-1 whitespace-pre-line bg-gray-50 p-3 rounded-md">
-                      {selectedBooking.specialRequest || 'No special requests'}
+                      {selectedBooking.specialRequest || "No special requests"}
                     </p>
                   </div>
                 </div>
@@ -423,7 +583,9 @@ const EventBookingsTable = () => {
                 <form onSubmit={handleEditSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Event Name:</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Event Name:
+                      </label>
                       <input
                         type="text"
                         name="eventName"
@@ -434,7 +596,9 @@ const EventBookingsTable = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Theme:</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Theme:
+                      </label>
                       <input
                         type="text"
                         name="eventTheme"
@@ -445,7 +609,9 @@ const EventBookingsTable = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Type:</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Type:
+                      </label>
                       <select
                         name="eventType"
                         value={editFormData.eventType}
@@ -460,7 +626,9 @@ const EventBookingsTable = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Date:</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Date:
+                      </label>
                       <input
                         type="date"
                         name="eventDate"
@@ -471,7 +639,9 @@ const EventBookingsTable = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Number of Guests:</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Number of Guests:
+                      </label>
                       <input
                         type="number"
                         name="noOfGuest"
@@ -483,10 +653,12 @@ const EventBookingsTable = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Package:</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Package:
+                      </label>
                       <select
                         name="eventPackage"
-                        value={editFormData.eventPackage || ''}
+                        value={editFormData.eventPackage || ""}
                         onChange={handleEditFormChange}
                         className="w-full p-2 border border-gray-300 rounded-md"
                         required
@@ -499,7 +671,9 @@ const EventBookingsTable = () => {
                     </div>
                   </div>
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Special Requests:</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Special Requests:
+                    </label>
                     <textarea
                       name="specialRequest"
                       value={editFormData.specialRequest}
@@ -521,7 +695,7 @@ const EventBookingsTable = () => {
           </div>
         )}
       </main>
-      
+
       {/* Footer */}
       <footer className="bg-gradient-to-b from-yellow-600 to-yellow-800 text-white">
         <div className="max-w-7xl mx-auto px-6 py-12">
@@ -530,47 +704,124 @@ const EventBookingsTable = () => {
             <div className="md:col-span-2">
               <h3 className="text-2xl font-bold mb-4 flex items-center">
                 <span className="bg-white text-yellow-600 rounded-full p-2 mr-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                    />
                   </svg>
                 </span>
                 Festivo Events
               </h3>
               <p className="mb-4 text-yellow-100">
-                Creating unforgettable experiences with golden touches since 2015.
+                Creating unforgettable experiences with golden touches since
+                2015.
               </p>
             </div>
 
             {/* Quick Links */}
             <div>
-              <h4 className="text-lg font-semibold mb-4 border-b border-yellow-500 pb-2">Quick Links</h4>
+              <h4 className="text-lg font-semibold mb-4 border-b border-yellow-500 pb-2">
+                Quick Links
+              </h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Home</a></li>
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Services</a></li>
-                <li><a href="#" className="text-yellow-100 hover:text-white transition-colors">Feedback</a></li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-yellow-100 hover:text-white transition-colors"
+                  >
+                    Home
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-yellow-100 hover:text-white transition-colors"
+                  >
+                    Services
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="text-yellow-100 hover:text-white transition-colors"
+                  >
+                    Feedback
+                  </a>
+                </li>
               </ul>
             </div>
 
             {/* Contact Info */}
             <div>
-              <h4 className="text-lg font-semibold mb-4 border-b border-yellow-500 pb-2">Contact Us</h4>
+              <h4 className="text-lg font-semibold mb-4 border-b border-yellow-500 pb-2">
+                Contact Us
+              </h4>
               <address className="not-italic space-y-2">
                 <div className="flex items-start">
-                  <svg className="h-5 w-5 mt-0.5 mr-2 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <svg
+                    className="h-5 w-5 mt-0.5 mr-2 text-yellow-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
                   </svg>
-                  <span className="text-yellow-100">123 Golden Avenue, Event City</span>
+                  <span className="text-yellow-100">
+                    123 Golden Avenue, Event City
+                  </span>
                 </div>
                 <div className="flex items-center">
-                  <svg className="h-5 w-5 mr-2 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  <svg
+                    className="h-5 w-5 mr-2 text-yellow-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                    />
                   </svg>
                   <span className="text-yellow-100">0707230078</span>
                 </div>
                 <div className="flex items-center">
-                  <svg className="h-5 w-5 mr-2 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  <svg
+                    className="h-5 w-5 mr-2 text-yellow-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
                   </svg>
                   <span className="text-yellow-100">festivo@gmail.com</span>
                 </div>
@@ -580,7 +831,10 @@ const EventBookingsTable = () => {
 
           {/* Copyright */}
           <div className="border-t border-yellow-500 mt-8 pt-8 text-center text-yellow-200">
-            <p>&copy; {new Date().getFullYear()} Festivo Event Planners. All rights reserved.</p>
+            <p>
+              &copy; {new Date().getFullYear()} Festivo Event Planners. All
+              rights reserved.
+            </p>
           </div>
         </div>
       </footer>
