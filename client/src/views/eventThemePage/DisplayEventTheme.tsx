@@ -15,8 +15,8 @@ import {
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { fetchThemesByEvent } from "../../api/eventThemeApi";
-import Logo from "../../assets/Logo.jpg"; // fallback image
-import { useParams } from "react-router-dom";
+import Logo from "../../assets/Logo.jpg";
+import { useParams, useNavigate } from "react-router-dom";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -27,22 +27,23 @@ import StarIcon from "@mui/icons-material/Star";
 
 const DisplayEventTheme = () => {
   const { eventName } = useParams<{ eventName: string }>();
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ["eventThemes", eventName],
-    queryFn: () => fetchThemesByEvent(eventName!), // ✅ fixed: call with eventName
-    enabled: !!eventName, // only fetch if eventName exists
+    queryFn: () => fetchThemesByEvent(eventName!),
+    enabled: !!eventName,
   });
+
+  const handleSelectTheme = (theme: any) => {
+    navigate("/Eventbooking", { state: { selectedTheme: theme } });
+  };
 
   if (isLoading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="60vh"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress />
       </Box>
     );
@@ -86,7 +87,6 @@ const DisplayEventTheme = () => {
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
-              {/* Favorite button */}
               <IconButton
                 size="small"
                 onClick={() => setIsFavorite(!isFavorite)}
@@ -104,14 +104,10 @@ const DisplayEventTheme = () => {
                 {isFavorite ? (
                   <FavoriteIcon fontSize="small" sx={{ color: "#e91e63" }} />
                 ) : (
-                  <FavoriteBorderIcon
-                    fontSize="small"
-                    sx={{ color: "#614A29" }}
-                  />
+                  <FavoriteBorderIcon fontSize="small" sx={{ color: "#614A29" }} />
                 )}
               </IconButton>
 
-              {/* Featured tag if applicable */}
               {theme.featured && (
                 <Chip
                   icon={<StarIcon fontSize="small" />}
@@ -129,11 +125,9 @@ const DisplayEventTheme = () => {
                 />
               )}
 
-              {/* Image with overlay on hover */}
               <Box sx={{ position: "relative" }}>
                 <CardMedia
                   component="img"
-                //   height="15"
                   image={theme.img || Logo}
                   alt={theme.themeName}
                   sx={{
@@ -199,38 +193,21 @@ const DisplayEventTheme = () => {
 
                 <Stack spacing={1} sx={{ mt: 1.5 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <EventIcon
-                      fontSize="small"
-                      sx={{ color: "#866A40", fontSize: "1rem" }}
-                    />
-                    <Typography
-                      variant="body2"
-                      color="#866A40"
-                      fontSize="0.85rem"
-                    >
+                    <EventIcon fontSize="small" sx={{ color: "#866A40", fontSize: "1rem" }} />
+                    <Typography variant="body2" color="#866A40" fontSize="0.85rem">
                       {theme.eventName}
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PaletteIcon
-                      fontSize="small"
-                      sx={{ color: "#866A40", fontSize: "1rem" }}
-                    />
-                    <Typography
-                      variant="body2"
-                      color="#866A40"
-                      fontSize="0.85rem"
-                    >
+                    <PaletteIcon fontSize="small" sx={{ color: "#866A40", fontSize: "1rem" }} />
+                    <Typography variant="body2" color="#866A40" fontSize="0.85rem">
                       {theme.color}
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <AttachMoneyIcon
-                      fontSize="small"
-                      sx={{ color: "#866A40", fontSize: "1rem" }}
-                    />
+                    <AttachMoneyIcon fontSize="small" sx={{ color: "#866A40", fontSize: "1rem" }} />
                     <Typography
                       variant="body2"
                       color="#866A40"
@@ -261,11 +238,11 @@ const DisplayEventTheme = () => {
                   </Typography>
                 )}
 
-                {/* Bottom action button */}
                 <Button
                   fullWidth
                   variant="contained"
                   size="small"
+                  onClick={() => handleSelectTheme(theme)}
                   sx={{
                     mt: 2,
                     bgcolor: "#E5BA73",

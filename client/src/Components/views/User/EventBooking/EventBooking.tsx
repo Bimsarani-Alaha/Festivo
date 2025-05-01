@@ -1,20 +1,36 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+
+interface ThemeData {
+  id: string;
+  themeName: string;
+  eventName: string;
+  color: string;
+  price: number;
+  description?: string;
+  featured?: boolean;
+  img?: string;
+}
 
 interface EventData {
   eventName: string;
   eventTheme: string;
   eventDate: string;
-  eventType: string;
+  eventType: 'Indoor' | 'Outdoor' | 'Pool' | '';
   noOfGuest: number;
   specialRequest: string;
   eventPackage: 'Basic' | 'Premium' | 'Luxury';
 }
 
 const EventBooking = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const [eventName, setEventName] = useState('Birthday');
-  const [eventTheme, setEventTheme] = useState('Fairy Tale Magic');
+  const selectedTheme = location.state?.selectedTheme as ThemeData | undefined;
+
+  // Initialize form state with theme data if available
+  const [eventName, setEventName] = useState(selectedTheme?.eventName || 'Birthday');
+  const [eventTheme, setEventTheme] = useState(selectedTheme?.themeName || 'Fairy Tale Magic');
   const [eventType, setEventType] = useState<'Indoor' | 'Outdoor' | 'Pool' | ''>('');
   const [guestCount, setGuestCount] = useState(0);
   const [specialRequest, setSpecialRequest] = useState('');
@@ -32,14 +48,25 @@ const EventBooking = () => {
     package: false
   });
 
-  // Set minimum date to today
+  // Set minimum date to today and initialize package based on theme price
   useEffect(() => {
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     setMinDate(`${year}-${month}-${day}`);
-  }, []);
+
+    if (selectedTheme) {
+      // Set package based on theme price
+      if (selectedTheme.price > 70000) {
+        setSelectedPackage('Luxury');
+      } else if (selectedTheme.price > 40000) {
+        setSelectedPackage('Premium');
+      } else {
+        setSelectedPackage('Basic');
+      }
+    }
+  }, [selectedTheme]);
 
   const incrementGuests = () => {
     setGuestCount(prev => prev + 1);
@@ -95,7 +122,6 @@ const EventBooking = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Mark all fields as touched
     setTouchedFields({
       eventName: true,
       eventTheme: true,
@@ -133,22 +159,16 @@ const EventBooking = () => {
       }
 
       const result = await response.json();
-      console.log('Booking successful:', result);
-      
-      // Navigate to checkout page with the booking data
       navigate('/CheckoutPage', { 
         state: { 
           bookingData: eventData,
-          bookingId: result.id || Date.now() // Fallback to timestamp if no ID
+          bookingId: result.id || Date.now(),
+          themeData: selectedTheme
         } 
       });
       
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message || 'An error occurred while submitting the booking');
-      } else {
-        setError('An unknown error occurred');
-      }
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
       console.error('Error submitting booking:', err);
     } finally {
       setIsLoading(false);
@@ -156,8 +176,8 @@ const EventBooking = () => {
   };
 
   const resetForm = () => {
-    setEventName('Birthday');
-    setEventTheme('Fairy Tale Magic');
+    setEventName(selectedTheme?.eventName || 'Birthday');
+    setEventTheme(selectedTheme?.themeName || 'Fairy Tale Magic');
     setEventType('');
     setGuestCount(0);
     setSpecialRequest('');
@@ -174,16 +194,61 @@ const EventBooking = () => {
     });
   };
 
+  // Get the theme color or default to yellow
+  const themeColor = selectedTheme?.color || 'yellow';
+  
+  // Safely generate gradient classes
+  const getGradientClasses = (color: string) => {
+    const safeColors = ['yellow', 'blue', 'green', 'red', 'purple', 'pink', 'indigo']; // Add all possible theme colors
+    const baseColor = safeColors.includes(color) ? color : 'yellow';
+    
+    return {
+      header: `from-${baseColor}-600 to-${baseColor}-700`,
+      button: `from-${baseColor}-500 to-${baseColor}-600 hover:from-${baseColor}-600 hover:to-${baseColor}-700`,
+      footer: `from-${baseColor}-600 to-${baseColor}-800`,
+      text: `text-${baseColor}-100`,
+      focus: `focus:ring-${baseColor}-500 focus:border-${baseColor}-500`,
+      border: `border-${baseColor}-500`
+    };
+  };
+
+  const gradientClasses = getGradientClasses(themeColor);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Main Content */}
       <div className="flex-grow p-4 md:p-8 font-sans">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-yellow-600 to-yellow-700 text-white p-6">
+          {/* Header with dynamic color */}
+          <div className={`bg-gradient-to-r ${gradientClasses.header} text-white p-6`}>
             <h1 className="text-2xl font-bold">Event Booking Form</h1>
-            <p className="text-yellow-100 mt-1">Plan your perfect event with us</p>
+            <p className={`${gradientClasses.text} mt-1`}>
+              {selectedTheme ? `Booking for ${selectedTheme.themeName}` : 'Plan your perfect event with us'}
+            </p>
           </div>
+
+          {/* Theme Preview Section */}
+          {selectedTheme && (
+            <div className="p-6 border-b">
+              <div className="flex flex-col md:flex-row gap-6">
+                {selectedTheme.img && (
+                  <img 
+                    src={selectedTheme.img} 
+                    alt={selectedTheme.themeName}
+                    className="w-full md:w-1/3 h-48 object-cover rounded-lg border"
+                  />
+                )}
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-800">{selectedTheme.themeName}</h3>
+                  <p className="text-gray-600 mt-2">{selectedTheme.description}</p>
+                  <div className="mt-3 flex items-center">
+                    <AttachMoneyIcon className="text-gray-700 mr-1" />
+                    <span className="font-medium">Starting from Rs. {selectedTheme.price.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -207,7 +272,7 @@ const EventBooking = () => {
                   value={eventName}
                   onChange={(e) => setEventName(e.target.value)}
                   onBlur={() => handleBlur('eventName')}
-                  className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                  className={`w-full p-3 border rounded-md ${gradientClasses.focus} ${
                     touchedFields.eventName && !eventName.trim() ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
@@ -229,7 +294,7 @@ const EventBooking = () => {
                   value={eventTheme}
                   onChange={(e) => setEventTheme(e.target.value)}
                   onBlur={() => handleBlur('eventTheme')}
-                  className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 ${
+                  className={`w-full p-3 border rounded-md ${gradientClasses.focus} ${
                     touchedFields.eventTheme && !eventTheme.trim() ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
@@ -281,7 +346,7 @@ const EventBooking = () => {
                         checked={eventType === 'Indoor'}
                         onChange={() => setEventType('Indoor')}
                         onBlur={() => handleBlur('eventType')}
-                        className="text-yellow-600 focus:ring-yellow-500"
+                        className={`text-${themeColor}-600 focus:ring-${themeColor}-500`}
                         required
                       />
                       <span className="ml-2">Indoor</span>
@@ -293,7 +358,7 @@ const EventBooking = () => {
                         checked={eventType === 'Outdoor'}
                         onChange={() => setEventType('Outdoor')}
                         onBlur={() => handleBlur('eventType')}
-                        className="text-yellow-600 focus:ring-yellow-500"
+                        className={`text-${themeColor}-600 focus:ring-${themeColor}-500`}
                       />
                       <span className="ml-2">Outdoor</span>
                     </label>
@@ -304,7 +369,7 @@ const EventBooking = () => {
                         checked={eventType === 'Pool'}
                         onChange={() => setEventType('Pool')}
                         onBlur={() => handleBlur('eventType')}
-                        className="text-yellow-600 focus:ring-yellow-500"
+                        className={`text-${themeColor}-600 focus:ring-${themeColor}-500`}
                       />
                       <span className="ml-2">Pool</span>
                     </label>
@@ -367,8 +432,8 @@ const EventBooking = () => {
                       key={pkg}
                       className={`border rounded-lg p-4 cursor-pointer transition-all ${
                         selectedPackage === pkg 
-                          ? 'border-yellow-500 ring-2 ring-yellow-200 bg-yellow-50' 
-                          : 'border-gray-200 hover:border-yellow-300'
+                          ? `${gradientClasses.border} ring-2 ring-${themeColor}-200 bg-${themeColor}-50` 
+                          : 'border-gray-200 hover:border-gray-300'
                       } ${
                         touchedFields.package && !selectedPackage ? 'ring-1 ring-red-500' : ''
                       }`}
@@ -440,7 +505,7 @@ const EventBooking = () => {
               <div className="mt-8">
                 <button 
                   type="submit"
-                  className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-4 px-6 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all duration-300 font-medium text-lg disabled:opacity-50 shadow-lg hover:shadow-yellow-200/50 flex items-center justify-center"
+                  className={`w-full bg-gradient-to-r ${gradientClasses.button} text-white py-4 px-6 rounded-lg transition-all duration-300 font-medium text-lg disabled:opacity-50 shadow-lg hover:shadow-xl flex items-center justify-center`}
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -452,12 +517,7 @@ const EventBooking = () => {
                       Processing...
                     </>
                   ) : (
-                    <>
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                      Confirm Booking
-                    </>
+                    'Confirm Booking'
                   )}
                 </button>
               </div>
@@ -466,8 +526,8 @@ const EventBooking = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-gradient-to-b from-yellow-600 to-yellow-800 text-white">
+      {/* Footer with dynamic color */}
+      <footer className={`bg-gradient-to-b ${gradientClasses.footer} text-white`}>
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Company Info */}

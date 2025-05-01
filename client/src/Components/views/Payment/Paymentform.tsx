@@ -38,6 +38,19 @@ interface FormErrors {
   cvv?: string;
 }
 
+interface UserData {
+  name?: string;
+  email?: string;
+  phoneNumber?: string;
+}
+
+// Package price mapping
+const PACKAGE_PRICES = {
+  Basic: 30000,    // Rs. 30,000
+  Premium: 50000,  // Rs. 50,000
+  Luxury: 80000    // Rs. 80,000
+};
+
 const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,9 +64,11 @@ const CheckoutPage: React.FC = () => {
       noOfGuest: 50,
       specialRequest: 'Need vegetarian options',
       eventPackage: 'Premium',
-      packagePrice: 50000 // Rs. 50,000 for Premium package
+      packagePrice: PACKAGE_PRICES.Premium
     }
   );
+
+  const [userData, setUserData] = useState<UserData>({});
 
   const [formData, setFormData] = useState<CheckoutFormData>({
     name: "",
@@ -64,8 +79,8 @@ const CheckoutPage: React.FC = () => {
     cardType: "Visa",
     expDate: "",
     cvv: "",
-    orderSummary: `Event: ${bookingData.eventName}, Package: ${bookingData.eventPackage}`,
-    amount: bookingData.packagePrice
+    orderSummary: `Event: ${location.state?.bookingData?.eventName || 'Birthday Party'}, Package: ${location.state?.bookingData?.eventPackage || 'Premium'}`,
+    amount: location.state?.bookingData?.packagePrice || PACKAGE_PRICES.Premium
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -75,13 +90,48 @@ const CheckoutPage: React.FC = () => {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [countdown, setCountdown] = useState(5);
 
+  // Load user data from localStorage on component mount
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      orderSummary: `Event: ${bookingData.eventName}, Theme: ${bookingData.eventTheme}, Package: ${bookingData.eventPackage}`,
-      amount: bookingData.packagePrice
-    }));
-  }, [bookingData]);
+    const loadUserData = () => {
+      try {
+        const storedUser = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+        
+        if (token && storedUser) {
+          const user = JSON.parse(storedUser);
+          setUserData({
+            name: user.name || '',
+            email: user.email || '',
+            phoneNumber: user.phoneNumber || ''
+          });
+          
+          // Update form data with user info
+          setFormData(prev => ({
+            ...prev,
+            name: user.name || '',
+            email: user.email || '',
+            phoneNumber: user.phoneNumber || ''
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    };
+
+    loadUserData();
+  }, []);
+
+  useEffect(() => {
+    if (location.state?.bookingData) {
+      const bookingData = location.state.bookingData;
+      setBookingData(bookingData);
+      setFormData(prev => ({
+        ...prev,
+        orderSummary: `Event: ${bookingData.eventName}, Theme: ${bookingData.eventTheme}, Package: ${bookingData.eventPackage}`,
+        amount: bookingData.packagePrice
+      }));
+    }
+  }, [location.state]);
 
   // Countdown timer for success message
   useEffect(() => {
@@ -110,7 +160,7 @@ const CheckoutPage: React.FC = () => {
     });
   };
 
-  // Advanced validation functions
+  // Validation functions remain the same...
   const validateName = (name: string) => {
     if (!name.trim()) return "Name is required";
     if (name.trim().length < 3) return "Name must be at least 3 characters";
@@ -311,6 +361,7 @@ const CheckoutPage: React.FC = () => {
       const response = await axios.post('http://localhost:8080/public/addPayment', paymentData, {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
       });
 
@@ -318,7 +369,7 @@ const CheckoutPage: React.FC = () => {
         const transactionId = response.data.transactionId || Date.now().toString();
         setSuccess({
           show: true,
-          message: `Payment confirmed for Rs. ${(formData.amount * 1.1 / 100).toFixed(2)}`,
+          message: `Payment confirmed for Rs. ${formData.amount}`,
           transactionId
         });
         setCountdown(5);
@@ -393,7 +444,7 @@ const CheckoutPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="font-medium text-gray-500">Amount:</p>
-                      <p className="text-gray-900">Rs. {(formData.amount * 1.1 / 100).toFixed(2)}</p>
+                      <p className="text-gray-900">Rs. {formData.amount}</p>
                     </div>
                     <div>
                       <p className="font-medium text-gray-500">Card:</p>
@@ -476,6 +527,7 @@ const CheckoutPage: React.FC = () => {
                         touched.name && errors.name ? 'border-red-500' : 'border-gray-300'
                       }`}
                       required
+                      readOnly={!!userData.name} // Make read-only if user is logged in
                     />
                     {touched.name && errors.name && (
                       <p className="text-red-500 text-xs mt-1">{errors.name}</p>
@@ -497,6 +549,7 @@ const CheckoutPage: React.FC = () => {
                         touched.email && errors.email ? 'border-red-500' : 'border-gray-300'
                       }`}
                       required
+                      readOnly={!!userData.email} // Make read-only if user is logged in
                     />
                     {touched.email && errors.email && (
                       <p className="text-red-500 text-xs mt-1">{errors.email}</p>
@@ -518,6 +571,7 @@ const CheckoutPage: React.FC = () => {
                         touched.phoneNumber && errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
                       }`}
                       required
+                      readOnly={!!userData.phoneNumber} // Make read-only if user is logged in
                     />
                     {touched.phoneNumber && errors.phoneNumber && (
                       <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
@@ -700,7 +754,7 @@ const CheckoutPage: React.FC = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                     </svg>
-                    Confirm Payment Rs. {(formData.amount * 1.1 / 100).toFixed(2)}
+                    Confirm Payment Rs. {formData.amount}
                   </>
                 )}
               </button>
@@ -734,19 +788,14 @@ const CheckoutPage: React.FC = () => {
                 </div>
               </div>
               
-              {/* Order Totals */}
-              <div className="border-t border-yellow-300 pt-4 space-y-3">
-                <div className="flex justify-between text-gray-700">
-                  <span>Package Price</span>
-                  <span>Rs. {(bookingData.packagePrice / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-gray-700">
-                  <span>Tax (10%)</span>
-                  <span>Rs. {(bookingData.packagePrice * 0.1 / 100).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between font-semibold text-yellow-900 pt-2 text-lg">
-                  <span>Total Amount</span>
-                  <span>Rs. {(formData.amount * 1.1 / 100).toFixed(2)}</span>
+              {/* Price Breakdown */}
+              <div className="border-t border-yellow-300 pt-4">
+                <h4 className="font-medium text-gray-800 mb-3">Price Summary</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Package Price:</span>
+                    <span className="font-medium">Rs. {bookingData.packagePrice}</span>
+                  </div>
                 </div>
               </div>
               
