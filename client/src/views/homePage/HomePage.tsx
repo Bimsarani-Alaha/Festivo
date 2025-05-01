@@ -186,7 +186,7 @@ const Home = () => {
                 </CardContent>
                 <CardActions sx={{ px: 4, pb: 4 }}>
                   <Link
-                    to={`/admin/DisplayEventTheme/${encodeURIComponent(theme.name)}`}
+                    to={`/DisplayEventTheme/${encodeURIComponent(theme.name)}`}
                     style={{ width: '100%', textDecoration: 'none' }}
                   >
                     <Button
