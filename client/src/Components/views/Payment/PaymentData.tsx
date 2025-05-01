@@ -19,11 +19,10 @@ interface DataItem {
 }
 
 interface DataTableProps {
-  onView?: (item: DataItem) => void;
   onDelete?: (item: DataItem) => void;
 }
 
-const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
+const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
   const [data, setData] = useState<DataItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -34,10 +33,10 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   
   const { toPDF, targetRef } = usePDF({ filename: 'payment-record.pdf' });
-  
-  // Fetch data from API
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -56,7 +55,6 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
     fetchData();
   }, []);
 
-  // Handle edit button click
   const handleEdit = (item: DataItem) => {
     setEditingItem(item);
     setFormData({
@@ -72,7 +70,11 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
     setSuccessMessage(null);
   };
 
-  // Handle form input changes
+  const handleView = (item: DataItem) => {
+    setSelectedItem(item);
+    setViewModalOpen(true);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -81,7 +83,6 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingItem) return;
@@ -90,7 +91,7 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
       setLoading(true);
       await axios.put(`http://localhost:8080/public/updatePayment/${editingItem.id}`, formData);
       setSuccessMessage('Payment record updated successfully!');
-      await fetchData(); // Refresh data after update
+      await fetchData();
       setTimeout(() => {
         setEditingItem(null);
       }, 1500);
@@ -102,26 +103,22 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
     }
   };
 
-  // Function to handle search input
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  // Function to format the phone number
   const formatPhoneNumber = (phoneNumber: number | null): string => {
     if (!phoneNumber) return 'N/A';
     const numStr = phoneNumber.toString();
     return `(${numStr.substring(0, 3)}) ${numStr.substring(3, 6)}-${numStr.substring(6)}`;
   };
 
-  // Function to mask card number
   const maskCardNumber = (cardNumber: number | null): string => {
     if (!cardNumber) return 'N/A';
     const numStr = cardNumber.toString();
     return `•••• •••• •••• ${numStr.slice(-4)}`;
   };
 
-  // Function to format amount as currency
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -129,7 +126,6 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
     }).format(amount / 100);
   };
 
-  // Filter data based on the search term
   const filteredData = data.filter(item => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -139,12 +135,10 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
     );
   });
 
-  // Handle share functionality
   const handleShare = async (item: DataItem) => {
     setIsSharing(true);
     setSelectedItem(item);
     try {
-      // Check if Web Share API is supported
       if (navigator && navigator.share) {
         await navigator.share({
           title: `Payment Record - ${item.name}`,
@@ -152,7 +146,6 @@ const DataTable: React.FC<DataTableProps> = ({ onView, onDelete }) => {
           url: window.location.href,
         });
       } else {
-        // Fallback for browsers that don't support Web Share API
         const text = `Payment Record Details:
 Name: ${item.name}
 Email: ${item.email}
@@ -161,13 +154,11 @@ Amount: ${formatCurrency(item.amount)}
 Card Type: ${item.cardType}
 Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}`;
         
-        // Check if clipboard API is available
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(text);
           setCopiedId(item.id);
           setTimeout(() => setCopiedId(null), 2000);
         } else {
-          // Fallback for older browsers
           const textArea = document.createElement('textarea');
           textArea.value = text;
           document.body.appendChild(textArea);
@@ -186,7 +177,6 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
     }
   };
 
-  // Generate PDF for a single record
   const generatePdfForRecord = (item: DataItem) => {
     setSelectedItem(item);
     setTimeout(() => {
@@ -196,49 +186,8 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Payment Records</h1>
-        <button 
-          onClick={fetchData} 
-          className="flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          disabled={loading}
-        >
-          <FontAwesomeIcon icon={faSync} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
-      </div>
-
-      {/* Search Bar */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search by Name, Email or Phone"
-          className="px-4 py-2 border border-gray-300 rounded w-full md:w-1/3"
-          value={searchTerm}
-          onChange={handleSearchChange}
-        />
-      </div>
-
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-          <button 
-            onClick={fetchData} 
-            className="ml-4 text-blue-600 hover:underline"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-          {successMessage}
-        </div>
-      )}
-
-      {/* PDF Content (hidden) */}
-      <div ref={targetRef} className="p-4 hidden">
+      {/* Hidden PDF content */}
+      <div ref={targetRef} className="p-4" style={{ display: 'none' }}>
         {selectedItem && (
           <div className="max-w-md mx-auto">
             <h2 className="text-xl font-bold mb-4">Payment Receipt</h2>
@@ -292,7 +241,140 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
         )}
       </div>
 
-      {/* Edit Form Modal */}
+      {/* Visible UI */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Payment Records</h1>
+        <button 
+          onClick={fetchData} 
+          className="flex items-center px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          disabled={loading}
+        >
+          <FontAwesomeIcon icon={faSync} className={`mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by Name, Email or Phone"
+          className="px-4 py-2 border border-gray-300 rounded w-full md:w-1/3"
+          value={searchTerm}
+          onChange={handleSearchChange}
+        />
+      </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+          <button 
+            onClick={fetchData} 
+            className="ml-4 text-blue-600 hover:underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+          {successMessage}
+        </div>
+      )}
+
+      {/* View Modal */}
+      {viewModalOpen && selectedItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+            <div className="flex justify-between items-center border-b p-4">
+              <h2 className="text-xl font-semibold">Payment Record Details</h2>
+              <button 
+                onClick={() => setViewModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Name</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedItem.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Email</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedItem.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Phone</p>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {formatPhoneNumber(selectedItem.phoneNumber)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Address</p>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedItem.address || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Information</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Card Type</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedItem.cardType || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Card Number</p>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {maskCardNumber(selectedItem.cardNumber)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Expiration Date</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedItem.expDate || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Order Summary</p>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedItem.orderSummery || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Amount</p>
+                      <p className="mt-1 text-lg font-bold text-gray-900">
+                        {formatCurrency(selectedItem.amount)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 pt-6 border-t flex justify-end space-x-2">
+                <button
+                  onClick={() => generatePdfForRecord(selectedItem)}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center"
+                >
+                  <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
+                  Export PDF
+                </button>
+                <button
+                  onClick={() => setViewModalOpen(false)}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
       {editingItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
@@ -442,6 +524,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
         </div>
       )}
 
+      {/* Data Table */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -484,18 +567,16 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                       <td className="px-6 py-4 text-sm text-gray-500">{maskCardNumber(item.cardNumber)}</td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{formatCurrency(item.amount)}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        <button onClick={() => onView?.(item)} className="text-blue-600 hover:text-blue-800 mx-1">
+                        <button onClick={() => handleView(item)} className="text-blue-600 hover:text-blue-800 mx-1">
                           <FontAwesomeIcon icon={faEye} />
                         </button>
                         <button onClick={() => handleEdit(item)} className="text-yellow-600 hover:text-yellow-800 mx-1">
                           <FontAwesomeIcon icon={faEdit} />
                         </button>
                         <button 
-                          onClick={() => {
-                            setSelectedItem(item);
-                            setTimeout(() => toPDF(), 100);
-                          }} 
+                          onClick={() => generatePdfForRecord(item)} 
                           className="text-red-600 hover:text-red-800 mx-1"
+                          title="Export PDF"
                         >
                           <FontAwesomeIcon icon={faFilePdf} />
                         </button>
@@ -503,6 +584,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                           onClick={() => handleShare(item)} 
                           className={`text-green-600 hover:text-green-800 mx-1 relative`}
                           disabled={isSharing}
+                          title="Share"
                         >
                           <FontAwesomeIcon icon={isSharing ? faSync : faShare} className={isSharing ? 'animate-spin' : ''} />
                           {copiedId === item.id && (
@@ -511,7 +593,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                             </span>
                           )}
                         </button>
-                        <button onClick={() => onDelete?.(item)} className="text-red-600 hover:text-red-800 mx-1">
+                        <button onClick={() => onDelete?.(item)} className="text-red-600 hover:text-red-800 mx-1" title="Delete">
                           <FontAwesomeIcon icon={faTrash} />
                         </button>
                       </td>
@@ -536,16 +618,10 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
 const App = () => {
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleView = (item: DataItem) => {
-    console.log('View item:', item);
-    // Implement view functionality
-  };
-
   const handleDelete = async (item: DataItem) => {
     try {
       if (window.confirm('Are you sure you want to delete this record?')) {
         await axios.delete(`http://localhost:8080/public/deletePayment/${item.id}`);
-        // Trigger refresh by updating the key
         setRefreshKey(prev => prev + 1);
       }
     } catch (err) {
@@ -556,7 +632,6 @@ const App = () => {
   return (
     <div key={refreshKey}>
       <DataTable 
-        onView={handleView}
         onDelete={handleDelete}
       />
     </div>

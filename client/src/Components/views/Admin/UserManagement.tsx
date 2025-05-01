@@ -29,6 +29,7 @@ function UserManagementPage() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const tableRef = useRef<HTMLTableElement>(null);
   const { userId } = useParams();
@@ -160,6 +161,7 @@ function UserManagementPage() {
       setEditingUser({ ...userToEdit });
       setIsEditing(true);
       setUpdateError(null);
+      setSuccessMessage(null);
     } else {
       console.error("User not found for editing");
       toast.error("User data not available for editing. Please try again.");
@@ -201,17 +203,19 @@ function UserManagementPage() {
 
       const response = await UserService.updateUser(editingUser.id, userUpdateData, token);
       
-      if (response && response.status === "OK") {
-        // Update the users list with the updated user data
+      if (response && (response.status === "OK" || response.message === "User updated successfully")) {
         setUsers(prevUsers => 
           prevUsers.map(user => 
             user.id === editingUser.id ? { ...user, ...userUpdateData } : user
           )
         );
+        setSuccessMessage("User updated successfully!");
         toast.success("User updated successfully!");
-        setIsEditing(false);
-        setEditingUser(null);
-        // No need to call fetchUsers() here since we're updating the state directly
+        setTimeout(() => {
+          setIsEditing(false);
+          setEditingUser(null);
+          setSuccessMessage(null);
+        }, 1500);
       } else {
         throw new Error(response?.message || "Invalid response from server");
       }
@@ -245,24 +249,30 @@ function UserManagementPage() {
                 setIsEditing(false);
                 setEditingUser(null);
                 setUpdateError(null);
+                setSuccessMessage(null);
               }}
               className="text-gray-500 hover:text-gray-700"
             >
-              <FaArrowLeft size={20} />
+              <FaTimes size={20} />
             </button>
           </div>
           
           {updateError && (
-            <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-700">{updateError}</p>
-                </div>
+            <div className="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+              <div className="flex items-center text-red-800">
+                <svg className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <p className="text-sm">{updateError}</p>
+              </div>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-4 p-4 rounded-md bg-green-50 border border-green-200">
+              <div className="flex items-center text-green-800">
+                <FaCheckCircle className="h-5 w-5 mr-2" />
+                <p className="text-sm font-medium">{successMessage}</p>
               </div>
             </div>
           )}
@@ -355,6 +365,7 @@ function UserManagementPage() {
                   setIsEditing(false);
                   setEditingUser(null);
                   setUpdateError(null);
+                  setSuccessMessage(null);
                 }}
                 className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mr-2"
               >
@@ -362,9 +373,9 @@ function UserManagementPage() {
               </button>
               <button
                 type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center"
+                className={`bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded flex items-center ${successMessage ? "bg-green-600" : ""}`}
               >
-                <FaSave className="mr-2" /> Save Changes
+                <FaSave className="mr-2" /> {successMessage ? "Saved!" : "Save Changes"}
               </button>
             </div>
           </form>
@@ -551,9 +562,6 @@ function UserManagementPage() {
                     <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                   </select>
-                </div>
-                <div className="flex justify-end">
-                 
                 </div>
               </div>
             </div>
