@@ -11,6 +11,7 @@ const menuItems = [
   { text: 'Reports', icon: <BarChartIcon />, path: '/admin/reports' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/admin/settings' },
   { text: 'Event Theme', icon: <ContrastIcon />, path: '/admin/EventTheme' },
+  { text: 'Payment Details', icon: <BarChartIcon />, path: '/DataTable' },
 ];
 
 interface AdminSideBarProps {

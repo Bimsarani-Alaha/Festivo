@@ -186,62 +186,74 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Hidden PDF content */}
-      <div ref={targetRef} className="p-4" style={{ display: 'none' }}>
+      {/* PDF content - now properly showing all details */}
+      <div ref={targetRef} className="p-4" style={{ position: 'absolute', left: '-9999px' }}>
         {selectedItem && (
           <div className="max-w-md mx-auto">
             <h2 className="text-xl font-bold mb-4">Payment Receipt</h2>
             <div className="border-b pb-4 mb-4">
               <p className="text-sm text-gray-500">Transaction ID: {selectedItem.id}</p>
               <p className="text-lg font-semibold">{selectedItem.name}</p>
+              <p className="text-sm text-gray-500">Date: {new Date().toLocaleDateString()}</p>
             </div>
             
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <p className="text-sm text-gray-500">Email</p>
-                <p>{selectedItem.email}</p>
+                <p className="text-sm font-medium text-gray-500">Email</p>
+                <p className="text-sm">{selectedItem.email}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Phone</p>
-                <p>{formatPhoneNumber(selectedItem.phoneNumber)}</p>
+                <p className="text-sm font-medium text-gray-500">Phone</p>
+                <p className="text-sm">{formatPhoneNumber(selectedItem.phoneNumber)}</p>
+              </div>
+            </div>
+            
+            <div>
+              <p className="text-sm font-medium text-gray-500">Address</p>
+              <p className="text-sm mb-4">{selectedItem.address || 'N/A'}</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Card Type</p>
+                <p className="text-sm">{selectedItem.cardType}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Card Number</p>
+                <p className="text-sm">{maskCardNumber(selectedItem.cardNumber)}</p>
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <p className="text-sm text-gray-500">Card Type</p>
-                <p>{selectedItem.cardType}</p>
+                <p className="text-sm font-medium text-gray-500">Expiration Date</p>
+                <p className="text-sm">{selectedItem.expDate}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Card Number</p>
-                <p>{maskCardNumber(selectedItem.cardNumber)}</p>
+                <p className="text-sm font-medium text-gray-500">CVV</p>
+                <p className="text-sm">{selectedItem.cvv ? '•••' : 'N/A'}</p>
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p className="text-sm text-gray-500">Exp Date</p>
-                <p>{selectedItem.expDate}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Order Summary</p>
-                <p>{selectedItem.orderSummery}</p>
-              </div>
+            <div className="mb-4">
+              <p className="text-sm font-medium text-gray-500">Order Summary</p>
+              <p className="text-sm">{selectedItem.orderSummery || 'N/A'}</p>
             </div>
             
             <div className="border-t pt-4">
-              <p className="text-sm text-gray-500">Amount</p>
+              <p className="text-sm font-medium text-gray-500">Amount</p>
               <p className="text-xl font-bold">{formatCurrency(selectedItem.amount)}</p>
             </div>
             
             <div className="mt-8 text-xs text-gray-500">
               <p>Generated on: {new Date().toLocaleString()}</p>
+              <p className="mt-2">This is an official payment receipt</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Visible UI */}
+      {/* Rest of your component remains the same */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Payment Records</h1>
         <button 
@@ -338,6 +350,12 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                     <div>
                       <p className="text-sm text-gray-500">Expiration Date</p>
                       <p className="mt-1 text-sm text-gray-900">{selectedItem.expDate || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">CVV</p>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedItem.cvv ? '•••' : 'N/A'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Order Summary</p>
