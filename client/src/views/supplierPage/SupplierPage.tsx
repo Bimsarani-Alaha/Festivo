@@ -89,9 +89,12 @@ function OrdersPage() {
 function ReportsPage() {
   return <Typography variant="h4">Reports Overview</Typography>;
 }
+function AddItemPage(){
+  return <Typography variant='h4'> Add New Item</Typography>
+}
 
 function NotFoundPage() {
-  return <Typography variant="h4">404 - Page Not Found</Typography>;
+  return <Typography variant="h4">Here Your Products</Typography>;
 }
 
 // === Content switcher ===
@@ -106,6 +109,9 @@ function DemoPageContent({ pathname }: { pathname: string }) {
     case '/orders':
       ContentComponent = OrdersPage;
       break;
+    case '/add-items':
+      ContentComponent=AddItemPage;
+      break
     case '/reports':
       ContentComponent = ReportsPage;
       break;

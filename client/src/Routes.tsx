@@ -18,6 +18,8 @@ import SupplierSignup from "./Components/views/Supplier/SupplierSignup.tsx";
 import SupplierLogin from "./Components/views/Supplier/SupplierLogin.tsx";
 import SupplierPage from "./views/supplierPage/SupplierPage.tsx"
 import AllEventThemes from "./views/eventThemePage/allEventThemes.tsx";
+import AddProductPage from "./views/SupplierProducts/AddProductPage.tsx";
+import SupplierOnboardingForm from "./views/supplierPage/SupplierOnboardingForm.tsx";
 
 
 const AdminProtectedRoute = () => {
@@ -93,6 +95,8 @@ const AppRoutes = () => {
             </Route>
             <Route element={<SupplierProtectedRoute/>}>
                 <Route path="/supplier/SupplierPage" element={<SupplierPage/>}/>
+                <Route path="/supplier/addItem" element={<AddProductPage/>}/>
+                <Route path="/supplier/supplierOnboardingForm" element={<SupplierOnboardingForm/>}/>
             </Route>
             
         </Routes>

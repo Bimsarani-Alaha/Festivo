@@ -1,0 +1,42 @@
+package com.example.festivo.controller.suppliercontroller;
+
+import java.net.http.HttpHeaders;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.festivo.dto.supplierDTO.SupplierRequestDTO;
+import com.example.festivo.entity.suplierEntity.SupplierEntity;
+import com.example.festivo.service.supplierService.SupplierService;
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@RestController
+@RequestMapping("/supplier")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5176")
+public class SupplierController {
+
+    private final SupplierService supplierService;
+
+    @PostMapping("/create")
+    public ResponseEntity<SupplierEntity> createSupplier(@RequestBody SupplierRequestDTO req) {
+        SupplierEntity createdSupplier = supplierService.createSupplier(req);
+        return ResponseEntity.ok(createdSupplier);
+    }
+
+    @GetMapping("/checkEmail/{email}")
+    public ResponseEntity<Boolean> checkEmail(@PathVariable String email) {
+        boolean exists = supplierService.checkEmail(email);
+        return ResponseEntity.ok(exists);
+    }
+
+}
