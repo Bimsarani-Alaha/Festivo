@@ -59,6 +59,10 @@ const AppRoutes = () => {
             <Route path="/LoginForm" element={<LoginForm/>}/>
             <Route path="/SupplierLogin" element={<SupplierLogin/>}/>
             <Route path="/SupplierSignup" element={<SupplierSignup/>}/>
+            <Route
+                    path="/DisplayEventTheme/:eventName"
+                    element={<DisplayEventTheme/>}
+                />
 
 
             <Route element={<UserProtectedRoute/>}>
@@ -84,10 +88,7 @@ const AppRoutes = () => {
                     path="/admin/allEventThemes"
                     element={<AllEventThemes/>}
                 />
-                <Route
-                    path="/admin/DisplayEventTheme/:eventName"
-                    element={<DisplayEventTheme/>}
-                />
+                
                 
             </Route>
             <Route element={<SupplierProtectedRoute/>}>
