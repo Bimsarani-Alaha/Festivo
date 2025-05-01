@@ -8,6 +8,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import com.example.festivo.entity.suplierEntity.SupplierEntity;
 
 public interface SupplierRepository extends MongoRepository<SupplierEntity, String> {
-    Optional<SupplierEntity> findByEmail(String email);
+    Optional<SupplierEntity> findBySupplierEmail(String email);
     List<SupplierEntity> findByCategory(String category);
 }

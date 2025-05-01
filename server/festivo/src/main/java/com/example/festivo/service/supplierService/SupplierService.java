@@ -1,18 +1,34 @@
 package com.example.festivo.service.supplierService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import com.example.festivo.dto.supplierDTO.SupplierRequestDTO;
 import com.example.festivo.entity.suplierEntity.SupplierEntity;
 import com.example.festivo.repository.supplierRepository.SupplierRepository;
 
+@Service
 public class SupplierService {
 
-     @Autowired
+    @Autowired
     private SupplierRepository supplierRepository;
-    
-    public SupplierEntity createSupplier(SupplierEntity supplier) {
-        supplier.setCompanyName(null);
+
+    public SupplierEntity createSupplier(SupplierRequestDTO supplierRequestDTO) {
+        SupplierEntity supplier = new SupplierEntity();
+
+
+        // Map the DTO fields to the SupplierEntity fields
+        supplier.setSupplierEmail(supplierRequestDTO.getSupplierEmail());
+        supplier.setCompanyName(supplierRequestDTO.getCompanyName());
+        supplier.setCategory(supplierRequestDTO.getCategory());
+        supplier.setAddress(supplierRequestDTO.getAddress());
+
+        // Save the supplier to the database
         return supplierRepository.save(supplier);
+    }
+
+    public boolean checkEmail(String email) {
+        return supplierRepository.findBySupplierEmail(email).isPresent();
     }
 
 }

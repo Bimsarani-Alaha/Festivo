@@ -1,6 +1,8 @@
 package com.example.festivo.entity.suplierEntity;
 
+import java.math.BigDecimal;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -11,15 +13,18 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@Document(collection = "suppliers")
-public class SupplierEntity {
+@Document(collection = "supplierProducts")
+public class SupplierProductEntity {
 
-    @Indexed
+    @Id
     private String id;
 
     @Indexed(unique = true)
     private String supplierEmail;
-    private String companyName;
-    private String category;
-    private String address;
+    private String productName;
+    private BigDecimal price;
+    private String quantity;
+    private String description;
+    private String imageUrl;
+
 }

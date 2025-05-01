@@ -32,6 +32,7 @@ import {
     ArrowForward as ArrowForwardIcon,
     Business as BusinessIcon
 } from '@mui/icons-material';
+import { checkEmailAvailability } from '../../../api/supplierApi';
 
 interface TokenPayload {
     exp: number;
@@ -86,32 +87,42 @@ export default function SupplierLogin() {
         e.preventDefault();
         setError('');
         setLoading(true);
-
+    
         try {
             const response = await UserService.login(email, password) as LoginResponse;
             console.log('Login API Response:', response);
 
+            const supplierEmailExists = await checkEmailAvailability(email);
+            console.log('Email availability check:', supplierEmailExists);
+    
             if (response.token) {
                 localStorage.setItem('token', response.token);
                 localStorage.setItem('role', response.role);
-
+    
                 if (response.user) {
                     localStorage.setItem('user', JSON.stringify(response.user));
                     localStorage.setItem('name', response.user.name || '');
                     localStorage.setItem('email', response.user.email || '');
                 }
-
-                if (response.isNewSupplier) {
-                    navigate('/supplier/onboarding');
-                    return;
+    
+                // Only allow suppliers to proceed
+                if (response.role !== 'SUPPLIER') {
+                    // Clear any stored data
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('role');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('name');
+                    localStorage.removeItem('email');
+                    
+                    throw new Error('Access restricted to suppliers only. Please use the appropriate login portal.');
                 }
-
-                if (response.role === 'ADMIN') {
-                    navigate('/admin/dashboard');
-                } else if (response.role === 'SUPPLIER') {
+    
+                // Only suppliers reach this point
+                if(supplierEmailExists){
                     navigate('/supplier/SupplierPage');
-                } else {
-                    navigate('/');
+                }
+                else{
+                    navigate('/supplier/supplierOnboardingForm')
                 }
             } else {
                 throw new Error('Authentication failed - no token received');
