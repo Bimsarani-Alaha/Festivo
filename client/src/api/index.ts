@@ -27,7 +27,7 @@ axios.interceptors.request.use(
 );
 
 function getBaseUrl(): string {
-  return import.meta.env.VITE_API_BASE_URL;
+  return import.meta.env="http://localhost:8080";
 }
 
 axios.interceptors.response.use(
