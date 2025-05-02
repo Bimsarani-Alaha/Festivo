@@ -67,10 +67,11 @@ const CheckoutPage: React.FC = () => {
     }
   );
   const TAX_RATE = 0.10; // 10% tax
+  
 
   const packagePrice = bookingData.packagePrice || PACKAGE_PRICES[bookingData.eventPackage as keyof typeof PACKAGE_PRICES];
-const taxAmount = Math.round(packagePrice * TAX_RATE);
-const totalAmount = packagePrice + taxAmount;
+  const taxAmount = Math.round(packagePrice * TAX_RATE);
+  const totalAmount = packagePrice + taxAmount;
 
   // Get logged-in user data from localStorage
   const [userData, setUserData] = useState<UserData>(() => {
@@ -192,10 +193,17 @@ const totalAmount = packagePrice + taxAmount;
     return "";
   };
 
-  const validateCardNumber = (cardNumber: string) => {
+  const validateCardNumber = (cardNumber: string, cardType: string) => {
     if (!cardNumber) return "Card number is required";
-    const cleaned = cardNumber.replace(/\s/g, '');
-    if (!/^\d{13,19}$/.test(cleaned)) return "Card number must be 13-19 digits";
+    const cleaned = cardNumber.replace(/\D/g, '');
+    
+    // Validate length based on card type
+    if (cardType === "American Express") {
+      if (cleaned.length !== 15) return "American Express requires 15 digits";
+    } else {
+      if (cleaned.length !== 16) return "Card number must be 16 digits";
+    }
+
     if (!luhnCheck(cleaned)) return "Invalid card number";
     return "";
   };
@@ -239,13 +247,23 @@ const totalAmount = packagePrice + taxAmount;
     return sum % 10 === 0;
   };
 
+  // Detect card type based on number
+  const detectCardType = (cardNumber: string) => {
+    const cleaned = cardNumber.replace(/\D/g, '');
+    if (/^4/.test(cleaned)) return "Visa";
+    if (/^5[1-5]/.test(cleaned)) return "MasterCard";
+    if (/^3[47]/.test(cleaned)) return "American Express";
+    if (/^6(?:011|5)/.test(cleaned)) return "Discover";
+    return formData.cardType; // Return current type if unknown
+  };
+
   const validateField = (name: string, value: string) => {
     switch (name) {
       case 'name': return validateName(value);
       case 'email': return validateEmail(value);
       case 'phoneNumber': return validatePhone(value);
       case 'address': return validateAddress(value);
-      case 'cardNumber': return validateCardNumber(value);
+      case 'cardNumber': return validateCardNumber(value, formData.cardType);
       case 'expDate': return validateExpDate(value);
       case 'cvv': return validateCVV(value, formData.cardType);
       default: return "";
@@ -255,37 +273,115 @@ const totalAmount = packagePrice + taxAmount;
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // Format card number with spaces every 4 digits
-    let formattedValue = value;
+    // Format card number with dashes based on card type
     if (name === 'cardNumber') {
-      formattedValue = value
-        .replace(/\s/g, '')
-        .replace(/(\d{4})/g, '$1 ')
-        .trim();
+      // Remove all non-digit characters
+      const cleanedValue = value.replace(/\D/g, '');
+      
+      // Auto-detect card type if first few digits change
+      if (cleanedValue.length >= 2) {
+        const detectedType = detectCardType(cleanedValue);
+        if (detectedType !== formData.cardType) {
+          setFormData(prev => ({
+            ...prev,
+            cardType: detectedType
+          }));
+        }
+      }
+
+      // Limit length based on card type
+      let maxLength = 16;
+      if (formData.cardType === "American Express") {
+        maxLength = 15;
+      }
+      const limitedValue = cleanedValue.slice(0, maxLength);
+      
+      // Add dashes based on card type
+      let formattedValue = '';
+      if (formData.cardType === "American Express") {
+        // Amex format: XXXX-XXXXXX-XXXXX
+        for (let i = 0; i < limitedValue.length; i++) {
+          if (i === 4 || i === 10) {
+            formattedValue += '-';
+          }
+          formattedValue += limitedValue[i];
+        }
+      } else {
+        // Other cards format: XXXX-XXXX-XXXX-XXXX
+        for (let i = 0; i < limitedValue.length; i++) {
+          if (i > 0 && i % 4 === 0) {
+            formattedValue += '-';
+          }
+          formattedValue += limitedValue[i];
+        }
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue
+      }));
+      
+      // Validate field if it's been touched
+      if (touched[name]) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: validateField(name, formattedValue)
+        }));
+      }
+      return;
     }
     // Format expiration date with slash
     else if (name === 'expDate') {
-      formattedValue = value
+      const formattedValue = value
         .replace(/\D/g, '')
         .replace(/(\d{2})(\d{0,2})/, '$1/$2')
         .substring(0, 5);
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue
+      }));
+      
+      // Validate field if it's been touched
+      if (touched[name]) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: validateField(name, formattedValue)
+        }));
+      }
+      return;
     }
     // Limit CVV length based on card type
     else if (name === 'cvv') {
       const maxLength = formData.cardType === "American Express" ? 4 : 3;
-      formattedValue = value.replace(/\D/g, '').substring(0, maxLength);
+      const formattedValue = value.replace(/\D/g, '').substring(0, maxLength);
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue
+      }));
+      
+      // Validate field if it's been touched
+      if (touched[name]) {
+        setErrors(prev => ({
+          ...prev,
+          [name]: validateField(name, formattedValue)
+        }));
+      }
+      return;
     }
 
+    // For all other fields
     setFormData(prev => ({
       ...prev,
-      [name]: formattedValue
+      [name]: value
     }));
 
     // Validate field if it's been touched
     if (touched[name]) {
       setErrors(prev => ({
         ...prev,
-        [name]: validateField(name, formattedValue)
+        [name]: validateField(name, value)
       }));
     }
   };
@@ -305,7 +401,7 @@ const totalAmount = packagePrice + taxAmount;
       email: validateEmail(formData.email),
       phoneNumber: validatePhone(formData.phoneNumber),
       address: validateAddress(formData.address),
-      cardNumber: validateCardNumber(formData.cardNumber),
+      cardNumber: validateCardNumber(formData.cardNumber, formData.cardType),
       cardType: formData.cardType ? "" : "Card type is required",
       expDate: validateExpDate(formData.expDate),
       cvv: validateCVV(formData.cvv, formData.cardType)
@@ -345,7 +441,7 @@ const totalAmount = packagePrice + taxAmount;
         email: formData.email,
         phoneNumber: formData.phoneNumber,
         address: formData.address,
-        cardNumber: formData.cardNumber.replace(/\s/g, ''),
+        cardNumber: formData.cardNumber.replace(/\D/g, ''),
         cardType: formData.cardType,
         expDate: formData.expDate,
         cvv: formData.cvv,
@@ -670,7 +766,11 @@ const totalAmount = packagePrice + taxAmount;
                     <input
                       type="text"
                       name="cardNumber"
-                      placeholder="1234 5678 9012 3456"
+                      placeholder={
+                        formData.cardType === "American Express" 
+                          ? "3782-822463-10005" 
+                          : "1234-5678-9012-3456"
+                      }
                       value={formData.cardNumber}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
@@ -678,6 +778,10 @@ const totalAmount = packagePrice + taxAmount;
                         touched.cardNumber && errors.cardNumber ? 'border-red-500' : 'border-gray-300'
                       }`}
                       required
+                      inputMode="numeric"
+                      maxLength={
+                        formData.cardType === "American Express" ? 17 : 19 // 15 digits + 2 dashes or 16 digits + 3 dashes
+                      }
                     />
                     {touched.cardNumber && errors.cardNumber && (
                       <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>
@@ -729,6 +833,8 @@ const totalAmount = packagePrice + taxAmount;
                             touched.cvv && errors.cvv ? 'border-red-500' : 'border-gray-300'
                           }`}
                           required
+                          inputMode="numeric"
+                          maxLength={formData.cardType === "American Express" ? 4 : 3}
                         />
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 absolute right-3 top-3.5" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
@@ -799,20 +905,18 @@ const totalAmount = packagePrice + taxAmount;
               <div className="border-t border-yellow-300 pt-4">
                 <h4 className="font-medium text-gray-800 mb-3">Price Summary</h4>
                 <div className="space-y-2 text-sm">
-                <div className="space-y-2 text-sm">
-  <div className="flex justify-between">
-    <span className="text-gray-600">Package Price:</span>
-    <span className="font-medium">Rs. {packagePrice.toLocaleString()}</span>
-  </div>
-  <div className="flex justify-between">
-    <span className="text-gray-600">Tax (10%):</span>
-    <span className="font-medium">Rs. {taxAmount.toLocaleString()}</span>
-  </div>
-  <div className="flex justify-between border-t border-yellow-200 pt-2">
-    <span className="text-gray-800 font-semibold">Total:</span>
-    <span className="text-gray-900 font-bold">Rs. {totalAmount.toLocaleString()}</span>
-  </div>
-</div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Package Price:</span>
+                    <span className="font-medium">Rs. {packagePrice.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tax (10%):</span>
+                    <span className="font-medium">Rs. {taxAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-yellow-200 pt-2">
+                    <span className="text-gray-800 font-semibold">Total:</span>
+                    <span className="text-gray-900 font-bold">Rs. {totalAmount.toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
               
