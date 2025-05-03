@@ -20,6 +20,7 @@ public class SupplierOrderReqService {
 
         SupplierReq supplierReq = new SupplierReq();
         supplierReq.setEventName(req.getEventName());
+        supplierReq.setStatus("Ongoing");
         supplierReq.setEventPackage(req.getEventPackage());
         supplierReq.setEventTheme(req.getEventTheme());
         supplierReq.setEventType(req.getEventType());
