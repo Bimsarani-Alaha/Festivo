@@ -158,7 +158,7 @@ const CheckoutPage: React.FC = () => {
   }, [success.show, countdown]);
 
   const navigateToSuccessPage = () => {
-    navigate('/payment-success', {
+    navigate('/', {
       state: {
         paymentData: {
           ...formData,
