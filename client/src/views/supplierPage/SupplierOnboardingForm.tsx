@@ -117,7 +117,7 @@ const SupplierOnboardingForm = () => {
       await createSupplier(formData);
       setActiveStep(steps.length);
       setTimeout(() => {
-        navigate('/SupplierPage');
+        navigate('/supplier/SupplierPage');
       }, 2000);
     } catch (err) {
       setError('Submission failed. Please try again.');

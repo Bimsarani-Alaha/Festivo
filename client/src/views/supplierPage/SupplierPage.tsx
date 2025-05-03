@@ -9,6 +9,7 @@ import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
 import logo from '../../assets/logoremasted.png';
+import AddProductPage from '../SupplierProducts/AddProductPage';
 
 function AppTitle() {
   return (
@@ -36,11 +37,11 @@ function AppTitle() {
 }
 
 const NAVIGATION: Navigation = [
-  {
-    segment: 'dashboard',
-    title: 'Dashboard',
-    icon: <DashboardIcon />,
-  },
+  // {
+  //   segment: 'dashboard',
+  //   title: 'Dashboard',
+  //   icon: <DashboardIcon />,
+  // },
   {
     segment: 'orders',
     title: 'Orders',
@@ -90,7 +91,7 @@ function ReportsPage() {
   return <Typography variant="h4">Reports Overview</Typography>;
 }
 function AddItemPage(){
-  return <Typography variant='h4'> Add New Item</Typography>
+  return <AddProductPage/>
 }
 
 function NotFoundPage() {
@@ -103,9 +104,9 @@ function DemoPageContent({ pathname }: { pathname: string }) {
   let ContentComponent;
 
   switch (pathname) {
-    case '/dashboard':
-      ContentComponent = DashboardPage;
-      break;
+    // case '/dashboard':
+    //   ContentComponent = DashboardPage;
+    //   break;
     case '/orders':
       ContentComponent = OrdersPage;
       break;
@@ -137,7 +138,7 @@ function DemoPageContent({ pathname }: { pathname: string }) {
 // === App Wrapper ===
 
 export default function DashboardLayoutNoMiniSidebar() {
-  const router = useDemoRouter('/dashboard');
+  const router = useDemoRouter('/orders');
 
   return (
     <AppProvider
