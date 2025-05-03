@@ -63,7 +63,8 @@ public class SupplierOrderReqController {
                     order.getSpecialRequest(),
                     order.getEventDate(),
                     order.getEventId(),
-                    order.getSupplierCategory()
+                    order.getSupplierCategory(),
+                    order.getStatus()
                 ))
                 .collect(Collectors.toList());
             
