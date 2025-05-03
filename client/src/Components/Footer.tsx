@@ -94,7 +94,7 @@ const Footer = () => {
               <Link href="#" underline="hover" sx={{ color: '#B4846C' }}>
                 Decorations
               </Link>
-              <Link href="#" underline="hover" sx={{ color: '#B4846C' }}>
+              <Link href="/FeedbackPage" underline="hover" sx={{ color: '#B4846C' }}>
                 Customer Feedback
               </Link>
             </Stack>

@@ -12,6 +12,7 @@ const menuItems = [
   { text: 'Settings', icon: <SettingsIcon />, path: '/admin/settings' },
   { text: 'Event Theme', icon: <ContrastIcon />, path: '/admin/EventTheme' },
   { text: 'Payment Details', icon: <BarChartIcon />, path: '/DataTable' },
+  { text: 'Feedback Details', icon: <BarChartIcon />, path: '/FeedbackList' },
 ];
 
 interface AdminSideBarProps {
