@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEdit, faTrash, faSync, faTimes, faFilePdf, faShare } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { usePDF } from 'react-to-pdf';
 
 interface DataItem {
@@ -34,6 +35,7 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
   const [isSharing, setIsSharing] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const navigate = useNavigate();
   
   const { toPDF, targetRef } = usePDF({ filename: 'payment-record.pdf' });
 
@@ -70,9 +72,13 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
     setSuccessMessage(null);
   };
 
-  const handleView = (item: DataItem) => {
+  const handleViewModal = (item: DataItem) => {
     setSelectedItem(item);
     setViewModalOpen(true);
+  };
+
+  const handleViewNavigation = (item: DataItem) => {
+    navigate(`/EventBookingsTable`);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -381,6 +387,12 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                   Export PDF
                 </button>
                 <button
+                  onClick={() => handleViewNavigation(selectedItem)}
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                  View Full Details
+                </button>
+                <button
                   onClick={() => setViewModalOpen(false)}
                   className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
@@ -585,7 +597,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                       <td className="px-6 py-4 text-sm text-gray-500">{maskCardNumber(item.cardNumber)}</td>
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">{formatCurrency(item.amount)}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        <button onClick={() => handleView(item)} className="text-blue-600 hover:text-blue-800 mx-1">
+                        <button onClick={() => handleViewModal(item)} className="text-blue-600 hover:text-blue-800 mx-1">
                           <FontAwesomeIcon icon={faEye} />
                         </button>
                         <button onClick={() => handleEdit(item)} className="text-yellow-600 hover:text-yellow-800 mx-1">

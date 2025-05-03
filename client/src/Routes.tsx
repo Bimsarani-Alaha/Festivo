@@ -22,6 +22,7 @@ import AddProductPage from "./views/SupplierProducts/AddProductPage.tsx";
 import SupplierOnboardingForm from "./views/supplierPage/SupplierOnboardingForm.tsx";
 
 
+
 const AdminProtectedRoute = () => {
     const role = getRole();
 
@@ -97,6 +98,7 @@ const AppRoutes = () => {
                 <Route path="/supplier/SupplierPage" element={<SupplierPage/>}/>
                 <Route path="/supplier/addItem" element={<AddProductPage/>}/>
                 <Route path="/supplier/supplierOnboardingForm" element={<SupplierOnboardingForm/>}/>
+                
             </Route>
             
         </Routes>
