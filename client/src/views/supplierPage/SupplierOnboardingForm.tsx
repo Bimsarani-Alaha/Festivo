@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Stepper,
   Step,
@@ -52,6 +53,7 @@ const SupplierOnboardingForm = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -110,6 +112,9 @@ const SupplierOnboardingForm = () => {
       setLoading(true);
       await createSupplier(formData);
       setActiveStep(steps.length);
+      setTimeout(() => {
+        navigate('/SupplierPage');
+      }, 2000);
     } catch (err) {
       setError('Submission failed. Please try again.');
       console.error('Error:', err);
