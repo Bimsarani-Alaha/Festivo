@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Stepper,
   Step,
@@ -21,6 +22,7 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { createSupplier } from '../../api/supplierApi';
+import { getSupplierDetails } from '../../customHooks/supplierEmailextract';
 
 const steps = ['Welcome', 'Company Info', 'Contact', 'Review'];
 
@@ -52,12 +54,16 @@ const SupplierOnboardingForm = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  const supplierDetails = getSupplierDetails()
+  const supplierEmail = supplierDetails?.email;
 
   const [formData, setFormData] = useState({
     companyName: '',
     category: '',
     address: '',
-    supplierEmail: ''
+    supplierEmail: supplierEmail || '',
   });
 
   const handleNext = async () => {
@@ -73,7 +79,7 @@ const SupplierOnboardingForm = () => {
         setError('Email is required');
         return;
       }
-      
+
       if (!/^\S+@\S+\.\S+$/.test(formData.supplierEmail)) {
         setError('Please enter a valid email address');
         return;
@@ -110,6 +116,9 @@ const SupplierOnboardingForm = () => {
       setLoading(true);
       await createSupplier(formData);
       setActiveStep(steps.length);
+      setTimeout(() => {
+        navigate('/SupplierPage');
+      }, 2000);
     } catch (err) {
       setError('Submission failed. Please try again.');
       console.error('Error:', err);
@@ -124,7 +133,7 @@ const SupplierOnboardingForm = () => {
         return (
           <Fade in={true} timeout={500}>
             <Box sx={{ p: 3, textAlign: 'center' }}>
-              <Typography variant="h4" gutterBottom sx={{ 
+              <Typography variant="h4" gutterBottom sx={{
                 mb: 3,
                 background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
                 WebkitBackgroundClip: 'text',
@@ -155,7 +164,7 @@ const SupplierOnboardingForm = () => {
         return (
           <Zoom in={true} timeout={300}>
             <Box sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ 
+              <Typography variant="h6" gutterBottom sx={{
                 mb: 3,
                 color: 'primary.main',
                 fontWeight: 'medium'
@@ -178,7 +187,7 @@ const SupplierOnboardingForm = () => {
                 <Select
                   name="category"
                   value={formData.category}
-                  onChange={(e) => setFormData({...formData, category: e.target.value as string})}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value as string })}
                   label="Service Category"
                 >
                   {categories.map((category) => (
@@ -203,37 +212,40 @@ const SupplierOnboardingForm = () => {
             </Box>
           </Zoom>
         );
-      case 2:
-        return (
-          <Zoom in={true} timeout={300}>
-            <Box sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ 
-                mb: 3,
-                color: 'primary.main',
-                fontWeight: 'medium'
-              }}>
-                Contact Information
-              </Typography>
-              <TextField
-                fullWidth
-                label="Business Email"
-                name="supplierEmail"
-                type="email"
-                value={formData.supplierEmail}
-                onChange={handleInputChange}
-                margin="normal"
-                required
-                variant="outlined"
-                sx={{ mb: 2 }}
-              />
-            </Box>
-          </Zoom>
-        );
+        case 2:
+          return (
+            <Zoom in={true} timeout={300}>
+              <Box sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{
+                  mb: 3,
+                  color: 'primary.main',
+                  fontWeight: 'medium'
+                }}>
+                  Contact Information
+                </Typography>
+                <TextField
+                  fullWidth
+                  label="Business Email"
+                  name="supplierEmail"
+                  type="email"
+                  value={formData.supplierEmail}
+                  onChange={handleInputChange}
+                  margin="normal"
+                  required
+                  variant="outlined"
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                />
+              </Box>
+            </Zoom>
+          );
       case 3:
         return (
           <Fade in={true} timeout={500}>
             <Box sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom sx={{ 
+              <Typography variant="h6" gutterBottom sx={{
                 mb: 3,
                 color: 'primary.main',
                 fontWeight: 'medium'
@@ -276,7 +288,7 @@ const SupplierOnboardingForm = () => {
     <Container maxWidth="md" sx={{ py: 4 }}>
       <AnimatedPaper
         elevation={6}
-        sx={{ 
+        sx={{
           p: { xs: 2, md: 4 },
           borderRadius: 4,
           background: 'white',
@@ -285,10 +297,10 @@ const SupplierOnboardingForm = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Stepper 
-          activeStep={activeStep} 
+        <Stepper
+          activeStep={activeStep}
           alternativeLabel
-          sx={{ 
+          sx={{
             mb: 4,
             '& .MuiStepLabel-label': {
               fontWeight: '500',
@@ -301,7 +313,7 @@ const SupplierOnboardingForm = () => {
             </Step>
           ))}
         </Stepper>
-        
+
         {activeStep === steps.length ? (
           <Box sx={{ textAlign: 'center', p: 3 }}>
             <motion.div
@@ -316,7 +328,7 @@ const SupplierOnboardingForm = () => {
                 sx={{ width: 100, height: 100, mb: 3 }}
               />
             </motion.div>
-            <Typography variant="h5" gutterBottom sx={{ 
+            <Typography variant="h5" gutterBottom sx={{
               mb: 2,
               background: 'linear-gradient(45deg, #4CAF50 30%, #81C784 90%)',
               WebkitBackgroundClip: 'text',
@@ -328,7 +340,7 @@ const SupplierOnboardingForm = () => {
             <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
               Thank you for your application. Our team will review your information and contact you within 2-3 business days.
             </Typography>
-            <ColorButton 
+            <ColorButton
               onClick={handleReset}
               variant="contained"
               sx={{
@@ -341,7 +353,7 @@ const SupplierOnboardingForm = () => {
         ) : (
           <>
             {getStepContent(activeStep)}
-            
+
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -352,9 +364,9 @@ const SupplierOnboardingForm = () => {
                 </Alert>
               </motion.div>
             )}
-            
-            <Box sx={{ 
-              display: 'flex', 
+
+            <Box sx={{
+              display: 'flex',
               justifyContent: 'space-between',
               pt: 2,
               mt: 2
@@ -362,7 +374,7 @@ const SupplierOnboardingForm = () => {
               <Button
                 onClick={handleBack}
                 disabled={activeStep === 0}
-                sx={{ 
+                sx={{
                   mr: 1,
                   borderRadius: 2,
                   px: 3,
@@ -371,13 +383,13 @@ const SupplierOnboardingForm = () => {
               >
                 Back
               </Button>
-              
+
               {activeStep === steps.length - 1 ? (
                 <ColorButton
                   onClick={handleSubmit}
                   variant="contained"
                   disabled={loading}
-                  sx={{ 
+                  sx={{
                     borderRadius: 2,
                     px: 4,
                     textTransform: 'none'
@@ -393,7 +405,7 @@ const SupplierOnboardingForm = () => {
                 <ColorButton
                   onClick={handleNext}
                   variant="contained"
-                  sx={{ 
+                  sx={{
                     borderRadius: 2,
                     px: 4,
                     textTransform: 'none'
