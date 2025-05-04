@@ -53,10 +53,7 @@ public class SupplierOrderReqService {
         if (optionalSupplierReq.isPresent()) {
             SupplierReq supplierReq = optionalSupplierReq.get();
             
-            // Update status (you can update other fields as needed)
             supplierReq.setStatus(req.getStatus());
-    
-            // Save the updated entity
             SupplierReq updatedSupplierReq = supplierOrderReqRepository.save(supplierReq);
             
             return updatedSupplierReq;

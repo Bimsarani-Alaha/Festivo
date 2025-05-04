@@ -19,18 +19,23 @@ export async function getAllSupplierOrders(): Promise<SupplierOrder[]> {
     return res.data;
 }
 
-// Add these functions to your existing API file
+// Accept a supplier order
 export async function acceptSupplierOrder(orderId: string): Promise<SupplierOrder> {
-    const res = await axios.put(`/public/supplierOrder/${orderId}/accept`);
+    const res = await axios.put(`/public/supplierOrder/status/${orderId}`, {
+        status: 'ACCEPTED'
+    });
     return res.data;
 }
 
+// Reject a supplier order
 export async function rejectSupplierOrder(orderId: string): Promise<SupplierOrder> {
-    const res = await axios.put(`/public/supplierOrder/${orderId}/reject`);
+    const res = await axios.put(`/public/supplierOrder/status/${orderId}`, {
+        status: 'REJECTED'
+    });
     return res.data;
 }
 
-// Type definition for the supplier order
+// Interface for Supplier Order
 export interface SupplierOrder {
     id: string;
     eventName: string;
@@ -39,8 +44,8 @@ export interface SupplierOrder {
     eventType: string;
     noOfGuest: number;
     specialRequest: string;
-    eventDate: string;
+    eventDate: Date | string;
     eventId: string | null;
     supplierCategory: string;
-    status: string;
+    status: 'ACCEPTED' | 'REJECTED' | 'ONGOING' | 'accept' | 'reject'; // Added possible status values from the example
 }
