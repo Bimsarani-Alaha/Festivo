@@ -26,7 +26,7 @@ function AppTitle() {
         sx={{ height: 50, maxWidth: "auto" }}
       />
       <Typography variant="h6" noWrap>
-        Supplier
+        {supplierEmail}
       </Typography>
     </Box>
   );

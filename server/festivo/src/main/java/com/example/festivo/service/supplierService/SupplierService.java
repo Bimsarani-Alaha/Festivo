@@ -31,4 +31,18 @@ public class SupplierService {
         return supplierRepository.findBySupplierEmail(email).isPresent();
     }
 
+    public SupplierEntity updatedSupplierEntity(String email, SupplierRequestDTO supplierRequestDTO) {
+        SupplierEntity supplier = supplierRepository.findBySupplierEmail(email).orElseThrow(() -> new RuntimeException("Supplier not found"));
+        // Update the fields of the supplier entity with the values from the DTO
+        supplier.setCompanyName(supplierRequestDTO.getCompanyName());
+        supplier.setCategory(supplierRequestDTO.getCategory());
+        supplier.setAddress(supplierRequestDTO.getAddress());
+
+        // Save the updated supplier entity to the database
+        return supplierRepository.save(supplier);
+    }
+    public void deleteSupplierEntity(String email) {
+        supplierRepository.deleteById(email);
+    }
+
 }

@@ -16,3 +16,12 @@ export async function fetchAllSuplierProducts() {
     console.log('Full API response:', res.data);
     return res.data;
 }
+export async function updateProduct(id: string, data: any) {
+    const res = await axios.put(`/supplier/update-product/${id}`, data);
+    return res.data;
+  }
+  
+  export async function deleteProduct(id: string) {
+    const res = await axios.delete(`/supplier/delete-product/${id}`);
+    return res.data;
+  }
