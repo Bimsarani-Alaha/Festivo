@@ -16,7 +16,7 @@ interface DataItem {
   expDate: string;
   cvv: number | null;
   orderSummery: string;
-  amount: number;
+  totalAmount: number;
 }
 
 interface DataTableProps {
@@ -67,7 +67,7 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
       cardType: item.cardType,
       expDate: item.expDate,
       orderSummery: item.orderSummery,
-      amount: item.amount
+      totalAmount: item.totalAmount
     });
     setSuccessMessage(null);
   };
@@ -148,7 +148,7 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
       if (navigator && navigator.share) {
         await navigator.share({
           title: `Payment Record - ${item.name}`,
-          text: `Payment details for ${item.name}\nEmail: ${item.email}\nAmount: ${formatCurrency(item.amount)}`,
+          text: `Payment details for ${item.name}\nEmail: ${item.email}\nAmount: ${formatCurrency(item.totalAmount)}`,
           url: window.location.href,
         });
       } else {
@@ -156,7 +156,7 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
 Name: ${item.name}
 Email: ${item.email}
 Phone: ${formatPhoneNumber(item.phoneNumber)}
-Amount: ${formatCurrency(item.amount)}
+Amount: ${formatCurrency(item.totalAmount)}
 Card Type: ${item.cardType}
 Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}`;
         
@@ -248,7 +248,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
             
             <div className="border-t pt-4">
               <p className="text-sm font-medium text-gray-500">Amount</p>
-              <p className="text-xl font-bold">{formatCurrency(selectedItem.amount)}</p>
+              <p className="text-xl font-bold">{formatCurrency(selectedItem.totalAmount)}</p>
             </div>
             
             <div className="mt-8 text-xs text-gray-500">
@@ -372,7 +372,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                     <div>
                       <p className="text-sm text-gray-500">Amount</p>
                       <p className="mt-1 text-lg font-bold text-gray-900">
-                        {formatCurrency(selectedItem.amount)}
+                        {formatCurrency(selectedItem.totalAmount)}
                       </p>
                     </div>
                   </div>
@@ -526,7 +526,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                     type="number"
                     id="amount"
                     name="amount"
-                    value={formData.amount || ''}
+                    value={formData.totalAmount || ''}
                     onChange={handleInputChange}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     required
@@ -595,7 +595,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">{item.cardType || 'N/A'}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">{maskCardNumber(item.cardNumber)}</td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{formatCurrency(item.amount)}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{formatCurrency(item.totalAmount)}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">
                         <button onClick={() => handleViewModal(item)} className="text-blue-600 hover:text-blue-800 mx-1">
                           <FontAwesomeIcon icon={faEye} />
