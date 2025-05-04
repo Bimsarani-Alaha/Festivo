@@ -124,7 +124,11 @@ export default function AdminDashboard(props: AdminDashboardProps) {
           boxShadow: 1,
         }}
       >
-        <Toolbar>
+        <Toolbar
+          sx={{
+            backgroundColor: "#E5BA73",
+          }}
+        >
           <IconButton
             color="inherit"
             aria-label="open drawer"

@@ -20,6 +20,7 @@ import SupplierPage from "./views/supplierPage/SupplierPage.tsx"
 import AllEventThemes from "./views/eventThemePage/allEventThemes.tsx";
 import AddProductPage from "./views/SupplierProducts/AddProductPage.tsx";
 import SupplierOnboardingForm from "./views/supplierPage/SupplierOnboardingForm.tsx";
+import AdminSupplierProducts from "./views/adminPage/AdminSupplierProducts.tsx";
 
 
 
@@ -90,6 +91,10 @@ const AppRoutes = () => {
                 <Route
                     path="/admin/allEventThemes"
                     element={<AllEventThemes/>}
+                />
+                <Route
+                    path="/admin/supplierProducts"
+                    element={<AdminSupplierProducts/>}
                 />
                 
                 
