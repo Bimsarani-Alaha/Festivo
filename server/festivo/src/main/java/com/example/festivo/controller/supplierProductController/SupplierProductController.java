@@ -3,10 +3,8 @@ package com.example.festivo.controller.supplierProductController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.festivo.dto.SupplierOrderRequestdto.SupplierReqDTO;
 import com.example.festivo.dto.supplierProductsDto.SupplierProductRequestDTO;
 import com.example.festivo.entity.suplierEntity.SupplierProductEntity;
-import com.example.festivo.entity.supplierReqOrderEntity.SupplierReq;
 import com.example.festivo.service.supplierProductService.SupplierProductService;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -25,6 +23,12 @@ public class SupplierProductController {
         return ResponseEntity.ok(product);
     }
 
+    @GetMapping("/get-products")
+    public ResponseEntity<List<SupplierProductEntity>> getAllSupplierProducts() {
+        List<SupplierProductEntity> products = supplierProductService.getAllSupplierProducts();
+        return ResponseEntity.ok(products);
+    }
+
     @GetMapping("/products/{email}")
     public ResponseEntity<List<SupplierProductEntity>> getSupplierProducts(@PathVariable String email) {
         List<SupplierProductEntity> products = supplierProductService.getSupplierProducts(email);
@@ -38,6 +42,12 @@ public class SupplierProductController {
             @RequestBody SupplierProductRequestDTO productDTO) {
         SupplierProductEntity updatedProduct = supplierProductService.updateSupplierProduct(id, productDTO);
         return ResponseEntity.ok(updatedProduct);
+    }
+
+    @DeleteMapping("/delete-product/{id}")
+    public ResponseEntity<String> deleteSupplierProduct(@PathVariable String id) {
+        supplierProductService.deleteSupplierProduct(id);
+        return ResponseEntity.ok("Product deleted successfully");
     }
 
 
