@@ -2,6 +2,7 @@ import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText
 import { Link } from 'react-router-dom';
 import { Dashboard as DashboardIcon, People as PeopleIcon, ShoppingCart as ShoppingCartIcon, BarChart as BarChartIcon, Settings as SettingsIcon } from '@mui/icons-material';
 import ContrastIcon from '@mui/icons-material/Contrast';
+import ExtensionIcon from '@mui/icons-material/Extension';
 const drawerWidth = 240;
 
 const menuItems = [
@@ -9,7 +10,7 @@ const menuItems = [
   { text: 'Customers', icon: <PeopleIcon />, path: '/UserManagementDashboard' },
   { text: 'Orders', icon: <ShoppingCartIcon />, path: '/EventBookingsTable' },
   { text: 'Reports', icon: <BarChartIcon />, path: '/admin/reports' },
-  { text: 'Settings', icon: <SettingsIcon />, path: '/admin/settings' },
+  { text: 'Supplier Products', icon: <ExtensionIcon />, path: '/admin/supplierProducts' },
   { text: 'Event Theme', icon: <ContrastIcon />, path: '/admin/EventTheme' },
   { text: 'Payment Details', icon: <BarChartIcon />, path: '/DataTable' },
 ];
