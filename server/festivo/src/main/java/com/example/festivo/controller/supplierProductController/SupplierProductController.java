@@ -3,8 +3,10 @@ package com.example.festivo.controller.supplierProductController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.festivo.dto.SupplierOrderRequestdto.SupplierReqDTO;
 import com.example.festivo.dto.supplierProductsDto.SupplierProductRequestDTO;
 import com.example.festivo.entity.suplierEntity.SupplierProductEntity;
+import com.example.festivo.entity.supplierReqOrderEntity.SupplierReq;
 import com.example.festivo.service.supplierProductService.SupplierProductService;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -37,5 +39,7 @@ public class SupplierProductController {
         SupplierProductEntity updatedProduct = supplierProductService.updateSupplierProduct(id, productDTO);
         return ResponseEntity.ok(updatedProduct);
     }
+
+
 
 }
