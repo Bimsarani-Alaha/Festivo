@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import visaCard from "../Images/payment.jpeg";
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
+import jsPDF from 'jspdf';
+import logo from './logofes.png';
+
 
 interface UserData {
   name?: string;
@@ -66,6 +69,98 @@ const CheckoutPage: React.FC = () => {
       packagePrice: PACKAGE_PRICES.Premium
     }
   );
+
+
+  const generateReceiptPDF = async (transactionId: string) => {
+    const doc = new jsPDF();
+    
+    const logoUrl = 'logofes.png'; // Replace with your actual logo path or base64
+    try {
+      doc.addImage(logoUrl, 'PNG', 15, 10, 40, 20);
+    } catch (error) {
+      console.log('Could not load logo, proceeding without it');
+    }
+  
+    // Header
+    doc.setFontSize(16);
+    doc.setTextColor(33, 37, 41);
+    doc.setFont('helvetica', 'bold');
+    doc.text('EVENT BOOKING RECEIPT', 105, 40, { align: 'center' });
+    
+    // Divider line
+    doc.setDrawColor(200, 200, 200);
+    doc.line(15, 45, 195, 45);
+    
+    // Transaction info section
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Receipt #: ${transactionId}`, 15, 55);
+    doc.text(`Date: ${new Date().toLocaleString()}`, 15, 60);
+    
+    // Customer information section
+    doc.setFontSize(12);
+    doc.setTextColor(33, 37, 41);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CUSTOMER INFORMATION', 15, 75);
+    doc.setFont('helvetica', 'normal');
+    
+    doc.text(`Name: ${formData.name}`, 20, 85);
+    doc.text(`Email: ${formData.email}`, 20, 95);
+    doc.text(`Phone: ${formData.phoneNumber}`, 20, 105);
+    
+    // Booking details section
+    doc.setFont('helvetica', 'bold');
+    doc.text('BOOKING DETAILS', 15, 125);
+    doc.setFont('helvetica', 'normal');
+    
+    doc.text(`Event: ${bookingData.eventName}`, 20, 135);
+    doc.text(`Theme: ${bookingData.eventTheme}`, 20, 145);
+    doc.text(`Date: ${formatDate(bookingData.eventDate)}`, 20, 155);
+    doc.text(`Guests: ${bookingData.noOfGuest}`, 20, 165);
+    doc.text(`Package: ${bookingData.eventPackage}`, 20, 175);
+    
+    // Payment summary section with table-like layout
+    doc.setFont('helvetica', 'bold');
+    doc.text('PAYMENT SUMMARY', 15, 195);
+    
+    // Table header
+    doc.setFillColor(240, 240, 240);
+    doc.rect(15, 200, 180, 10, 'F');
+    doc.setTextColor(33, 37, 41);
+    doc.text('Description', 20, 207);
+    doc.text('Amount (Rs.)', 160, 207, { align: 'right' });
+    
+    // Table rows
+    doc.setFont('helvetica', 'normal');
+    doc.text('Package Price', 20, 220);
+    doc.text(packagePrice.toLocaleString(), 160, 220, { align: 'right' });
+    
+    doc.text('Service Charge (10%)', 20, 230);
+    doc.text(serviceCharge.toLocaleString(), 160, 230, { align: 'right' });
+    
+    doc.text('Tax (5%)', 20, 240);
+    doc.text(taxAmount.toLocaleString(), 160, 240, { align: 'right' });
+    
+    // Total row
+    doc.setFont('helvetica', 'bold');
+    doc.setFillColor(230, 230, 250);
+    doc.rect(15, 250, 180, 10, 'F');
+    doc.text('TOTAL', 20, 257);
+    doc.text(totalAmount.toLocaleString(), 160, 257, { align: 'right' });
+    
+    // Footer
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Thank you for your booking with us!', 105, 280, { align: 'center' });
+    doc.text('For any questions, please contact support@eventfes.com', 105, 285, { align: 'center' });
+    doc.text('Official Receipt - Please retain for your records', 105, 290, { align: 'center' });
+    
+    // Save the PDF
+    doc.save(`EventFES_Receipt_${transactionId}.pdf`);
+  };
+
+
 
   const TAX_RATE = 0.05; // Changed from 0.10 to 0.05 (5% tax)
   const SERVICE_CHARGE_RATE = 0.10; // Added 10% service charge  
@@ -399,6 +494,7 @@ const CheckoutPage: React.FC = () => {
         }
       };
 
+      
       // Send the payment data to the backend
       const response = await axios.post('http://localhost:8080/public/addPayment', paymentData, {
         headers: {
@@ -409,6 +505,10 @@ const CheckoutPage: React.FC = () => {
 
       if (response.data) {
         const transactionId = response.data.transactionId || Date.now().toString();
+
+        // Generate and download the receipt
+        generateReceiptPDF(transactionId);
+
         setSuccess({
           show: true,
           message: `Payment confirmed for Rs. ${formData.amount}`,
@@ -566,14 +666,13 @@ const CheckoutPage: React.FC = () => {
   name="name"
   value={formData.name}
   onChange={(e) => {
-    // Allow letters and spaces, but don't prevent other input (like backspace)
+    // Allow letters and spaces
     const value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
-    handleInputChange({
-      target: {
-        name: e.target.name,
-        value: value
-      }
-    });
+    // Update state directly instead of creating synthetic event
+    setFormData(prev => ({
+      ...prev,
+      name: value
+    }));
   }}
   onBlur={handleBlur}
   className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
@@ -595,7 +694,7 @@ const CheckoutPage: React.FC = () => {
   type="email"
   name="email"
   value={formData.email}
-  onChange={handleInputChange}
+  onChange={handleInputChange}  // Use the standard handler
   onBlur={handleBlur}
   className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
     touched.email && errors.email ? 'border-red-500' : 'border-gray-300'
@@ -616,12 +715,11 @@ const CheckoutPage: React.FC = () => {
   onChange={(e) => {
     // Allow only numbers, limit to 10 digits
     const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-    handleInputChange({
-      target: {
-        name: e.target.name,
-        value: value
-      }
-    });
+    // Update state directly
+    setFormData(prev => ({
+      ...prev,
+      phoneNumber: value
+    }));
   }}
   onBlur={handleBlur}
   className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
