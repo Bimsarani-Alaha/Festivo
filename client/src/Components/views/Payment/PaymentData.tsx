@@ -16,7 +16,7 @@ interface DataItem {
   expDate: string;
   cvv: number | null;
   orderSummery: string;
-  amount: number;
+  amount: number; // This should now contain the totalAmount from checkout
 }
 
 interface DataTableProps {
@@ -38,7 +38,9 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
   const navigate = useNavigate();
   
   const { toPDF, targetRef } = usePDF({ filename: 'payment-record.pdf' });
-
+  const handleViewNavigation = (item: DataItem) => {
+    navigate(`/EventBookingsTable`);
+  };
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -67,7 +69,7 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
       cardType: item.cardType,
       expDate: item.expDate,
       orderSummery: item.orderSummery,
-      amount: item.amount
+      amount: item.amount // This is now the total amount
     });
     setSuccessMessage(null);
   };
@@ -75,10 +77,6 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
   const handleViewModal = (item: DataItem) => {
     setSelectedItem(item);
     setViewModalOpen(true);
-  };
-
-  const handleViewNavigation = (item: DataItem) => {
-    navigate(`/EventBookingsTable`);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -126,10 +124,10 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount / 100);
+    return 'Rs. ' + new Intl.NumberFormat('en-IN', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
   };
 
   const filteredData = data.filter(item => {
@@ -192,7 +190,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* PDF content - now properly showing all details */}
+      {/* PDF content */}
       <div ref={targetRef} className="p-4" style={{ position: 'absolute', left: '-9999px' }}>
         {selectedItem && (
           <div className="max-w-md mx-auto">
@@ -247,7 +245,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
             </div>
             
             <div className="border-t pt-4">
-              <p className="text-sm font-medium text-gray-500">Amount</p>
+              <p className="text-sm font-medium text-gray-500">Total Amount</p>
               <p className="text-xl font-bold">{formatCurrency(selectedItem.amount)}</p>
             </div>
             
@@ -259,7 +257,6 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
         )}
       </div>
 
-      {/* Rest of your component remains the same */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Payment Records</h1>
         <button 
@@ -370,7 +367,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Amount</p>
+                      <p className="text-sm text-gray-500">Total Amount</p>
                       <p className="mt-1 text-lg font-bold text-gray-900">
                         {formatCurrency(selectedItem.amount)}
                       </p>
@@ -520,7 +517,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="amount">
-                    Amount (in cents)
+                    Total Amount (Rs.)
                   </label>
                   <input
                     type="number"
@@ -571,7 +568,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase">Phone</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase">Card Type</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase">Card Number</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase">Total Amount (Rs.)</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase">Actions</th>
                 </tr>
               </thead>

@@ -10,3 +10,9 @@ export async function checkEmailAvailability(email: string) {
     console.log('Full API response:', res.data); // Logs `true`
     return res.data; // Instead of `res.data.available`
 }
+
+export async function fetchAllSuplierProducts() {
+    const res = await axios.get(`/supplier/get-products`);
+    console.log('Full API response:', res.data);
+    return res.data;
+}

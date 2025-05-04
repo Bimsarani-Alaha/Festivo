@@ -207,14 +207,13 @@ const DisplayEventTheme = () => {
                   </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <AttachMoneyIcon fontSize="small" sx={{ color: "#866A40", fontSize: "1rem" }} />
                     <Typography
                       variant="body2"
                       color="#866A40"
                       fontWeight={500}
                       fontSize="0.85rem"
                     >
-                      ₹{theme.price}
+                      LKR {" "} {theme.price}
                     </Typography>
                   </Box>
                 </Stack>
