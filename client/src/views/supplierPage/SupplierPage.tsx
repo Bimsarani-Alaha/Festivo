@@ -10,6 +10,7 @@ import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
 import logo from '../../assets/logoremasted.png';
 import AddProductPage from '../SupplierProducts/AddProductPage';
+import SupplierOrders from './SupplierOrderPage';
 
 function AppTitle() {
   return (
@@ -79,12 +80,12 @@ const demoTheme = createTheme({
 
 // === Page components ===
 
-function DashboardPage() {
-  return <Typography variant="h4">Welcome to the Dashboard</Typography>;
-}
+// function DashboardPage() {
+//   return <Typography variant="h4">Welcome to the Dashboard</Typography>;
+// }
 
 function OrdersPage() {
-  return <Typography variant="h4">Here are your Orders</Typography>;
+  return <SupplierOrders />;
 }
 
 function ReportsPage() {
