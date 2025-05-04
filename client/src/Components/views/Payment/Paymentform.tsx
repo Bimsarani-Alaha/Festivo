@@ -195,18 +195,11 @@ const CheckoutPage: React.FC = () => {
     return "";
   };
 
-  const validateCardNumber = (cardNumber: string, cardType: string) => {
+  const validateCardNumber = (cardNumber: string) => {
     if (!cardNumber) return "Card number is required";
-    const cleaned = cardNumber.replace(/\D/g, '');
-    
-    // Validate length based on card type
-    if (cardType === "American Express") {
-      if (cleaned.length !== 15) return "American Express requires 15 digits";
-    } else {
-      if (cleaned.length !== 16) return "Card number must be 16 digits";
-    }
-
-    if (!luhnCheck(cleaned)) return "Invalid card number";
+    const cleaned = cardNumber.replace(/\s/g, '');
+    if (!/^\d+$/.test(cleaned)) return "Card number must contain only numbers";
+    if (cleaned.length !== 16) return "Card number must be 16 digits";
     return "";
   };
 
@@ -225,97 +218,30 @@ const CheckoutPage: React.FC = () => {
     return "";
   };
 
-  const validateCVV = (cvv: string, cardType: string) => {
+  const validateCVV = (cvv: string) => {
     if (!cvv) return "CVV is required";
-    if (cardType === "American Express") {
-      if (!/^\d{4}$/.test(cvv)) return "American Express requires 4-digit CVV";
-    } else {
-      if (!/^\d{3}$/.test(cvv)) return "CVV must be 3 digits";
-    }
+    if (!/^\d{3}$/.test(cvv)) return "CVV must be 3 digits";
     return "";
-  };
-
-  // Luhn algorithm for card validation
-  const luhnCheck = (cardNumber: string): boolean => {
-    let sum = 0;
-    for (let i = 0; i < cardNumber.length; i++) {
-      let digit = parseInt(cardNumber[i]);
-      if ((cardNumber.length - i) % 2 === 0) {
-        digit *= 2;
-        if (digit > 9) digit -= 9;
-      }
-      sum += digit;
-    }
-    return sum % 10 === 0;
-  };
-
-  // Detect card type based on number
-  const detectCardType = (cardNumber: string) => {
-    const cleaned = cardNumber.replace(/\D/g, '');
-    if (/^4/.test(cleaned)) return "Visa";
-    if (/^5[1-5]/.test(cleaned)) return "MasterCard";
-    if (/^3[47]/.test(cleaned)) return "American Express";
-    if (/^6(?:011|5)/.test(cleaned)) return "Discover";
-    return formData.cardType; // Return current type if unknown
-  };
-
-  const validateField = (name: string, value: string) => {
-    switch (name) {
-      case 'name': return validateName(value);
-      case 'email': return validateEmail(value);
-      case 'phoneNumber': return validatePhone(value);
-      case 'address': return validateAddress(value);
-      case 'cardNumber': return validateCardNumber(value, formData.cardType);
-      case 'expDate': return validateExpDate(value);
-      case 'cvv': return validateCVV(value, formData.cardType);
-      default: return "";
-    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // Format card number with dashes based on card type
+    // Format card number as #### #### #### ####
     if (name === 'cardNumber') {
       // Remove all non-digit characters
       const cleanedValue = value.replace(/\D/g, '');
       
-      // Auto-detect card type if first few digits change
-      if (cleanedValue.length >= 2) {
-        const detectedType = detectCardType(cleanedValue);
-        if (detectedType !== formData.cardType) {
-          setFormData(prev => ({
-            ...prev,
-            cardType: detectedType
-          }));
-        }
-      }
-
-      // Limit length based on card type
-      let maxLength = 16;
-      if (formData.cardType === "American Express") {
-        maxLength = 15;
-      }
-      const limitedValue = cleanedValue.slice(0, maxLength);
+      // Limit to 16 digits
+      const limitedValue = cleanedValue.slice(0, 16);
       
-      // Add dashes based on card type
+      // Add space every 4 digits
       let formattedValue = '';
-      if (formData.cardType === "American Express") {
-        // Amex format: XXXX-XXXXXX-XXXXX
-        for (let i = 0; i < limitedValue.length; i++) {
-          if (i === 4 || i === 10) {
-            formattedValue += '-';
-          }
-          formattedValue += limitedValue[i];
+      for (let i = 0; i < limitedValue.length; i++) {
+        if (i > 0 && i % 4 === 0) {
+          formattedValue += ' ';
         }
-      } else {
-        // Other cards format: XXXX-XXXX-XXXX-XXXX
-        for (let i = 0; i < limitedValue.length; i++) {
-          if (i > 0 && i % 4 === 0) {
-            formattedValue += '-';
-          }
-          formattedValue += limitedValue[i];
-        }
+        formattedValue += limitedValue[i];
       }
       
       setFormData(prev => ({
@@ -353,10 +279,9 @@ const CheckoutPage: React.FC = () => {
       }
       return;
     }
-    // Limit CVV length based on card type
+    // Limit CVV to 3 digits
     else if (name === 'cvv') {
-      const maxLength = formData.cardType === "American Express" ? 4 : 3;
-      const formattedValue = value.replace(/\D/g, '').substring(0, maxLength);
+      const formattedValue = value.replace(/\D/g, '').substring(0, 3);
       
       setFormData(prev => ({
         ...prev,
@@ -397,16 +322,29 @@ const CheckoutPage: React.FC = () => {
     }));
   };
 
+  const validateField = (name: string, value: string) => {
+    switch (name) {
+      case 'name': return validateName(value);
+      case 'email': return validateEmail(value);
+      case 'phoneNumber': return validatePhone(value);
+      case 'address': return validateAddress(value);
+      case 'cardNumber': return validateCardNumber(value);
+      case 'expDate': return validateExpDate(value);
+      case 'cvv': return validateCVV(value);
+      default: return "";
+    }
+  };
+
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {
       name: validateName(formData.name),
       email: validateEmail(formData.email),
       phoneNumber: validatePhone(formData.phoneNumber),
       address: validateAddress(formData.address),
-      cardNumber: validateCardNumber(formData.cardNumber, formData.cardType),
+      cardNumber: validateCardNumber(formData.cardNumber),
       cardType: formData.cardType ? "" : "Card type is required",
       expDate: validateExpDate(formData.expDate),
-      cvv: validateCVV(formData.cvv, formData.cardType)
+      cvv: validateCVV(formData.cvv)
     };
 
     setErrors(newErrors);
@@ -443,7 +381,7 @@ const CheckoutPage: React.FC = () => {
         email: formData.email,
         phoneNumber: formData.phoneNumber,
         address: formData.address,
-        cardNumber: formData.cardNumber.replace(/\D/g, ''),
+        cardNumber: formData.cardNumber.replace(/\s/g, ''),
         cardType: formData.cardType,
         expDate: formData.expDate,
         cvv: formData.cvv,
@@ -609,81 +547,94 @@ const CheckoutPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Payment Section */}
             <div className="md:col-span-2">
+              
               {/* Personal Information */}
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-4 text-yellow-700 border-b border-yellow-200 pb-2">
-                  Personal Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-700 text-sm font-medium mb-1">
-                      Full Name {touched.name && errors.name && (
-                        <span className="text-red-500 text-xs ml-1">*</span>
-                      )}
-                    </label>
-                    
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
-                        touched.name && errors.name ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      required
-                      readOnly={!!userData.name}
-                    />
-                    {touched.name && errors.name && (
-                      <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 text-sm font-medium mb-1">
-                      Email {touched.email && errors.email && (
-                        <span className="text-red-500 text-xs ml-1">*</span>
-                      )}
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
-                        touched.email && errors.email ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      required
-                      readOnly={!!userData.email}
-                    />
-                    {touched.email && errors.email && (
-                      <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 text-sm font-medium mb-1">
-                      Phone Number {touched.phoneNumber && errors.phoneNumber && (
-                        <span className="text-red-500 text-xs ml-1">*</span>
-                      )}
-                    </label>
-                    <input
-                      type="tel"
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
-                        touched.phoneNumber && errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      required
-                      readOnly={!!userData.phoneNumber}
-                    />
-                    {touched.phoneNumber && errors.phoneNumber && (
-                      <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
+<div className="mb-6">
+  <h3 className="text-lg font-medium mb-4 text-yellow-700 border-b border-yellow-200 pb-2">
+    Personal Information
+  </h3>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-gray-700 text-sm font-medium mb-1">
+        Full Name {touched.name && errors.name && (
+          <span className="text-red-500 text-xs ml-1">*</span>
+        )}
+      </label>
+      
+      <input
+  type="text"
+  name="name"
+  value={formData.name}
+  onChange={(e) => {
+    // Allow letters and spaces, but don't prevent other input (like backspace)
+    const value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+    handleInputChange({
+      target: {
+        name: e.target.name,
+        value: value
+      }
+    });
+  }}
+  onBlur={handleBlur}
+  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
+    touched.name && errors.name ? 'border-red-500' : 'border-gray-300'
+  }`}
+  required
+/>
+      {touched.name && errors.name && (
+        <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+      )}
+    </div>
+    <div>
+      <label className="block text-gray-700 text-sm font-medium mb-1">
+        Email {touched.email && errors.email && (
+          <span className="text-red-500 text-xs ml-1">*</span>
+        )}
+      </label>
+      <input
+  type="email"
+  name="email"
+  value={formData.email}
+  onChange={handleInputChange}
+  onBlur={handleBlur}
+  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
+    touched.email && errors.email ? 'border-red-500' : 'border-gray-300'
+  }`}
+  required
+/>
+    </div>
+    <div>
+      <label className="block text-gray-700 text-sm font-medium mb-1">
+        Phone Number {touched.phoneNumber && errors.phoneNumber && (
+          <span className="text-red-500 text-xs ml-1">*</span>
+        )}
+      </label>
+      <input
+  type="tel"
+  name="phoneNumber"
+  value={formData.phoneNumber}
+  onChange={(e) => {
+    // Allow only numbers, limit to 10 digits
+    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    handleInputChange({
+      target: {
+        name: e.target.name,
+        value: value
+      }
+    });
+  }}
+  onBlur={handleBlur}
+  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
+    touched.phoneNumber && errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
+  }`}
+  required
+/>
+      {touched.phoneNumber && errors.phoneNumber && (
+        <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
+      )}
+    </div>
+  </div>
+</div>
 
               {/* Shipping Address */}
               <div className="mb-6">
@@ -768,11 +719,7 @@ const CheckoutPage: React.FC = () => {
                     <input
                       type="text"
                       name="cardNumber"
-                      placeholder={
-                        formData.cardType === "American Express" 
-                          ? "3782-822463-10005" 
-                          : "1234-5678-9012-3456"
-                      }
+                      placeholder="1234 5678 9012 3456"
                       value={formData.cardNumber}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
@@ -781,9 +728,7 @@ const CheckoutPage: React.FC = () => {
                       }`}
                       required
                       inputMode="numeric"
-                      maxLength={
-                        formData.cardType === "American Express" ? 17 : 19 // 15 digits + 2 dashes or 16 digits + 3 dashes
-                      }
+                      maxLength={19} // 16 digits + 3 spaces
                     />
                     {touched.cardNumber && errors.cardNumber && (
                       <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>
@@ -827,7 +772,7 @@ const CheckoutPage: React.FC = () => {
                         <input
                           type="text"
                           name="cvv"
-                          placeholder={formData.cardType === "American Express" ? "1234" : "123"}
+                          placeholder="123"
                           value={formData.cvv}
                           onChange={handleInputChange}
                           onBlur={handleBlur}
@@ -836,7 +781,7 @@ const CheckoutPage: React.FC = () => {
                           }`}
                           required
                           inputMode="numeric"
-                          maxLength={formData.cardType === "American Express" ? 4 : 3}
+                          maxLength={3}
                         />
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 absolute right-3 top-3.5" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
@@ -852,27 +797,27 @@ const CheckoutPage: React.FC = () => {
               
               {/* Confirm Payment Button */}
               <button 
-  type="submit"
-  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg transition-colors font-medium shadow-md flex items-center justify-center mt-4 disabled:bg-yellow-400 disabled:cursor-not-allowed"
-  disabled={isLoading}
->
-  {isLoading ? (
-    <>
-      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      Processing...
-    </>
-  ) : (
-    <>
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-      </svg>
-      Confirm Payment Rs. {totalAmount.toLocaleString()}
-    </>
-  )}
-</button>
+                type="submit"
+                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg transition-colors font-medium shadow-md flex items-center justify-center mt-4 disabled:bg-yellow-400 disabled:cursor-not-allowed"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    Confirm Payment Rs. {totalAmount.toLocaleString()}
+                  </>
+                )}
+              </button>
             </div>
             
             {/* Order Summary */}
@@ -907,24 +852,24 @@ const CheckoutPage: React.FC = () => {
               <div className="border-t border-yellow-300 pt-4">
                 <h4 className="font-medium text-gray-800 mb-3">Price Summary</h4>
                 <div className="space-y-2 text-sm">
-  <div className="flex justify-between">
-    <span className="text-gray-600">Package Price:</span>
-    <span className="font-medium">Rs. {packagePrice.toLocaleString()}</span>
-  </div>
-  <div className="flex justify-between">
-    <span className="text-gray-600">Service Charge (10%):</span> {/* Added this line */}
-    <span className="font-medium">Rs. {serviceCharge.toLocaleString()}</span> {/* Added this line */}
-  </div>
-  <div className="flex justify-between">
-    <span className="text-gray-600">Tax (5%):</span> {/* Changed from 10% to 5% */}
-    <span className="font-medium">Rs. {taxAmount.toLocaleString()}</span>
-  </div>
-  
-  <div className="flex justify-between border-t border-yellow-200 pt-2">
-    <span className="text-gray-800 font-semibold">Total:</span>
-    <span className="text-gray-900 font-bold">Rs. {totalAmount.toLocaleString()}</span>
-  </div>
-</div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Package Price:</span>
+                    <span className="font-medium">Rs. {packagePrice.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Service Charge (10%):</span>
+                    <span className="font-medium">Rs. {serviceCharge.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tax (5%):</span>
+                    <span className="font-medium">Rs. {taxAmount.toLocaleString()}</span>
+                  </div>
+                  
+                  <div className="flex justify-between border-t border-yellow-200 pt-2">
+                    <span className="text-gray-800 font-semibold">Total:</span>
+                    <span className="text-gray-900 font-bold">Rs. {totalAmount.toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
               
               {/* Payment Info */}
