@@ -117,7 +117,7 @@ const SupplierOnboardingForm = () => {
       await createSupplier(formData);
       setActiveStep(steps.length);
       setTimeout(() => {
-        navigate('/SupplierPage');
+        navigate('/supplier/SupplierPage');
       }, 2000);
     } catch (err) {
       setError('Submission failed. Please try again.');
@@ -340,15 +340,6 @@ const SupplierOnboardingForm = () => {
             <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
               Thank you for your application. Our team will review your information and contact you within 2-3 business days.
             </Typography>
-            <ColorButton
-              onClick={handleReset}
-              variant="contained"
-              sx={{
-                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-              }}
-            >
-              Start New Application
-            </ColorButton>
           </Box>
         ) : (
           <>
