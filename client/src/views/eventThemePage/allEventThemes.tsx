@@ -294,7 +294,7 @@ const AllEventThemes: React.FC = () => {
               </Box>
               <Button 
                 component={Link} 
-                to="/admin/createEventTheme" 
+                to="/admin/EventTheme" 
                 variant="contained"
                 sx={{ bgcolor: "#C58940", "&:hover": { bgcolor: "#A67535" } }}
               >
