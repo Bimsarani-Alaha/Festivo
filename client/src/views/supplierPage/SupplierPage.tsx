@@ -2,33 +2,28 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { createTheme } from '@mui/material/styles';
-import DashboardIcon from '@mui/icons-material/Dashboard';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import Avatar from '@mui/material/Avatar';
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
 import logo from '../../assets/logoremasted.png';
 import AddProductPage from '../SupplierProducts/AddProductPage';
 import SupplierOrders from './SupplierOrderPage';
+import { getSupplierDetails } from '../../customHooks/supplierEmailextract';
+
+const supplierDetails = getSupplierDetails();
+const supplierEmail = supplierDetails?.email || 'supplier@example.com'; // Fallback email
 
 function AppTitle() {
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1,
-      }}
-    >
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
       <Box
         component="img"
         src={logo}
         alt="Logo"
-        sx={{
-          height: 50,
-          maxWidth: "auto",
-        }}
+        sx={{ height: 50, maxWidth: "auto" }}
       />
       <Typography variant="h6" noWrap>
         Supplier
@@ -37,12 +32,43 @@ function AppTitle() {
   );
 }
 
+function UserAvatar() {
+  // Extract initials from email (first letter of local part and domain)
+  const getInitials = (email: string) => {
+    const [localPart, domain] = email.split('@');
+    return `${localPart[0]?.toUpperCase()}${domain[0]?.toUpperCase()}` || 'SU';
+  };
+
+  return (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Avatar 
+        alt={supplierEmail} 
+        sx={{ 
+          width: 40, 
+          height: 40,
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText'
+        }}
+      >
+        {getInitials(supplierEmail)}
+      </Avatar>
+      <Typography 
+        variant="body1" 
+        sx={{ 
+          display: { xs: 'none', sm: 'block' },
+          maxWidth: 200,
+          textOverflow: 'ellipsis',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        {supplierEmail}
+      </Typography>
+    </Box>
+  );
+}
+
 const NAVIGATION: Navigation = [
-  // {
-  //   segment: 'dashboard',
-  //   title: 'Dashboard',
-  //   icon: <DashboardIcon />,
-  // },
   {
     segment: 'orders',
     title: 'Orders',
@@ -53,20 +79,71 @@ const NAVIGATION: Navigation = [
     title: 'Add Items',    
     icon: <ShoppingCartIcon /> 
   },
-
   {
     segment: 'reports',
     title: 'Reports',
     icon: <BarChartIcon />,
   },
-  
 ];
 
+const themeColors = {
+  primary: '#d4a85f',
+  secondary: '#fffff',
+  light: '#f8f4e9',
+  border: '#e0d6bc',
+  darkHover: '#4a381f',
+};
+
 const demoTheme = createTheme({
-  cssVariables: {
-    colorSchemeSelector: 'data-toolpad-color-scheme',
+  palette: {
+    mode: 'light', // Force light mode
+    primary: {
+      main: themeColors.primary,
+      dark: themeColors.darkHover,
+    },
+    secondary: {
+      main: themeColors.secondary,
+    },
+    background: {
+      default: themeColors.light,
+      paper: themeColors.light,
+    },
+    divider: themeColors.border,
   },
-  colorSchemes: { light: true, dark: true },
+  components: {
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: themeColors.primary,
+          color: '#ffffff',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        containedPrimary: {
+          backgroundColor: themeColors.primary,
+          '&:hover': {
+            backgroundColor: themeColors.darkHover,
+          },
+        },
+        containedSecondary: {
+          backgroundColor: themeColors.secondary,
+          '&:hover': {
+            backgroundColor: themeColors.primary,
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundColor: themeColors.light,
+          borderColor: themeColors.border,
+        },
+      },
+    },
+  },
   breakpoints: {
     values: {
       xs: 0,
@@ -78,12 +155,6 @@ const demoTheme = createTheme({
   },
 });
 
-// === Page components ===
-
-// function DashboardPage() {
-//   return <Typography variant="h4">Welcome to the Dashboard</Typography>;
-// }
-
 function OrdersPage() {
   return <SupplierOrders />;
 }
@@ -91,29 +162,25 @@ function OrdersPage() {
 function ReportsPage() {
   return <Typography variant="h4">Reports Overview</Typography>;
 }
-function AddItemPage(){
-  return <AddProductPage/>
+
+function AddItemPage() {
+  return <AddProductPage/>;
 }
 
 function NotFoundPage() {
   return <Typography variant="h4">Here Your Products</Typography>;
 }
 
-// === Content switcher ===
-
 function DemoPageContent({ pathname }: { pathname: string }) {
   let ContentComponent;
 
   switch (pathname) {
-    // case '/dashboard':
-    //   ContentComponent = DashboardPage;
-    //   break;
     case '/orders':
       ContentComponent = OrdersPage;
       break;
     case '/add-items':
-      ContentComponent=AddItemPage;
-      break
+      ContentComponent = AddItemPage;
+      break;
     case '/reports':
       ContentComponent = ReportsPage;
       break;
@@ -122,21 +189,17 @@ function DemoPageContent({ pathname }: { pathname: string }) {
   }
 
   return (
-    <Box
-      sx={{
-        py: 4,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-      }}
-    >
+    <Box sx={{
+      py: 4,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      textAlign: 'center',
+    }}>
       <ContentComponent />
     </Box>
   );
 }
-
-// === App Wrapper ===
 
 export default function DashboardLayoutNoMiniSidebar() {
   const router = useDemoRouter('/orders');
@@ -149,7 +212,7 @@ export default function DashboardLayoutNoMiniSidebar() {
     >
       <DashboardLayout
         slots={{
-          toolbarAccount: () => null,
+          toolbarAccount: UserAvatar,
           appTitle: AppTitle,
         }}
       >
