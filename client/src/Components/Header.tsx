@@ -13,7 +13,6 @@ import {
   MenuItem,
   Badge,
 } from "@mui/material";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import MenuIcon from "@mui/icons-material/Menu";
 import getUserDetails from "../customHooks/extractJwt";
 import { useNavigate } from "react-router-dom";
@@ -148,9 +147,6 @@ const Header = () => {
                 },
               }}
             >
-              <Badge badgeContent={3} color="error">
-                <ShoppingCartIcon />
-              </Badge>
             </IconButton>
             <Box
               sx={{
