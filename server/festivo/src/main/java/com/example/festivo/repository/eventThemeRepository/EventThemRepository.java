@@ -8,4 +8,7 @@ import com.example.festivo.entity.eventEntity.EventTheme;
 
 public interface EventThemRepository extends MongoRepository<EventTheme, String> {
     List<EventTheme> findByEventName(String eventName);
+
+    EventTheme findByThemeName(String eventName);
+
 }

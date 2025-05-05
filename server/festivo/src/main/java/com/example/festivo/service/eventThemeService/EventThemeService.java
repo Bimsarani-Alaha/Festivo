@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 import com.example.festivo.dto.EventThemeDTO.EventThemeRequestDTO;
 import com.example.festivo.dto.EventThemeDTO.EventThemeResponseDTO;
 import com.example.festivo.entity.eventEntity.EventTheme;
+import com.example.festivo.entity.userentity.Event;
 import com.example.festivo.repository.eventThemeRepository.EventThemRepository;
+import com.example.festivo.repository.userrepository.EventRepo;
 
 import lombok.AllArgsConstructor;
 
@@ -17,6 +19,7 @@ import lombok.AllArgsConstructor;
 public class EventThemeService {
 
     private final EventThemRepository eventThemeRepository;
+    private final EventRepo eventRepo;
 
     public EventThemeResponseDTO createEventTheme(EventThemeRequestDTO req) {
 
@@ -63,15 +66,21 @@ public class EventThemeService {
         return new EventThemeResponseDTO("Event Updated Successfully", null);
     }
 
-    public boolean deleteEventTheme(String id) {
-
+    public String deleteEventTheme(String id, String eventName) {
         Optional<EventTheme> optionalEventTheme = eventThemeRepository.findById(id);
-
         if (optionalEventTheme.isEmpty()) {
-            return false; // EventTheme not found
+            return "Not Found";
+        }
+        System.out.println("theme "+eventName);
+
+        EventTheme eventTheme = optionalEventTheme.get();
+        Event event = eventRepo.findByEventTheme(eventTheme.getThemeName());
+        if (event != null && eventTheme.getEventName().equals(event.getEventName())) {
+            return "Can not Delete This Event Theme";
         }
 
-        eventThemeRepository.deleteById(id); // Delete the event theme
-        return true; // Successfully deleted
+        eventThemeRepository.deleteById(id);
+        return "OK";
     }
+
 }

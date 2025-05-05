@@ -61,13 +61,17 @@ public class EventThemeController {
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEventTheme(@PathVariable String id) {
-        boolean deleted = eventThemeService.deleteEventTheme(id);
-        if (deleted) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        } else {
+    @DeleteMapping("/{id}/{eventName}")
+    public ResponseEntity<Void> deleteEventTheme(@PathVariable String id, @PathVariable String eventName) {
+        String deleted = eventThemeService.deleteEventTheme(id, eventName);
+        if (deleted.equals("OK")) {
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } else if (deleted.equals("Not Found")) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } else if (deleted.equals("Can not Delete This Event Theme")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 }
