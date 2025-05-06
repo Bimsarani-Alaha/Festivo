@@ -169,22 +169,58 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
     setSelectedConsumption(null);
     setDialogOpen(true);
   };
-  const handleClose = () => setDialogOpen(false);
+  const handleClose = () => {
+    setDialogOpen(false);
+    setSelectedConsumption(null); // Reset selected package when closing
+  };
+
   const handleSave = (data: ThemePackage) => {
     const currentPackages = watch("themePackage") || [];
-    setValue("themePackage", [...currentPackages, data]);
+
+    // If editing (selectedConsumption exists), exclude it from duplicate check
+    const packagesToCheck = selectedConsumption
+      ? currentPackages.filter((pkg) => pkg.id !== selectedConsumption.id)
+      : currentPackages;
+
+    const isDuplicate = packagesToCheck.some(
+      (pkg: ThemePackage) =>
+        pkg.packageName.trim().toLowerCase() ===
+        data.packageName.trim().toLowerCase()
+    );
+
+    if (isDuplicate) {
+      alert("You can't add the same package twice.");
+      return;
+    }
+
+    // If editing, replace the package, otherwise add new
+    if (selectedConsumption) {
+      setValue(
+        "themePackage",
+        currentPackages.map((pkg) =>
+          pkg.id === selectedConsumption.id ? data : pkg
+        )
+      );
+    } else {
+      setValue("themePackage", [...currentPackages, data]);
+    }
   };
+
   const [openAddOrEditAdditionalDialog, setOpenAddOrEditAdditionalDialog] =
     useState(false);
   const [selectedConsumption, setSelectedConsumption] =
     useState<ThemePackage | null>(null);
-
+  const packageColorMap: Record<string, string> = {
+    luxury: "#e3f2fd",
+    basic: "#fce4ec",
+    premium: "#e8f5e9",
+  };
   const themePackageWatch = watch("themePackage");
 
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ bgcolor: "#FAF8F1", minHeight: "100vh", py: 5 }}>
-        <Container maxWidth="md">
+        <Container maxWidth="lg">
           <Card
             elevation={4}
             sx={{
@@ -412,9 +448,6 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
                         control={control}
                         rules={{
                           required: "Image URL is required",
-                          validate: (value) =>
-                            isNaN(Number(value)) ||
-                            "Image URL cannot be numbers",
                         }}
                         render={({ field }) => (
                           <TextField
@@ -441,83 +474,93 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
                   </Box>
 
                   <Stack>
-                    <Table aria-label="simple table">
-                      <TableHead
-                        sx={{
-                          backgroundColor: "var(--pallet-lighter-grey)",
-                        }}
-                      >
-                        <TableRow>
-                          <TableCell align="center">id</TableCell>
-                          <TableCell align="center">Package Name</TableCell>
-                          <TableCell align="center">Package Price</TableCell>
-                          <TableCell align="center">Description</TableCell>
-                          <TableCell align="center"></TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {themePackageWatch?.length > 0 ? (
-                          themePackageWatch.map((row) => (
-                            <TableRow
-                              key={row.id} // Make sure to add a unique key
+                    <Box
+                      display="flex"
+                      flexWrap="wrap"
+                      gap={2}
+                      justifyContent="center"
+                    >
+                      {themePackageWatch?.length > 0 ? (
+                        themePackageWatch.map((row) => {
+                          const colorKey = row.packageName.toLowerCase();
+                          const bgColor = packageColorMap[colorKey] || "#fff";
+
+                          return (
+                            <Card
+                              key={row.id}
                               sx={{
-                                "&:last-child td, &:last-child th": {
-                                  border: 0,
-                                },
-                                cursor: "pointer",
+                                width: 280,
+                                borderRadius: 3,
+                                boxShadow: 3,
+                                position: "relative",
+                                backgroundColor: bgColor,
                               }}
                             >
-                              <TableCell
-                                component="th"
-                                scope="row"
-                                align="center"
-                              >
-                                {row?.id}
-                              </TableCell>
-                              <TableCell align="center">
-                                {row?.packageName}
-                              </TableCell>
-                              <TableCell align="center">
-                                {row?.packagePrice}
-                              </TableCell>
-                              
-                              <TableCell align="center">
-                                <IconButton
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedConsumption(row);
-                                    setDialogOpen(true);
-                                  }}
+                              <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                  {row.packageName}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
                                 >
-                                  <EditCalendarOutlined />
-                                </IconButton>
-                                <IconButton
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setValue(
-                                      "themePackage",
-                                      themePackageWatch.filter(
-                                        (item) => item.id !== row.id
-                                      )
-                                    );
-                                  }}
+                                  <strong>ID:</strong> {row.id}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
                                 >
-                                  <DeleteOutline />
-                                </IconButton>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={5} align="center">
-                              <Typography variant="body2">
-                                No packages added yet
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                                  <strong>Price:</strong> ${row.packagePrice}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{ mt: 1 }}
+                                >
+                                  <strong>Description:</strong>{" "}
+                                  {row.description}
+                                </Typography>
+                                <Box
+                                  display="flex"
+                                  justifyContent="flex-end"
+                                  mt={2}
+                                  gap={1}
+                                >
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                      setSelectedConsumption(row); // This sets the package to edit
+                                      setDialogOpen(true);
+                                    }}
+                                  >
+                                    <EditCalendarOutlined fontSize="small" />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                      setValue(
+                                        "themePackage",
+                                        themePackageWatch.filter(
+                                          (item) => item.id !== row.id
+                                        )
+                                      );
+                                    }}
+                                  >
+                                    <DeleteOutline fontSize="small" />
+                                  </IconButton>
+                                </Box>
+                              </CardContent>
+                            </Card>
+                          );
+                        })
+                      ) : (
+                        <Box width="100%" textAlign="center" mt={2}>
+                          <Typography variant="body2" color="text.secondary">
+                            No packages added yet
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
                   </Stack>
 
                   <Box sx={{ display: "flex", gap: 2, flexGrow: 1 }}>
@@ -599,6 +642,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
               onSave={(data) => {
                 console.log("Adding new Consumption", data);
                 if (selectedConsumption) {
+                  // Trying to update
                   setValue("themePackage", [
                     ...(themePackageWatch ?? []).map((item) => {
                       if (item.id === selectedConsumption.id) {
@@ -608,6 +652,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
                     }),
                   ]);
                 } else {
+                  // Adding new
                   setValue("themePackage", [
                     ...(themePackageWatch ?? []),
                     data,

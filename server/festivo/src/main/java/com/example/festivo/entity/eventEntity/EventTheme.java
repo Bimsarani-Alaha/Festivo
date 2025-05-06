@@ -1,5 +1,7 @@
 package com.example.festivo.entity.eventEntity;
 
+import java.util.List;
+
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -22,6 +24,6 @@ public class EventTheme {
     private Double price;
     private String description;
     private String img;
-    
+    private List<ThemePackage> themePackage;
 
 }

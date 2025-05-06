@@ -57,16 +57,7 @@ export async function deleteEventTheme({ themeId, themeName }: { themeId: string
 }
 
 export const PackageNameData = [
-    {
-        id: "1",
-        name: "Basic",
-    },
-    {
-        id: "2",
-        name: "Premium",
-    },
-    {
-        id: "3",
-        name: "Luxury",
-    },
+    {"id": 1, "name": "Basic"},
+    {"id": 2, "name": "Premium"},
+    {"id": 3, "name": "Luxury"}
 ];

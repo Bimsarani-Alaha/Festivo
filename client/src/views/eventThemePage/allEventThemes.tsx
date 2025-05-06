@@ -4,6 +4,8 @@ import {
   EventThemeSchema,
   updateEventTheme,
   deleteEventTheme,
+  PackageNameData,
+  ThemePackage
 } from "../../api/eventThemeApi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -45,8 +47,10 @@ import {
   ColorLens as ColorLensIcon,
   Category as CategoryIcon,
   AddPhotoAlternate as AddPhotoAlternateIcon,
+  EditCalendarOutlined,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import AddOrEditPackageDialog from "./AddOrEditThemePackagesDialog"; // Assuming this component is in the same directory
 
 // Custom theme based on the color palette
 const theme = createTheme({
@@ -179,6 +183,10 @@ const AllEventThemes: React.FC = () => {
     themeName: string;
   } | null>(null);
 
+  // Package dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<ThemePackage | null>(null);
+
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
 
@@ -253,6 +261,7 @@ const AllEventThemes: React.FC = () => {
       price: editData.price ?? 0,
       description: editData.description ?? "",
       img: editData.img || "",
+      themePackage: editData.themePackage || [],
     };
 
     updateEventThemeMutation(updatedTheme);
@@ -287,6 +296,52 @@ const AllEventThemes: React.FC = () => {
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditData({});
+  };
+
+  // Package dialog handlers
+  const handleOpenPackageDialog = (pkg: ThemePackage | null = null) => {
+    setSelectedPackage(pkg);
+    setDialogOpen(true);
+  };
+
+  const handleClosePackageDialog = () => {
+    setDialogOpen(false);
+    setSelectedPackage(null);
+  };
+
+  const handleSavePackage = (packageData: ThemePackage) => {
+    if (!editingId) return;
+
+    const currentPackages = editData.themePackage || [];
+    
+    let updatedPackages;
+    
+    if (selectedPackage) {
+      // Update existing package
+      updatedPackages = currentPackages.map(pkg => 
+        pkg.id === selectedPackage.id ? packageData : pkg
+      );
+    } else {
+      // Add new package
+      // Check for duplicates
+      const isDuplicate = currentPackages.some(
+        pkg => pkg.packageName.trim().toLowerCase() === packageData.packageName.trim().toLowerCase()
+      );
+      
+      if (isDuplicate) {
+        alert("You can't add the same package twice.");
+        return;
+      }
+      
+      updatedPackages = [...currentPackages, packageData];
+    }
+    
+    setEditData(prev => ({
+      ...prev,
+      themePackage: updatedPackages
+    }));
+    
+    handleClosePackageDialog();
   };
 
   const eventTypes = ["Birthday", "Proposal", "Gender Reveal"];
@@ -449,7 +504,6 @@ const AllEventThemes: React.FC = () => {
                       },
                       display: "flex",
                       flexDirection: "column",
-                      height: 420, // Set a fixed height for all cards
                     }}
                     elevation={3}
                   >
@@ -521,19 +575,6 @@ const AllEventThemes: React.FC = () => {
                         {theme.themeName}
                       </Typography>
 
-                      {theme.color && (
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", mt: 1 }}
-                        >
-                          <ColorLensIcon
-                            sx={{ color: "#C58940", fontSize: 20, mr: 1 }}
-                          />
-                          <Typography variant="body2" color="#705B35">
-                            {theme.color}
-                          </Typography>
-                        </Box>
-                      )}
-
                       {theme.description && (
                         <Typography
                           variant="body2"
@@ -548,6 +589,35 @@ const AllEventThemes: React.FC = () => {
                         >
                           {theme.description}
                         </Typography>
+                      )}
+
+                      {theme.themePackage && theme.themePackage.length > 0 && (
+                        <Box sx={{ mt: 2 }}>
+                          {theme.themePackage.map((pkg) => (
+                            <Box
+                              key={pkg.id}
+                              sx={{
+                                mt: 1,
+                                p: 1,
+                                bgcolor: "#FFF7E9",
+                                borderRadius: 1,
+                                border: "1px solid #EAD7A1",
+                              }}
+                            >
+                              <Typography
+                                variant="subtitle2"
+                                fontWeight={600}
+                                color="#705B35"
+                              >
+                                {pkg.packageName} - LKR{" "}
+                                {pkg.packagePrice.toLocaleString()}
+                              </Typography>
+                              <Typography variant="body2" color="#8C6E46">
+                                {pkg.description}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
                       )}
                     </CardContent>
 
@@ -595,11 +665,12 @@ const AllEventThemes: React.FC = () => {
         open={editingId !== null}
         onClose={handleCancelEdit}
         fullWidth
-        maxWidth="sm"
+        maxWidth="lg"
         PaperProps={{
           sx: {
             borderRadius: 3,
             overflow: "hidden",
+            marginTop: '2rem'
           },
         }}
       >
@@ -619,7 +690,7 @@ const AllEventThemes: React.FC = () => {
         </DialogTitle>
 
         <DialogContent sx={{ p: 3, mt: 2 }}>
-          <Stack spacing={3}>
+          <Stack spacing={3} margin={2}>
             <TextField
               fullWidth
               label="Event Type"
@@ -654,21 +725,6 @@ const AllEventThemes: React.FC = () => {
                       }}
                       variant="outlined"
                     />
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <TextField
-              fullWidth
-              label="Color"
-              name="color"
-              value={editData.color || ""}
-              onChange={handleChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <ColorLensIcon sx={{ color: "#C58940" }} />
                   </InputAdornment>
                 ),
               }}
@@ -714,6 +770,60 @@ const AllEventThemes: React.FC = () => {
               value={editData.description || ""}
               onChange={handleChange}
             />
+
+            {/* Theme Packages Section */}
+            <Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight={600} color="#433520">
+                  Theme Packages
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  size="small"
+                  onClick={() => handleOpenPackageDialog()}
+                  sx={{ borderColor: "#E5BA73", color: "#C58940" }}
+                >
+                  Add Package
+                </Button>
+              </Box>
+              
+              {editData.themePackage && editData.themePackage.length > 0 ? (
+                editData.themePackage.map((pkg) => (
+                  <Box
+                    key={pkg.id}
+                    sx={{
+                      mt: 1,
+                      p: 2,
+                      bgcolor: "#FFF7E9",
+                      borderRadius: 2,
+                      border: "1px solid #EAD7A1",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center"
+                    }}
+                  >
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight={600} color="#705B35">
+                        {pkg.packageName} - LKR {pkg.packagePrice.toLocaleString()}
+                      </Typography>
+                      <Typography variant="body2" color="#8C6E46">
+                        {pkg.description}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleOpenPackageDialog(pkg)}
+                    >
+                      <EditIcon fontSize="small" color="primary" />
+                    </IconButton>
+                  </Box>
+                ))
+              ) : (
+                <Typography variant="body2" color="#705B35" sx={{ fontStyle: 'italic' }}>
+                  No packages added yet. Click "Add Package" to create one.
+                </Typography>
+              )}
+            </Box>
           </Stack>
         </DialogContent>
 
@@ -767,6 +877,14 @@ const AllEventThemes: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Package Dialog */}
+      <AddOrEditPackageDialog
+        open={dialogOpen}
+        onClose={handleClosePackageDialog}
+        onSave={handleSavePackage}
+        defaultValues={selectedPackage || undefined}
+      />
+
       {/* Success Snackbars */}
       <Snackbar
         open={openSnackbar}
@@ -795,12 +913,12 @@ const AllEventThemes: React.FC = () => {
       >
         <Alert
           onClose={handleCloseDeleteSnackbar}
-          severity="success"
-          sx={{ width: "100%", bgcolor: "#C58940", color: "#FAF8F1" }}
+          severity="error"
+          sx={{ width: "100%" }}
           variant="filled"
           elevation={6}
         >
-          Event theme Can not Delete 
+          Event theme cannot be deleted
         </Alert>
       </Snackbar>
 

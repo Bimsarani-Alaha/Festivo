@@ -8,6 +8,7 @@ import {
   DialogActions,
   Autocomplete,
   Stack,
+  Typography,
 } from "@mui/material";
 import { PackageNameData, ThemePackage } from "../../api/eventThemeApi";
 import { Controller, useForm } from "react-hook-form";
@@ -36,26 +37,39 @@ export default function AddOrEditPackageDialog({
     setValue,
     watch,
   } = useForm<ThemePackage>({
-    defaultValues,
+    defaultValues: {
+      packageName: "",
+      packagePrice: 0,
+      description: "",
+      id: "",
+    },
   });
 
   useEffect(() => {
-    if (defaultValues) {
-      reset(defaultValues);
-    } else {
-      reset();
+    if (open) {
+      if (defaultValues) {
+        reset(defaultValues);
+      } else {
+        reset({
+          packageName: "",
+          packagePrice: 0,
+          description: "",
+          id: "",
+        });
+      }
     }
-  }, [defaultValues, reset]);
-
-  const resetForm = () => {
-    reset();
-  };
+  }, [open, defaultValues, reset]);
 
   return (
     <Dialog
       open={open}
       onClose={() => {
-        resetForm();
+        reset({
+          packageName: "",
+          packagePrice: 0,
+          description: "",
+          id: "",
+        });
         onClose();
       }}
       maxWidth="lg"
@@ -74,35 +88,34 @@ export default function AddOrEditPackageDialog({
             gap: "1rem",
           }}
         >
-          <Controller
-            name="packageName"
-            control={control}
-            defaultValue={defaultValues?.packageName}
-            rules={{ required: true }}
-            render={({ field }) => (
-              <Autocomplete
-                {...field}
-                onChange={(event, newValue) => field.onChange(newValue)}
-                value={PackageNameData.find((pkg) => pkg.name === field.value)}
-                options={PackageNameData}
-                getOptionLabel={(option) => option.name}
-                isOptionEqualToValue={(option, value) =>
-                  option.name === value.name
-                }
-                size="small"
-                sx={{ flex: 1, margin: "0.5rem" }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    required
-                    error={!!errors.packageName}
-                    helperText={errors.packageName && "Required"}
-                    label="Package Name"
-                  />
-                )}
-              />
-            )}
-          />
+          {defaultValues?.packageName ? (
+            <Typography>{defaultValues.packageName}</Typography>
+          ) : (
+            <Controller
+              name="packageName"
+              control={control}
+              rules={{ required: "Package Name is required" }}
+              render={({ field }) => (
+                <Autocomplete
+                  sx={{ p: "0.5rem" }}
+                  options={PackageNameData.map((pkg) => pkg.name)}
+                  value={field.value || null}
+                  onChange={(_, value) => field.onChange(value)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      size="small"
+                      label="Package Name"
+                      error={!!errors.packageName}
+                      helperText={errors.packageName?.message}
+                      required
+                      fullWidth
+                    />
+                  )}
+                />
+              )}
+            />
+          )}
 
           <TextField
             required
@@ -113,7 +126,10 @@ export default function AddOrEditPackageDialog({
             helperText={errors.packagePrice && "Required"}
             size="small"
             sx={{ flex: 1, margin: "0.5rem" }}
-            {...register("packagePrice", { required: true })}
+            {...register("packagePrice", {
+              required: true,
+              valueAsNumber: true,
+            })}
           />
 
           <Controller
@@ -133,7 +149,12 @@ export default function AddOrEditPackageDialog({
       <DialogActions>
         <Button
           onClick={() => {
-            resetForm();
+            reset({
+              packageName: "",
+              packagePrice: 0,
+              description: "",
+              id: "",
+            });
             onClose();
           }}
         >
@@ -144,10 +165,15 @@ export default function AddOrEditPackageDialog({
           onClick={handleSubmit((data) => {
             const finalData = {
               ...data,
-              id: data.id || generateRandomId(),
+              id: defaultValues?.id || generateRandomId(),
             };
             onSave(finalData);
-            resetForm();
+            reset({
+              packageName: "",
+              packagePrice: 0,
+              description: "",
+              id: "",
+            });
             onClose();
           })}
         >
