@@ -1,7 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import UserService from "./UserService";
-
 import CompanyLogo from "../Images/Logo.jpg";
 
 type FormData = {
@@ -10,7 +9,7 @@ type FormData = {
   gender: string;
   phoneNumber: string;
   password: string;
-  role: "USER" | "ADMIN";
+  role: "USER";
 };
 
 type FormErrors = {
@@ -19,7 +18,6 @@ type FormErrors = {
   gender?: string;
   phoneNumber?: string;
   password?: string;
-  role?: string;
 };
 
 const SignUp = () => {
@@ -36,9 +34,6 @@ const SignUp = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
-  const [showSecretKeyModal, setShowSecretKeyModal] = useState(false);
-  const [secretKeyInput, setSecretKeyInput] = useState("");
-  const [secretKeyError, setSecretKeyError] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -47,26 +42,20 @@ const SignUp = () => {
       ...formData,
       [name]: value
     });
-    
+
     if (errors[name as keyof FormErrors]) {
       setErrors({
         ...errors,
         [name]: undefined
       });
     }
-    
+
     if (apiError) setApiError("");
-    
-    if (name === "role" && value === "ADMIN") {
-      setShowSecretKeyModal(true);
-      setSecretKeyInput("");
-      setSecretKeyError("");
-    }
   };
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-    
+
     if (!formData.name.trim()) newErrors.name = "Full name is required";
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       newErrors.email = "Please enter a valid email";
@@ -78,9 +67,6 @@ const SignUp = () => {
     if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
     }
-    if (formData.role === "ADMIN" && !secretKeyInput) {
-      newErrors.role = "Admin registration requires secret key verification";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -88,9 +74,9 @@ const SignUp = () => {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
     setApiError("");
 
@@ -100,7 +86,7 @@ const SignUp = () => {
     } catch (error: any) {
       console.error("Registration error:", error);
       let errorMessage = "Registration failed. Please try again.";
-      
+
       if (error.response) {
         if (error.response.data?.message) {
           errorMessage = error.response.data.message;
@@ -108,19 +94,10 @@ const SignUp = () => {
           errorMessage = "Email already exists. Please use a different email.";
         }
       }
-      
+
       setApiError(errorMessage);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const verifySecretKey = () => {
-    if (secretKeyInput === "festivo") {
-      setShowSecretKeyModal(false);
-      setSecretKeyError("");
-    } else {
-      setSecretKeyError("Invalid secret key. Please try again.");
     }
   };
 
@@ -139,38 +116,21 @@ const SignUp = () => {
             className="h-20 object-contain transition-transform hover:scale-105" 
           />
         </div>
-        
+
         <h1 className="text-3xl font-bold text-center mb-3 text-[#C58940]">
           Create Account <span className="text-yellow-500">✨</span>
         </h1>
         <p className="text-[#8D6E63] text-center mb-8 text-sm">
           Join our exclusive community today! <span className="text-yellow-500">🎊</span>
         </p>
-        
+
         {apiError && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {apiError}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <div className="relative">
-              <select 
-                id="role" 
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className={`w-full px-4 py-3 pl-10 border ${errors.role ? 'border-red-500' : 'border-[#C58940]'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C58940] bg-white text-[#5D4037]`}
-              >
-                <option value=" USER">👤 Regular User</option>
-                <option value="ADMIN">👑 Administrator</option>
-              </select>
-              
-            </div>
-            {errors.role && <p className="text-red-500 text-xs mt-1">{errors.role}</p>}
-          </div>
-          
           <div className="relative">
             <input 
               type="text" 
@@ -179,12 +139,11 @@ const SignUp = () => {
               value={formData.name}
               onChange={handleChange}
               className={`w-full px-4 py-3 pl-10 border ${errors.name ? 'border-red-500' : 'border-[#C58940]'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C58940] bg-white placeholder-[#BCAAA4] text-[#5D4037]`} 
-              placeholder="👤Full Name"
+              placeholder="👤 Full Name"
             />
-            
             {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
           </div>
-          
+
           <div className="relative">
             <input 
               type="email" 
@@ -195,10 +154,9 @@ const SignUp = () => {
               className={`w-full px-4 py-3 pl-10 border ${errors.email ? 'border-red-500' : 'border-[#C58940]'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C58940] bg-white placeholder-[#BCAAA4] text-[#5D4037]`} 
               placeholder="✉️ Email Address"
             />
-           
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="relative">
               <select 
@@ -208,14 +166,13 @@ const SignUp = () => {
                 onChange={handleChange}
                 className={`w-full px-4 py-3 pl-10 border ${errors.gender ? 'border-red-500' : 'border-[#C58940]'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C58940] bg-white text-[#5D4037]`}
               >
-                <option value=""> ⚥ Select Gender</option>
-                <option value="MALE">♂️Male</option>
+                <option value="">⚥ Select Gender</option>
+                <option value="MALE">♂️ Male</option>
                 <option value="FEMALE">♀️ Female</option>
               </select>
-             
               {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender}</p>}
             </div>
-            
+
             <div className="relative">
               <input 
                 type="tel" 
@@ -236,11 +193,10 @@ const SignUp = () => {
                 maxLength={10}
                 inputMode="numeric"
               />
-              
               {errors.phoneNumber && <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>}
             </div>
           </div>
-          
+
           <div className="relative">
             <input 
               type="password" 
@@ -251,10 +207,9 @@ const SignUp = () => {
               className={`w-full px-4 py-3 pl-10 border ${errors.password ? 'border-red-500' : 'border-[#C58940]'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C58940] bg-white placeholder-[#BCAAA4] text-[#5D4037]`} 
               placeholder="🔒 Password (min 8 chars)"
             />
-           
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
           </div>
-          
+
           <button 
             type="submit" 
             disabled={isSubmitting}
@@ -272,60 +227,19 @@ const SignUp = () => {
               "Create Account"
             )}
           </button>
-          
+
           <p className="text-center text-sm text-[#8D6E63] mt-4">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <button
               type="button"
               className="text-[#C58940] hover:text-[#B17A3A] font-medium hover:underline"
               onClick={() => navigate("/loginForm")}
             >
-              Sign in 🔑 
+              Sign in 🔑
             </button>
           </p>
         </form>
-        
-        {showSecretKeyModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h2 className="text-xl font-bold text-[#C58940] mb-4">Admin Verification</h2>
-              <p className="mb-4 text-gray-700">
-                To register as an administrator, please enter the secret key provided by your organization.
-              </p>
-              <input
-                type="password"
-                value={secretKeyInput}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setSecretKeyInput(e.target.value)}
-                className="w-full px-4 py-2 border border-[#C58940] rounded-lg mb-4"
-                placeholder="Enter secret key"
-                autoFocus
-              />
-              {secretKeyError && <p className="text-red-500 text-sm mb-4">{secretKeyError}</p>}
-              <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSecretKeyModal(false);
-                    setFormData({...formData, role: "USER"});
-                    setSecretKeyInput("");
-                    setSecretKeyError("");
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={verifySecretKey}
-                  className="px-4 py-2 bg-[#C58940] text-white rounded-lg hover:bg-[#B17A3A]"
-                >
-                  Verify
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        
+
         {showSuccessModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 max-w-md w-full text-center">

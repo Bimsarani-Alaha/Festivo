@@ -1,17 +1,20 @@
 import React, { useState } from "react";
 import {
-  Grid,
+  Box,
   Card,
   CardContent,
   Typography,
   CardMedia,
   Container,
   CircularProgress,
-  Box,
   Button,
-  Stack,
   IconButton,
   Chip,
+  Divider,
+  Paper,
+  Stack,
+  Fade,
+  Zoom,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { fetchThemesByEvent } from "../../api/eventThemeApi";
@@ -19,250 +22,498 @@ import Logo from "../../assets/Logo.jpg";
 import { useParams, useNavigate } from "react-router-dom";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import EventIcon from "@mui/icons-material/Event";
-import PaletteIcon from "@mui/icons-material/Palette";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import StarIcon from "@mui/icons-material/Star";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import Header from "../../Components/Header";
+import Footer from "../../Components/Footer";
+import DescriptionIcon from '@mui/icons-material/Description';
 
-const DisplayEventTheme = () => {
+// Define TypeScript interfaces for the data structures
+interface ThemePackage {
+  id: number | string;
+  packageName: string;
+  packagePrice: number;
+  description: string;
+}
+
+interface Theme {
+  id: number | string;
+  themeName: string;
+  eventName: string;
+  color: string;
+  price: number;
+  featured?: boolean;
+  img?: string;
+  description?: string;
+  themePackage?: ThemePackage[];
+}
+
+interface FavoritesState {
+  [key: string | number]: boolean;
+}
+
+const DisplayEventTheme: React.FC = () => {
   const { eventName } = useParams<{ eventName: string }>();
   const navigate = useNavigate();
-  const [isHovered, setIsHovered] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-
+  const [hoveredId, setHoveredId] = useState<string | number | null>(null);
+  const [favorites, setFavorites] = useState<FavoritesState>({});
   const { data, isLoading, isError } = useQuery({
     queryKey: ["eventThemes", eventName],
     queryFn: () => fetchThemesByEvent(eventName!),
     enabled: !!eventName,
   });
 
-  const handleSelectTheme = (theme: any) => {
+  const handleSelectTheme = (theme: Theme): void => {
     navigate("/Eventbooking", { state: { selectedTheme: theme } });
+  };
+
+  const toggleFavorite = (
+    id: string | number,
+    event: React.MouseEvent
+  ): void => {
+    event.stopPropagation();
+    setFavorites((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
+      <>
+        <Header />
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="70vh"
+          sx={{
+            backgroundImage: "linear-gradient(to bottom, #fff9f2, #ffffff)",
+          }}
+        >
+          <CircularProgress sx={{ color: "#E5BA73" }} />
+        </Box>
+        <Footer />
+      </>
     );
   }
 
   if (isError) {
     return (
-      <Box textAlign="center" mt={4}>
-        <Typography variant="h6" color="error">
-          Failed to load event themes.
-        </Typography>
-      </Box>
+      <>
+        <Header />
+        <Box
+          textAlign="center"
+          py={8}
+          sx={{
+            backgroundImage: "linear-gradient(to bottom, #fff9f2, #ffffff)",
+          }}
+        >
+          <Typography variant="h6" color="error">
+            Failed to load event themes.
+          </Typography>
+          <Button
+            variant="outlined"
+            sx={{
+              mt: 2,
+              borderColor: "#E5BA73",
+              color: "#614A29",
+              "&:hover": {
+                borderColor: "#D4A85F",
+              },
+            }}
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </Button>
+        </Box>
+        <Footer />
+      </>
     );
   }
 
+  const themes = data as Theme[];
+
   return (
-    <Container sx={{ py: 6 }}>
-      <Typography variant="h4" gutterBottom textAlign="center" fontWeight={600}>
-        {eventName} Themes
-      </Typography>
-      <Grid container spacing={4}>
-        {data?.map((theme: any) => (
-          <Grid item xs={12} sm={6} md={4} key={theme.id}>
-            <Card
+    <>
+      <Header />
+      <Box
+        sx={{
+          backgroundImage: "linear-gradient(to bottom, #fff9f2, #ffffff)",
+          minHeight: "100vh",
+          pt: 6,
+          pb: 10,
+        }}
+      >
+        <Container maxWidth="lg">
+          <Box textAlign="center" mb={6}>
+            <Typography
+              variant="h3"
+              component="h1"
               sx={{
-                width: "20rem",
-                height: "40rem",
-                display: "flex",
-                flexDirection: "column",
-                borderRadius: 3,
-                overflow: "hidden",
-                boxShadow: "0 8px 16px rgba(0,0,0,0.08)",
-                transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                "&:hover": {
-                  transform: "translateY(-6px)",
-                  boxShadow: "0 12px 24px rgba(229, 186, 115, 0.25)",
-                },
-                border: "1px solid rgba(229, 186, 115, 0.2)",
-                position: "relative",
+                fontFamily: "'Playfair Display', serif",
+                color: "#614A29",
+                fontWeight: 700,
+                mb: 1,
               }}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
             >
-              <IconButton
-                size="small"
-                onClick={() => setIsFavorite(!isFavorite)}
-                sx={{
-                  position: "absolute",
-                  top: 8,
-                  right: 8,
-                  bgcolor: "white",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  "&:hover": { bgcolor: "white" },
-                  zIndex: 2,
-                  padding: "4px",
-                }}
+              {eventName} Themes
+            </Typography>
+
+            <Divider
+              sx={{
+                width: "120px",
+                mx: "auto",
+                my: 2,
+                borderColor: "#E5BA73",
+                borderWidth: 2,
+              }}
+            />
+
+            <Typography
+              variant="subtitle1"
+              color="#866A40"
+              sx={{
+                maxWidth: "700px",
+                mx: "auto",
+                opacity: 0.9,
+              }}
+            >
+              Choose from our curated selection of {eventName?.toLowerCase()}{" "}
+              themes to create your perfect event
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: { xs: 2, sm: 3, md: 4 },
+              justifyContent: "center",
+            }}
+          >
+            {themes?.map((theme, index) => (
+              <Zoom
+                in={true}
+                style={{ transitionDelay: `${index * 100}ms` }}
+                key={theme.id}
               >
-                {isFavorite ? (
-                  <FavoriteIcon fontSize="small" sx={{ color: "#e91e63" }} />
-                ) : (
-                  <FavoriteBorderIcon fontSize="small" sx={{ color: "#614A29" }} />
-                )}
-              </IconButton>
-
-              {theme.featured && (
-                <Chip
-                  icon={<StarIcon fontSize="small" />}
-                  label="Featured"
-                  size="small"
+                <Card
                   sx={{
-                    position: "absolute",
-                    top: 8,
-                    left: 8,
-                    bgcolor: "#E5BA73",
-                    color: "white",
-                    fontWeight: 600,
-                    zIndex: 2,
+                    width: { xs: "100%", sm: "320px", md: "340px" },
+                    height: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: 4,
+                    overflow: "hidden",
+                    boxShadow: "0 8px 16px rgba(0,0,0,0.08)",
+                    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                    "&:hover": {
+                      transform: "translateY(-8px)",
+                      boxShadow: "0 16px 30px rgba(229, 186, 115, 0.25)",
+                    },
+                    border: "1px solid rgba(229, 186, 115, 0.2)",
+                    position: "relative",
+                    background: "#ffffff",
                   }}
-                />
-              )}
-
-              <Box sx={{ position: "relative" }}>
-                <CardMedia
-                  component="img"
-                  image={theme.img || Logo}
-                  alt={theme.themeName}
-                  sx={{
-                    objectFit: "cover",
-                    transition: "transform 0.6s ease",
-                    transform: isHovered ? "scale(1.05)" : "scale(1)",
-                    height: "25rem",
-                  }}
-                />
-                {isHovered && (
-                  <Box
+                  onMouseEnter={() => setHoveredId(theme.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                >
+                  {/* Favorite Button */}
+                  <IconButton
+                    size="small"
+                    onClick={(e) => toggleFavorite(theme.id, e)}
                     sx={{
                       position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      bgcolor: "rgba(0,0,0,0.3)",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      transition: "opacity 0.3s ease",
+                      top: 12,
+                      right: 12,
+                      bgcolor: "rgba(255,255,255,0.9)",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      "&:hover": {
+                        bgcolor: "rgba(255,255,255,0.95)",
+                        transform: "scale(1.1)",
+                      },
+                      zIndex: 2,
+                      padding: "6px",
+                      transition: "all 0.2s ease",
                     }}
                   >
-                    <Button
-                      variant="contained"
-                      startIcon={<VisibilityIcon fontSize="small" />}
+                    {favorites[theme.id] ? (
+                      <FavoriteIcon sx={{ color: "#e91e63" }} />
+                    ) : (
+                      <FavoriteBorderIcon sx={{ color: "#614A29" }} />
+                    )}
+                  </IconButton>
+
+                  {/* Featured Chip */}
+                  {theme.featured && (
+                    <Chip
+                      icon={<StarIcon />}
+                      label="Featured"
                       size="small"
                       sx={{
-                        bgcolor: "white",
-                        color: "#614A29",
-                        "&:hover": {
-                          bgcolor: "white",
-                          filter: "brightness(0.95)",
+                        position: "absolute",
+                        top: 12,
+                        left: 12,
+                        background:
+                          "linear-gradient(135deg, #E5BA73 0%, #D4A85F 100%)",
+                        color: "white",
+                        fontWeight: 600,
+                        zIndex: 2,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                        "& .MuiChip-icon": {
+                          color: "white",
+                          fontSize: "18px",
                         },
-                        borderRadius: 28,
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                        textTransform: "none",
-                        fontWeight: 500,
-                        px: 2,
-                        py: 0.5,
                       }}
-                    >
-                      View
-                    </Button>
-                  </Box>
-                )}
-              </Box>
+                    />
+                  )}
 
-              <CardContent sx={{ flexGrow: 1, p: 2 }}>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  gutterBottom
-                  sx={{
-                    fontFamily: "'Playfair Display', serif",
-                    color: "#614A29",
-                    fontSize: "1.1rem",
-                  }}
-                >
-                  {theme.themeName}
-                </Typography>
-
-                <Stack spacing={1} sx={{ mt: 1.5 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <EventIcon fontSize="small" sx={{ color: "#866A40", fontSize: "1rem" }} />
-                    <Typography variant="body2" color="#866A40" fontSize="0.85rem">
-                      {theme.eventName}
-                    </Typography>
+                  {/* Image Section */}
+                  <Box sx={{ position: "relative", overflow: "hidden" }}>
+                    <CardMedia
+                      component="img"
+                      image={theme.img || Logo}
+                      alt={theme.themeName}
+                      sx={{
+                        height: "240px",
+                        objectFit: "cover",
+                        transition: "transform 0.8s ease",
+                        transform:
+                          hoveredId === theme.id ? "scale(1.08)" : "scale(1)",
+                      }}
+                    />
                   </Box>
 
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PaletteIcon fontSize="small" sx={{ color: "#866A40", fontSize: "1rem" }} />
-                    <Typography variant="body2" color="#866A40" fontSize="0.85rem">
-                      {theme.color}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Typography
-                      variant="body2"
-                      color="#866A40"
-                      fontWeight={500}
-                      fontSize="0.85rem"
-                    >
-                      LKR {" "} {theme.price}
-                    </Typography>
-                  </Box>
-                </Stack>
-
-                {theme.description && (
-                  <Typography
-                    variant="body2"
-                    mt={2}
+                  {/* Content Section */}
+                  <CardContent
                     sx={{
-                      color: "#614A29",
-                      opacity: 0.85,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      fontSize: "0.85rem",
+                      flexGrow: 1,
+                      p: 3,
+                      transition: "all 0.3s ease",
+                      background: "transparent",
                     }}
                   >
-                    {theme.description}
-                  </Typography>
-                )}
+                    {/* Theme Name */}
+                    <Typography
+                      variant="h5"
+                      gutterBottom
+                      sx={{
+                        fontFamily: "'Playfair Display', serif",
+                        color: "#614A29",
+                        fontWeight: 700,
+                        mb: 2,
+                        fontSize: "1.5rem",
+                        textAlign: "center",
+                        position: "relative",
+                        "&:after": {
+                          content: '""',
+                          display: "block",
+                          width: "60px",
+                          height: "3px",
+                          background: "#E5BA73",
+                          margin: "12px auto 0",
+                          borderRadius: 3,
+                        },
+                      }}
+                    >
+                      {theme.themeName}
+                    </Typography>
 
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="small"
-                  onClick={() => handleSelectTheme(theme)}
-                  sx={{
-                    mt: 2,
-                    bgcolor: "#E5BA73",
-                    color: "white",
-                    "&:hover": { bgcolor: "#D4A85F" },
-                    borderRadius: 28,
-                    py: 1,
-                    textTransform: "none",
-                    boxShadow: "0 4px 12px rgba(229, 186, 115, 0.2)",
-                    fontWeight: 500,
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  Select Theme
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Container>
+                    {/* Theme Details */}
+                    <Stack spacing={2} sx={{ mb: 3 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          p: 1.5,
+                          bgcolor: "rgba(229,186,115,0.1)",
+                          borderRadius: 2,
+                        }}
+                      >
+                        <EventIcon sx={{ color: "#866A40" }} />
+                        <Typography color="#866A40" fontWeight={500}>
+                          {theme.eventName}
+                        </Typography>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          p: 1.5,
+                          bgcolor: "rgba(229,186,115,0.1)",
+                          borderRadius: 2,
+                        }}
+                      >
+                        <AttachMoneyIcon sx={{ color: "#866A40" }} />
+                        <Typography color="#866A40" fontWeight={600}>
+                          LKR {theme.price.toLocaleString()}
+                        </Typography>
+                      </Box>
+                    </Stack>
+
+                    {/* Description */}
+                    {theme.description && (
+                      <Fade in={true}>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            mb: 3,
+                            background: "rgba(255,255,255,0.7)",
+                            borderRadius: 2,
+                            border: "1px solid rgba(229, 186, 115, 0.3)",
+                            boxShadow: "0 4px 12px rgba(229, 186, 115, 0.1)",
+                          }}
+                        >
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={600}
+                            gutterBottom
+                            color="#614A29"
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mb: 1.5,
+                            }}
+                          >
+                            <DescriptionIcon sx={{ color: "#E5BA73" }} />
+                            About This Theme
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: "#614A29",
+                              opacity: 0.85,
+                              lineHeight: 1.6,
+                            }}
+                          >
+                            {theme.description}
+                          </Typography>
+                        </Paper>
+                      </Fade>
+                    )}
+
+                    {/* Packages */}
+                    {theme.themePackage && theme.themePackage.length > 0 && (
+                      <Fade in={true}>
+                        <Box mb={3}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mb: 2,
+                            }}
+                          >
+                            <LocalOfferIcon sx={{ color: "#E5BA73" }} />
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight={600}
+                              sx={{ color: "#614A29" }}
+                            >
+                              Available Packages
+                            </Typography>
+                          </Box>
+
+                          <Stack spacing={2}>
+                            {theme.themePackage.map((pkg) => (
+                              <Paper
+                                key={pkg.id}
+                                elevation={0}
+                                sx={{
+                                  border: "1px solid #E5BA73",
+                                  borderRadius: 2,
+                                  p: 2,
+                                  background: "rgba(255,255,255,0.7)",
+                                  transition: "transform 0.2s ease",
+                                  "&:hover": {
+                                    transform: "translateY(-2px)",
+                                    boxShadow:
+                                      "0 4px 12px rgba(229, 186, 115, 0.15)",
+                                  },
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    mb: 1,
+                                  }}
+                                >
+                                  <Typography
+                                    variant="subtitle2"
+                                    fontWeight="bold"
+                                    sx={{ color: "#866A40" }}
+                                  >
+                                    {pkg.packageName}
+                                  </Typography>
+                                  <Typography
+                                    variant="subtitle2"
+                                    fontWeight="bold"
+                                    sx={{ color: "#E5BA73" }}
+                                  >
+                                    LKR {pkg.packagePrice.toLocaleString()}
+                                  </Typography>
+                                </Box>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ color: "#614A29", opacity: 0.9 }}
+                                >
+                                  {pkg.description}
+                                </Typography>
+                              </Paper>
+                            ))}
+                          </Stack>
+                        </Box>
+                      </Fade>
+                    )}
+
+                    {/* Select Button */}
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectTheme(theme);
+                      }}
+                      sx={{
+                        background:
+                          "linear-gradient(135deg, #E5BA73 0%, #D4A85F 100%)",
+                        color: "white",
+                        "&:hover": {
+                          background:
+                            "linear-gradient(135deg, #D4A85F 0%, #C3984E 100%)",
+                          transform: "translateY(-2px)",
+                        },
+                        borderRadius: 28,
+                        py: 1.2,
+                        textTransform: "none",
+                        boxShadow: "0 4px 14px rgba(229, 186, 115, 0.4)",
+                        fontWeight: 600,
+                        fontSize: "0.95rem",
+                        letterSpacing: 0.5,
+                        transition: "all 0.3s ease",
+                        mt: 1,
+                      }}
+                    >
+                      Select This Theme
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Zoom>
+            ))}
+          </Box>
+        </Container>
+      </Box>
+      <Footer />
+    </>
   );
 };
 

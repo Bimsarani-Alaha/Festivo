@@ -1,5 +1,7 @@
 package com.example.festivo.dto.EventThemeDTO;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +15,8 @@ public class EventThemeRequestDTO {
     private String themeName;
     private String color;
     private Double price;
-    private String description; 
+    private String description;
     private String img;
+    private List<ThemePackageDTO> themePackage;
+
 }
