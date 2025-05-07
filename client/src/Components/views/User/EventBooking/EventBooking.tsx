@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
+interface ThemePackage {
+  id: number | string;
+  packageName: string;
+  packagePrice: number;
+  description: string;
+}
+
 interface ThemeData {
   id: string;
   themeName: string;
@@ -20,53 +27,47 @@ interface EventData {
   eventType: 'Indoor' | 'Outdoor' | 'Pool' | '';
   noOfGuest: number;
   specialRequest: string;
-  eventPackage: 'Basic' | 'Premium' | 'Luxury';
+  selectedPackage?: ThemePackage;
 }
 
 const EventBooking = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const selectedTheme = location.state?.selectedTheme as ThemeData | undefined;
+  const selectedPackageFromTheme = location.state?.selectedPackage as ThemePackage | undefined;
 
-  // Initialize form state with theme data if available
-  const [eventName, setEventName] = useState(selectedTheme?.eventName || 'Birthday');
-  const [eventTheme, setEventTheme] = useState(selectedTheme?.themeName || 'Fairy Tale Magic');
-  const [eventType, setEventType] = useState<'Indoor' | 'Outdoor' | 'Pool' | ''>('');
-  const [guestCount, setGuestCount] = useState(0);
-  const [specialRequest, setSpecialRequest] = useState('');
-  const [selectedPackage, setSelectedPackage] = useState<'Basic' | 'Premium' | 'Luxury' | null>(null);
-  const [eventDate, setEventDate] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [minDate, setMinDate] = useState('');
-  const [touchedFields, setTouchedFields] = useState({
-    eventName: false,
-    eventTheme: false,
-    eventDate: false,
-    eventType: false,
-    guestCount: false,
-    package: false
-  });
 
-  // Set minimum date to today and initialize package based on theme price
+ // Initialize form state with theme data if available
+ const [eventName, setEventName] = useState(selectedTheme?.eventName || 'Birthday');
+ const [eventTheme, setEventTheme] = useState(selectedTheme?.themeName || 'Fairy Tale Magic');
+ const [eventType, setEventType] = useState<'Indoor' | 'Outdoor' | 'Pool' | ''>('');
+ const [guestCount, setGuestCount] = useState(0);
+ const [specialRequest, setSpecialRequest] = useState('');
+ const [selectedPackage, setSelectedPackage] = useState<ThemePackage | null>(selectedPackageFromTheme || null);
+ const [eventDate, setEventDate] = useState('');
+ const [isLoading, setIsLoading] = useState(false);
+ const [error, setError] = useState('');
+ const [minDate, setMinDate] = useState('');
+ const [touchedFields, setTouchedFields] = useState({
+   eventName: false,
+   eventTheme: false,
+   eventDate: false,
+   eventType: false,
+   guestCount: false,
+   package: false
+ });
+
+
+// Set minimum date to today
   useEffect(() => {
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     setMinDate(`${year}-${month}-${day}`);
+  }, []);
 
-    if (selectedTheme) {
-      // Set package based on theme price
-      if (selectedTheme.price > 70000) {
-        setSelectedPackage('Luxury');
-      } else if (selectedTheme.price > 40000) {
-        setSelectedPackage('Premium');
-      } else {
-        setSelectedPackage('Basic');
-      }
-    }
-  }, [selectedTheme]);
+
 
   const incrementGuests = () => {
     setGuestCount(prev => prev + 1);
@@ -82,7 +83,7 @@ const EventBooking = () => {
     setTouchedFields(prev => ({ ...prev, [field]: true }));
   };
 
-  const validateForm = () => {
+   const validateForm = () => {
     const errors = [];
     
     if (!eventName.trim()) {
@@ -111,13 +112,10 @@ const EventBooking = () => {
       errors.push('Number of guests must be at least 1');
     }
 
-    if (!selectedPackage) {
-      errors.push('Please select a package');
-    }
-
     setError(errors.join(', '));
     return errors.length === 0;
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +138,7 @@ const EventBooking = () => {
       eventType,
       noOfGuest: guestCount,
       specialRequest,
-      eventPackage: selectedPackage as 'Basic' | 'Premium' | 'Luxury'
+      selectedPackage: selectedPackage || undefined
     };
 
     setIsLoading(true);
@@ -227,7 +225,7 @@ const EventBooking = () => {
             </p>
           </div>
 
-          {/* Theme Preview Section */}
+           {/* Theme Preview Section */}
           {selectedTheme && (
             <div className="p-6 border-b">
               <div className="flex flex-col md:flex-row gap-6">
@@ -245,6 +243,19 @@ const EventBooking = () => {
                     <AttachMoneyIcon className="text-gray-700 mr-1" />
                     <span className="font-medium">Starting from Rs. {selectedTheme.price.toLocaleString()}</span>
                   </div>
+                  {/* Display selected package if available */}
+                  {selectedPackage && (
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <h4 className="font-bold text-gray-800">Selected Package:</h4>
+                      <div className="flex justify-between mt-1">
+                        <span className="font-medium">{selectedPackage.packageName}</span>
+                        <span className="font-bold text-yellow-700">
+                          Rs. {selectedPackage.packagePrice.toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{selectedPackage.description}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -423,86 +434,10 @@ const EventBooking = () => {
             </div>
 
             <div className="border-t pt-6">
-              {/* Packages */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">Select Package:</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {['Basic', 'Premium', 'Luxury'].map((pkg) => (
-                    <div 
-                      key={pkg}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        selectedPackage === pkg 
-                          ? `${gradientClasses.border} ring-2 ring-${themeColor}-200 bg-${themeColor}-50` 
-                          : 'border-gray-200 hover:border-gray-300'
-                      } ${
-                        touchedFields.package && !selectedPackage ? 'ring-1 ring-red-500' : ''
-                      }`}
-                      onClick={() => {
-                        setSelectedPackage(pkg as 'Basic' | 'Premium' | 'Luxury');
-                        setTouchedFields(prev => ({ ...prev, package: true }));
-                      }}
-                    >
-                      <h3 className="font-bold text-lg mb-2">{pkg}</h3>
-                      <ul className="space-y-2 text-sm text-gray-600 mb-4">
-                        {pkg === 'Basic' && (
-                          <>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Simple decor
-                            </li>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Basic Photography
-                            </li>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Standard Catering
-                            </li>
-                          </>
-                        )}
-                        {pkg === 'Premium' && (
-                          <>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Custom decor
-                            </li>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Pro Photography
-                            </li>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Themed Catering
-                            </li>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Live streaming
-                            </li>
-                          </>
-                        )}
-                        {pkg === 'Luxury' && (
-                          <>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Highend decor
-                            </li>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Cinematic coverage
-                            </li>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Premium Catering
-                            </li>
-                            <li className="flex items-center">
-                              <span className="mr-2">•</span> Live entertainment
-                            </li>
-                          </>
-                        )}
-                      </ul>
-                      <p className="font-bold text-lg">
-                        Rs. {pkg === 'Basic' ? '30,000.00' : pkg === 'Premium' ? '50,000.00' : '80,000.00'}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-                {touchedFields.package && !selectedPackage && (
-                  <p className="text-red-500 text-sm mt-2">Please select a package</p>
-                )}
-              </div>
+        
 
-              {/* Pay Now Button */}
-              <div className="mt-8">
+    {/* Pay Now Button */}
+    <div className="mt-8">
                 <button 
                   type="submit"
                   className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white py-4 px-6 rounded-lg transition-all duration-300 font-medium text-lg disabled:opacity-50 shadow-lg hover:shadow-xl flex items-center justify-center"

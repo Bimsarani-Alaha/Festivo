@@ -59,6 +59,8 @@ const DisplayEventTheme: React.FC = () => {
   const navigate = useNavigate();
   const [hoveredId, setHoveredId] = useState<string | number | null>(null);
   const [favorites, setFavorites] = useState<FavoritesState>({});
+  const [selectedPackage, setSelectedPackage] = useState<ThemePackage | null>(null);
+  
   const { data, isLoading, isError } = useQuery({
     queryKey: ["eventThemes", eventName],
     queryFn: () => fetchThemesByEvent(eventName!),
@@ -66,9 +68,18 @@ const DisplayEventTheme: React.FC = () => {
   });
 
   const handleSelectTheme = (theme: Theme): void => {
-    navigate("/Eventbooking", { state: { selectedTheme: theme } });
+    if (!selectedPackage && theme.themePackage && theme.themePackage.length > 0) {
+      // Don't navigate if no package is selected when packages are available
+      return;
+    }
+    
+    navigate("/Eventbooking", { 
+      state: { 
+        selectedTheme: theme,
+        selectedPackage: selectedPackage 
+      } 
+    });
   };
-
   const toggleFavorite = (
     id: string | number,
     event: React.MouseEvent
@@ -400,8 +411,8 @@ const DisplayEventTheme: React.FC = () => {
                       </Fade>
                     )}
 
-                    {/* Packages */}
-                    {theme.themePackage && theme.themePackage.length > 0 && (
+                     {/* Packages */}
+                     {theme.themePackage && theme.themePackage.length > 0 && (
                       <Fade in={true}>
                         <Box mb={3}>
                           <Box
@@ -428,16 +439,24 @@ const DisplayEventTheme: React.FC = () => {
                                 key={pkg.id}
                                 elevation={0}
                                 sx={{
-                                  border: "1px solid #E5BA73",
+                                  border: selectedPackage?.id === pkg.id 
+                                    ? "2px solid #E5BA73" 
+                                    : "1px solid #E5BA73",
                                   borderRadius: 2,
                                   p: 2,
-                                  background: "rgba(255,255,255,0.7)",
+                                  background: selectedPackage?.id === pkg.id
+                                    ? "rgba(229, 186, 115, 0.1)"
+                                    : "rgba(255,255,255,0.7)",
                                   transition: "transform 0.2s ease",
                                   "&:hover": {
                                     transform: "translateY(-2px)",
-                                    boxShadow:
-                                      "0 4px 12px rgba(229, 186, 115, 0.15)",
+                                    boxShadow: "0 4px 12px rgba(229, 186, 115, 0.15)",
                                   },
+                                  cursor: "pointer"
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedPackage(pkg);
                                 }}
                               >
                                 <Box
@@ -483,6 +502,7 @@ const DisplayEventTheme: React.FC = () => {
                         e.stopPropagation();
                         handleSelectTheme(theme);
                       }}
+                      disabled={theme.themePackage && theme.themePackage.length > 0 && !selectedPackage}
                       sx={{
                         background:
                           "linear-gradient(135deg, #E5BA73 0%, #D4A85F 100%)",
@@ -491,6 +511,12 @@ const DisplayEventTheme: React.FC = () => {
                           background:
                             "linear-gradient(135deg, #D4A85F 0%, #C3984E 100%)",
                           transform: "translateY(-2px)",
+                        },
+                        "&:disabled": {
+                          background: "#e0e0e0",
+                          color: "#a0a0a0",
+                          transform: "none",
+                          boxShadow: "none"
                         },
                         borderRadius: 28,
                         py: 1.2,
@@ -503,7 +529,9 @@ const DisplayEventTheme: React.FC = () => {
                         mt: 1,
                       }}
                     >
-                      Select This Theme
+                      {theme.themePackage && theme.themePackage.length > 0 && !selectedPackage 
+                        ? "Select a Package First" 
+                        : "Select This Theme"}
                     </Button>
                   </CardContent>
                 </Card>
