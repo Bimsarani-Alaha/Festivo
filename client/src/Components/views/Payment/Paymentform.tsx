@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import logo from './logofes.png';
+import { ThemePackage } from '../User/EventBooking/EventBooking'; // Import the ThemePackage interface
 
 // Interface definitions for type safety
 interface UserData {
@@ -12,6 +13,7 @@ interface UserData {
   phoneNumber?: string;
 }
 
+// Update the EventBookingData interface to include selectedPackage
 interface EventBookingData {
   eventName: string;
   eventTheme: string;
@@ -21,6 +23,7 @@ interface EventBookingData {
   specialRequest: string;
   eventPackage: 'Basic' | 'Premium' | 'Luxury';
   packagePrice: number;
+  selectedPackage?: ThemePackage; // Add this line
 }
 
 interface CheckoutFormData {
@@ -121,7 +124,7 @@ const CheckoutPage: React.FC = () => {
     doc.text(`Theme: ${bookingData.eventTheme}`, 20, 145);
     doc.text(`Date: ${formatDate(bookingData.eventDate)}`, 20, 155);
     doc.text(`Guests: ${bookingData.noOfGuest}`, 20, 165);
-    doc.text(`Package: ${bookingData.eventPackage}`, 20, 175);
+    doc.text(`Package: ${bookingData.selectedPackage.packageName}`, 20, 175);
     
     // Payment summary section with table layout
     doc.setFont('helvetica', 'bold');
@@ -137,7 +140,7 @@ const CheckoutPage: React.FC = () => {
     // Table rows with pricing details
     doc.setFont('helvetica', 'normal');
     doc.text('Package Price', 20, 220);
-    doc.text(packagePrice.toLocaleString(), 160, 220, { align: 'right' });
+    doc.text(bookingData.selectedPackage.packagePrice.toLocaleString(), 160, 220, { align: 'right' });
     
     doc.text('Service Charge (10%)', 20, 230);
     doc.text(serviceCharge.toLocaleString(), 160, 230, { align: 'right' });
@@ -164,15 +167,23 @@ const CheckoutPage: React.FC = () => {
     doc.save(`EventFES_Receipt_${transactionId}.pdf`);
   };
 
-  // Tax and service charge rates
-  const TAX_RATE = 0.05; // 5% tax
-  const SERVICE_CHARGE_RATE = 0.10; // 10% service charge  
 
-// Calculate pricing breakdown with proper initialization
-const packagePrice = bookingData.packagePrice || PACKAGE_PRICES[bookingData.eventPackage as keyof typeof PACKAGE_PRICES] || 0;
-const taxAmount = Math.round(packagePrice * TAX_RATE);
-const serviceCharge = Math.round(packagePrice * SERVICE_CHARGE_RATE);
-const totalAmount = packagePrice + taxAmount + serviceCharge;
+   // Get the selected package from location state
+   const selectedPackage = location.state?.selectedPackage as ThemePackage | undefined;
+
+   // Tax and service charge rates
+   const TAX_RATE = 0.05; // 5% tax
+   const SERVICE_CHARGE_RATE = 0.10; // 10% service charge  
+ 
+   // Calculate pricing breakdown with proper initialization
+   const packagePrice = selectedPackage?.packagePrice || 
+                       bookingData.packagePrice || 
+                       PACKAGE_PRICES[bookingData.eventPackage as keyof typeof PACKAGE_PRICES] || 
+                       0;
+                       
+const taxAmount = Math.round(bookingData.selectedPackage.packagePrice * TAX_RATE);
+const serviceCharge = Math.round(bookingData.selectedPackage.packagePrice * SERVICE_CHARGE_RATE);
+const totalAmount = bookingData.selectedPackage.packagePrice + taxAmount + serviceCharge;
 
 
   // Get logged-in user data from localStorage with fallback values
@@ -230,18 +241,31 @@ const totalAmount = packagePrice + taxAmount + serviceCharge;
     }));
   }, [userData]);
 
-  // Update booking data when location state changes
-  useEffect(() => {
-    if (location.state?.bookingData) {
-      const bookingData = location.state.bookingData;
-      setBookingData(bookingData);
-      setFormData(prev => ({
-        ...prev,
-        orderSummary: `Event: ${bookingData.eventName}, Theme: ${bookingData.eventTheme}, Package: ${bookingData.eventPackage}`,
-        amount: bookingData.packagePrice || PACKAGE_PRICES[bookingData.eventPackage as keyof typeof PACKAGE_PRICES]
-      }));
-    }
-  }, [location.state]);
+// In the CheckoutPage component, update the useEffect that handles location state changes
+useEffect(() => {
+  if (location.state?.bookingData || location.state?.selectedPackage) {
+    setBookingData(prev => ({
+      ...prev,
+      ...(location.state.bookingData || {}),
+      selectedPackage: location.state.selectedPackage || prev.selectedPackage
+    }));
+    
+    const packagePrice = location.state.selectedPackage?.packagePrice || 
+                       location.state.bookingData?.packagePrice || 
+                       PACKAGE_PRICES[location.state.bookingData?.eventPackage as keyof typeof PACKAGE_PRICES] || 
+                       0;
+
+    setFormData(prev => ({
+      ...prev,
+      orderSummary: `Event: ${location.state.bookingData?.eventName || prev.orderSummary.split(',')[0]}, 
+                    Theme: ${location.state.bookingData?.eventTheme || prev.orderSummary.split(',')[1]}, 
+                    Package: ${location.state.selectedPackage?.packageName || location.state.bookingData?.eventPackage || prev.orderSummary.split(',')[2]}`,
+      amount: packagePrice
+    }));
+  }
+}, [location.state]);
+
+
 
   // Countdown timer for success message
   useEffect(() => {
@@ -941,70 +965,83 @@ const totalAmount = packagePrice + taxAmount + serviceCharge;
 </button>
             </div>
             
-            {/* Right Column - Order Summary */}
-            <div className="bg-yellow-50 p-5 rounded-lg border-2 border-yellow-200">
-              <h3 className="text-lg font-medium mb-4 pb-3 border-b border-yellow-300 text-yellow-800">
-                Event Booking Summary
-              </h3>
-              
-              {/* Event Details Section */}
-              <div className="space-y-4 mb-6">
-                <div>
-                  <h4 className="font-medium text-gray-800">Event Details</h4>
-                  <div className="mt-2 space-y-2 text-sm text-gray-700">
-                    <p><span className="font-medium">Event Name:</span> {bookingData.eventName}</p>
-                    <p><span className="font-medium">Theme:</span> {bookingData.eventTheme}</p>
-                    <p><span className="font-medium">Date:</span> {formatDate(bookingData.eventDate)}</p>
-                    <p><span className="font-medium">Type:</span> {bookingData.eventType}</p>
-                    <p><span className="font-medium">Guests:</span> {bookingData.noOfGuest}</p>
-                  </div>
-                </div>
+           {/* Right Column - Order Summary */}
+      <div className="bg-yellow-50 p-5 rounded-lg border-2 border-yellow-200">
+        <h3 className="text-lg font-medium mb-4 pb-3 border-b border-yellow-300 text-yellow-800">
+          Event Booking Summary
+        </h3>
+        
+        {/* Event Details Section */}
+        <div className="space-y-4 mb-6">
+          <div>
+            <h4 className="font-medium text-gray-800">Event Details</h4>
+            <div className="mt-2 space-y-2 text-sm text-gray-700">
+              <p><span className="font-medium">Event Name:</span> {bookingData.eventName}</p>
+              <p><span className="font-medium">Theme:</span> {bookingData.eventTheme}</p>
+              <p><span className="font-medium">Date:</span> {formatDate(bookingData.eventDate)}</p>
+              <p><span className="font-medium">Type:</span> {bookingData.eventType}</p>
+              <p><span className="font-medium">Guests:</span> {bookingData.noOfGuest}</p>
+            </div>
+          </div>
 
-                {/* Package Details Section */}
-                <div>
-                  <h4 className="font-medium text-gray-800">Package Details</h4>
-                  <div className="mt-2 space-y-2 text-sm text-gray-700">
-                    <p><span className="font-medium">Package:</span> {bookingData.eventPackage}</p>
-                    <p><span className="font-medium">Special Requests:</span> {bookingData.specialRequest || 'None'}</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Price Breakdown Section */}
-              <div className="border-t border-yellow-300 pt-4">
-                <h4 className="font-medium text-gray-800 mb-3">Price Summary</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Package Price:</span>
-                    <span className="font-medium">Rs. {packagePrice.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Service Charge (10%):</span>
-                    <span className="font-medium">Rs. {serviceCharge.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax (5%):</span>
-                    <span className="font-medium">Rs. {taxAmount.toLocaleString()}</span>
-                  </div>
-                  
-                  {/* Total Price */}
-                  <div className="flex justify-between border-t border-yellow-200 pt-2">
-                    <span className="text-gray-800 font-semibold">Total:</span>
-                    <span className="text-gray-900 font-bold">Rs. {totalAmount.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Payment Info Notice */}
-              <div className="bg-yellow-100 border border-yellow-300 text-yellow-800 p-3 rounded-md mt-4 text-sm">
-                <div className="flex items-center mb-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-medium">Payment Information</span>
-                </div>
-                <p className="text-xs">Your payment will be processed securely. A confirmation will be sent to your email.</p>
-              </div>
+          {/* Package Details Section */}
+          <div>
+  <h4 className="font-medium text-gray-800">Package Details</h4>
+  <div className="mt-2 space-y-2 text-sm text-gray-700">
+    {bookingData.selectedPackage ? (
+      <>
+        <p><span className="font-medium">Package:</span> {bookingData.selectedPackage.packageName}</p>
+        <p><span className="font-medium">Price:</span> Rs. {bookingData.selectedPackage.packagePrice.toLocaleString()}</p>
+        <p><span className="font-medium">Description:</span> {bookingData.selectedPackage.description}</p>
+      </>
+    ) : (
+      <>
+        <p><span className="font-medium">Package:</span> {bookingData.eventPackage}</p>
+        <p><span className="font-medium">Price:</span> Rs. {packagePrice.toLocaleString()}</p>
+      </>
+    )}
+    <p><span className="font-medium">Special Requests:</span> {bookingData.specialRequest || 'None'}</p>
+  </div>
+
+          </div>
+        </div>
+        
+        {/* Price Breakdown Section */}
+        <div className="border-t border-yellow-300 pt-4">
+          <h4 className="font-medium text-gray-800 mb-3">Price Summary</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Package Price:</span>
+              <span className="font-medium">Rs. {bookingData.selectedPackage.packagePrice.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Service Charge (10%):</span>
+              <span className="font-medium">Rs. {serviceCharge.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Tax (5%):</span>
+              <span className="font-medium">Rs. {taxAmount.toLocaleString()}</span>
+            </div>
+            
+            {/* Total Price */}
+            <div className="flex justify-between border-t border-yellow-200 pt-2">
+              <span className="text-gray-800 font-semibold">Total:</span>
+              <span className="text-gray-900 font-bold">Rs. {totalAmount.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Payment Info Notice */}
+        <div className="bg-yellow-100 border border-yellow-300 text-yellow-800 p-3 rounded-md mt-4 text-sm">
+          <div className="flex items-center mb-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <span className="font-medium">Payment Information</span>
+          </div>
+          <p className="text-xs">Your payment will be processed securely. A confirmation will be sent to your email.</p>
+        </div>
+      
             </div>
           </div>
         </form>
