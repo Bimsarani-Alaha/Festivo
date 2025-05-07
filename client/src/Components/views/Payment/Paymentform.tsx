@@ -168,11 +168,12 @@ const CheckoutPage: React.FC = () => {
   const TAX_RATE = 0.05; // 5% tax
   const SERVICE_CHARGE_RATE = 0.10; // 10% service charge  
 
-  // Calculate pricing breakdown
-  const packagePrice = bookingData.packagePrice || PACKAGE_PRICES[bookingData.eventPackage as keyof typeof PACKAGE_PRICES];
-  const taxAmount = Math.round(packagePrice * TAX_RATE);
-  const serviceCharge = Math.round(packagePrice * SERVICE_CHARGE_RATE);
-  const totalAmount = packagePrice + taxAmount + serviceCharge;
+// Calculate pricing breakdown with proper initialization
+const packagePrice = bookingData.packagePrice || PACKAGE_PRICES[bookingData.eventPackage as keyof typeof PACKAGE_PRICES] || 0;
+const taxAmount = Math.round(packagePrice * TAX_RATE);
+const serviceCharge = Math.round(packagePrice * SERVICE_CHARGE_RATE);
+const totalAmount = packagePrice + taxAmount + serviceCharge;
+
 
   // Get logged-in user data from localStorage with fallback values
   const [userData, setUserData] = useState<UserData>(() => {
@@ -916,31 +917,28 @@ const CheckoutPage: React.FC = () => {
                 </div>
               </div>
               
-              {/* Confirm Payment Button */}
               <button 
-                type="submit"
-                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg transition-colors font-medium shadow-md flex items-center justify-center mt-4 disabled:bg-yellow-400 disabled:cursor-not-allowed"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  // Loading spinner when processing
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing...
-                  </>
-                ) : (
-                  // Normal button state
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                    </svg>
-                    Confirm Payment Rs. {totalAmount.toLocaleString()}
-                  </>
-                )}
-              </button>
+  type="submit"
+  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg transition-colors font-medium shadow-md flex items-center justify-center mt-4 disabled:bg-yellow-400 disabled:cursor-not-allowed"
+  disabled={isLoading}
+>
+  {isLoading ? (
+    <>
+      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Processing...
+    </>
+  ) : (
+    <>
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+      </svg>
+      Confirm Payment Rs. {(totalAmount || 0).toLocaleString()}
+    </>
+  )}
+</button>
             </div>
             
             {/* Right Column - Order Summary */}
