@@ -68,7 +68,7 @@ const ProfileMenu = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const supplierDetails = getSupplierDetails();
-  const supplierEmail = supplierDetails?.email || "supplier@example.com"; // Fallback email
+  const supplierEmail = supplierDetails?.email || "Error Loading";
 
   const [supplierData, setSupplierData] = useState<SupplierData | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -280,12 +280,6 @@ const ProfileMenu = () => {
             <Person fontSize="small" color="primary" />
           </ListItemIcon>
           <Typography>Profile</Typography>
-        </MenuItem>
-        <MenuItem onClick={handleClose} sx={{ py: 1.5 }}>
-          <ListItemIcon>
-            <Settings fontSize="small" color="primary" />
-          </ListItemIcon>
-          <Typography>Settings</Typography>
         </MenuItem>
         <Divider />
         <MenuItem
