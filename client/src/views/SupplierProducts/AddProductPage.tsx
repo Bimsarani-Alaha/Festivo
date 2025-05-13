@@ -406,7 +406,7 @@ const AddProductPage: React.FC = () => {
                           </Box>
                         </Stack>
                       </TableCell>
-                      <TableCell>${product.price.toFixed(2)}</TableCell>
+                      <TableCell>LKR{product.price.toFixed(2)}</TableCell>
                       <TableCell>{product.quantity}</TableCell>
                       <TableCell>
                         <IconButton color="primary" onClick={() => handleEdit(product)}>

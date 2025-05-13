@@ -22,4 +22,5 @@ public class SupplierEntity {
     private String companyName;
     private String category;
     private String address;
+    
 }
