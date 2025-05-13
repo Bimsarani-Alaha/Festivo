@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Avatar,
   Box,
@@ -11,7 +11,6 @@ import {
   TextField,
   Typography,
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   CircularProgress,
@@ -24,28 +23,33 @@ import {
   useTheme,
   alpha,
   Fade,
-} from '@mui/material';
-import { 
-  Person, 
-  Settings, 
-  Logout, 
-  Edit, 
-  Delete, 
+} from "@mui/material";
+import {
+  Person,
+  Settings,
+  Logout,
+  Edit,
+  Delete,
   ArrowBack,
   Business,
   LocationOn,
   Email,
   Category,
-  Check
-} from '@mui/icons-material';
-import { getSupplier, updateSupplier, deleteSupplier } from '../../../api/supplierApi';
-import { useNavigate } from 'react-router-dom';
+  Check,
+} from "@mui/icons-material";
+import {
+  getSupplier,
+  updateSupplier,
+  deleteSupplier,
+} from "../../../api/supplierApi";
+import { useNavigate } from "react-router-dom";
+import { getSupplierDetails } from "../../../customHooks/supplierEmailextract";
 
 const categories = [
-  'Decoration And Balloon',
-  'Photography',
-  'Furniture And Seating',
-  'Floral Decoration'
+  "Decoration And Balloon",
+  "Photography",
+  "Furniture And Seating",
+  "Floral Decoration",
 ];
 
 interface SupplierData {
@@ -63,21 +67,24 @@ const ProfileMenu = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const supplierDetails = getSupplierDetails();
+  const supplierEmail = supplierDetails?.email || "supplier@example.com"; // Fallback email
+
   const [supplierData, setSupplierData] = useState<SupplierData | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
-    companyName: '',
-    category: '',
-    address: '',
+    companyName: "",
+    category: "",
+    address: "",
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error',
+    message: "",
+    severity: "success" as "success" | "error",
   });
 
   // Replace with actual logged-in user email
-  const userEmail = 'senaliangry@gmail.com';
+  const userEmail = supplierEmail;
 
   const open = Boolean(anchorEl);
 
@@ -98,14 +105,14 @@ const ProfileMenu = () => {
         address: data.address,
       });
     } catch (error) {
-      console.error('Error fetching supplier data:', error);
-      showSnackbar('Failed to fetch supplier data', 'error');
+      console.error("Error fetching supplier data:", error);
+      showSnackbar("Failed to fetch supplier data", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const showSnackbar = (message: string, severity: 'success' | 'error') => {
+  const showSnackbar = (message: string, severity: "success" | "error") => {
     setSnackbar({ open: true, message, severity });
   };
 
@@ -133,14 +140,14 @@ const ProfileMenu = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   const handleCategoryChange = (e: any) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       category: e.target.value,
     }));
@@ -152,10 +159,10 @@ const ProfileMenu = () => {
       const updatedData = await updateSupplier(userEmail, formData);
       setSupplierData(updatedData);
       setEditMode(false);
-      showSnackbar('Profile updated successfully', 'success');
+      showSnackbar("Profile updated successfully", "success");
     } catch (error) {
-      console.error('Error updating supplier:', error);
-      showSnackbar('Failed to update profile', 'error');
+      console.error("Error updating supplier:", error);
+      showSnackbar("Failed to update profile", "error");
     } finally {
       setIsLoading(false);
     }
@@ -170,53 +177,53 @@ const ProfileMenu = () => {
     setIsLoading(true);
     try {
       await deleteSupplier(userEmail);
-      showSnackbar('Account deleted successfully', 'success');
+      showSnackbar("Account deleted successfully", "success");
       setOpenDeleteDialog(false);
       // Redirect to login page after deletion
-      navigate('/supplierLogin');
+      navigate("/supplierLogin");
     } catch (error) {
-      console.error('Error deleting account:', error);
-      showSnackbar('Failed to delete account', 'error');
+      console.error("Error deleting account:", error);
+      showSnackbar("Failed to delete account", "error");
     } finally {
       setIsLoading(false);
     }
   };
-  
-const handleLogout = () => {
-  // Clear local storage
-  localStorage.clear();
-  
-  // You might also want to clear session storage if you're using it
-  sessionStorage.clear();
-  
-  // Redirect to login page
-  navigate('/supplierLogin');
-  handleClose();
-};
+
+  const handleLogout = () => {
+    // Clear local storage
+    localStorage.clear();
+
+    // You might also want to clear session storage if you're using it
+    sessionStorage.clear();
+
+    // Redirect to login page
+    navigate("/supplierLogin");
+    handleClose();
+  };
 
   return (
     <>
       <IconButton
         onClick={handleClick}
         size="small"
-        sx={{ 
+        sx={{
           ml: 2,
-          transition: 'transform 0.2s',
-          '&:hover': {
-            transform: 'scale(1.1)',
-          } 
+          transition: "transform 0.2s",
+          "&:hover": {
+            transform: "scale(1.1)",
+          },
         }}
-        aria-controls={open ? 'account-menu' : undefined}
+        aria-controls={open ? "account-menu" : undefined}
         aria-haspopup="true"
-        aria-expanded={open ? 'true' : undefined}
+        aria-expanded={open ? "true" : undefined}
       >
-        <Avatar 
-          sx={{ 
-            width: 40, 
+        <Avatar
+          sx={{
+            width: 40,
             height: 40,
             background: theme.palette.primary.main,
-            fontWeight: 'bold',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+            fontWeight: "bold",
+            boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
           }}
         >
           {userEmail.charAt(0).toUpperCase()}
@@ -231,37 +238,41 @@ const handleLogout = () => {
         PaperProps={{
           elevation: 3,
           sx: {
-            overflow: 'visible',
-            filter: 'drop-shadow(0px 4px 12px rgba(0,0,0,0.15))',
+            overflow: "visible",
+            filter: "drop-shadow(0px 4px 12px rgba(0,0,0,0.15))",
             mt: 1.5,
             borderRadius: 2,
             minWidth: 200,
-            '& .MuiAvatar-root': {
+            "& .MuiAvatar-root": {
               width: 32,
               height: 32,
               ml: -0.5,
               mr: 1,
             },
-            '&:before': {
+            "&:before": {
               content: '""',
-              display: 'block',
-              position: 'absolute',
+              display: "block",
+              position: "absolute",
               top: 0,
               right: 14,
               width: 10,
               height: 10,
-              bgcolor: 'background.paper',
-              transform: 'translateY(-50%) rotate(45deg)',
+              bgcolor: "background.paper",
+              transform: "translateY(-50%) rotate(45deg)",
               zIndex: 0,
             },
           },
         }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
         <Box px={2} py={1.5}>
-          <Typography variant="subtitle1" fontWeight="bold">{userEmail}</Typography>
-          <Typography variant="body2" color="text.secondary">Supplier Account</Typography>
+          <Typography variant="subtitle1" fontWeight="bold">
+            {userEmail}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Supplier Account
+          </Typography>
         </Box>
         <Divider />
         <MenuItem onClick={handleProfileClick} sx={{ py: 1.5 }}>
@@ -277,8 +288,11 @@ const handleLogout = () => {
           <Typography>Settings</Typography>
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main', py: 1.5 }}>
-          <ListItemIcon sx={{ color: 'error.main' }}>
+        <MenuItem
+          onClick={handleDeleteClick}
+          sx={{ color: "error.main", py: 1.5 }}
+        >
+          <ListItemIcon sx={{ color: "error.main" }}>
             <Delete fontSize="small" />
           </ListItemIcon>
           <Typography>Delete Account</Typography>
@@ -292,32 +306,38 @@ const handleLogout = () => {
       </Menu>
 
       {/* Profile Dialog */}
-      <Dialog 
-        open={openDialog} 
-        onClose={handleDialogClose} 
-        maxWidth="sm" 
+      <Dialog
+        open={openDialog}
+        onClose={handleDialogClose}
+        maxWidth="sm"
         fullWidth
         PaperProps={{
           elevation: 5,
-          sx: { borderRadius: 2, overflow: 'hidden' }
+          sx: { borderRadius: 2, overflow: "hidden" },
         }}
       >
-        <Box 
-          sx={{ 
-            backgroundColor: theme.palette.primary.main, 
-            color: '#fff',
-            p: 2
+        <Box
+          sx={{
+            backgroundColor: theme.palette.primary.main,
+            color: "#fff",
+            p: 2,
           }}
         >
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Box display="flex" alignItems="center">
-              <IconButton 
-                onClick={handleDialogClose} 
-                sx={{ color: '#fff', mr: 1 }}
+              <IconButton
+                onClick={handleDialogClose}
+                sx={{ color: "#fff", mr: 1 }}
               >
                 <ArrowBack />
               </IconButton>
-              <Typography variant="h6" fontWeight="bold">Supplier Profile</Typography>
+              <Typography variant="h6" fontWeight="bold">
+                Supplier Profile
+              </Typography>
             </Box>
             {!editMode && (
               <Button
@@ -325,13 +345,13 @@ const handleLogout = () => {
                 onClick={handleEditClick}
                 variant="outlined"
                 size="small"
-                sx={{ 
-                  color: '#fff', 
-                  borderColor: '#fff',
-                  '&:hover': { 
-                    backgroundColor: alpha('#fff', 0.1),
-                    borderColor: '#fff' 
-                  }
+                sx={{
+                  color: "#fff",
+                  borderColor: "#fff",
+                  "&:hover": {
+                    backgroundColor: alpha("#fff", 0.1),
+                    borderColor: "#fff",
+                  },
                 }}
               >
                 Edit
@@ -346,31 +366,31 @@ const handleLogout = () => {
             </Box>
           ) : (
             <>
-              <Paper 
-                elevation={0} 
-                sx={{ 
-                  p: 3, 
-                  mb: 3, 
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  mb: 3,
                   backgroundColor: alpha(theme.palette.primary.main, 0.05),
-                  borderRadius: 2
+                  borderRadius: 2,
                 }}
               >
                 <Box display="flex" alignItems="center" mb={2}>
-                  <Avatar 
-                    sx={{ 
-                      width: 64, 
-                      height: 64, 
+                  <Avatar
+                    sx={{
+                      width: 64,
+                      height: 64,
                       bgcolor: theme.palette.primary.main,
-                      fontSize: '2rem',
-                      fontWeight: 'bold',
-                      mr: 2
+                      fontSize: "2rem",
+                      fontWeight: "bold",
+                      mr: 2,
                     }}
                   >
-                    {supplierData?.companyName?.charAt(0).toUpperCase() || 'S'}
+                    {supplierData?.companyName?.charAt(0).toUpperCase() || "S"}
                   </Avatar>
                   <Box>
                     <Typography variant="h6" fontWeight="bold">
-                      {supplierData?.companyName || 'Company Name'}
+                      {supplierData?.companyName || "Company Name"}
                     </Typography>
                     <Box display="flex" alignItems="center">
                       <Email fontSize="small" color="action" sx={{ mr: 0.5 }} />
@@ -384,14 +404,18 @@ const handleLogout = () => {
                 <Box display="flex" alignItems="center" mb={1}>
                   <Category fontSize="small" color="action" sx={{ mr: 1 }} />
                   <Typography variant="body2" color="text.secondary">
-                    {supplierData?.category || 'No category set'}
+                    {supplierData?.category || "No category set"}
                   </Typography>
                 </Box>
 
                 <Box display="flex" alignItems="flex-start">
-                  <LocationOn fontSize="small" color="action" sx={{ mr: 1, mt: 0.5 }} />
+                  <LocationOn
+                    fontSize="small"
+                    color="action"
+                    sx={{ mr: 1, mt: 0.5 }}
+                  />
                   <Typography variant="body2" color="text.secondary">
-                    {supplierData?.address || 'No address set'}
+                    {supplierData?.address || "No address set"}
                   </Typography>
                 </Box>
               </Paper>
@@ -450,8 +474,8 @@ const handleLogout = () => {
         </DialogContent>
         {editMode && (
           <DialogActions sx={{ p: 2, px: 3 }}>
-            <Button 
-              onClick={handleDialogClose} 
+            <Button
+              onClick={handleDialogClose}
               color="inherit"
               variant="outlined"
             >
@@ -463,9 +487,9 @@ const handleLogout = () => {
               variant="contained"
               disabled={isLoading}
               startIcon={isLoading ? <CircularProgress size={20} /> : <Check />}
-              sx={{ 
+              sx={{
                 px: 3,
-                boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
               }}
             >
               Save Changes
@@ -475,47 +499,61 @@ const handleLogout = () => {
       </Dialog>
 
       {/* Delete Account Dialog */}
-      <Dialog 
-        open={openDeleteDialog} 
+      <Dialog
+        open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
         PaperProps={{
           elevation: 5,
-          sx: { borderRadius: 2, overflow: 'hidden' }
+          sx: { borderRadius: 2, overflow: "hidden" },
         }}
       >
-        <Box sx={{ backgroundColor: '#f44336', color: '#fff', p: 2 }}>
-          <Typography variant="h6" fontWeight="bold">Delete Account</Typography>
+        <Box sx={{ backgroundColor: "#f44336", color: "#fff", p: 2 }}>
+          <Typography variant="h6" fontWeight="bold">
+            Delete Account
+          </Typography>
         </Box>
         <DialogContent sx={{ p: 3, mt: 1 }}>
           <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
-            <Avatar 
-              sx={{ 
-                width: 60, 
-                height: 60, 
-                bgcolor: alpha('#f44336', 0.1), 
-                color: '#f44336',
-                mb: 2
+            <Avatar
+              sx={{
+                width: 60,
+                height: 60,
+                bgcolor: alpha("#f44336", 0.1),
+                color: "#f44336",
+                mb: 2,
               }}
             >
               <Delete fontSize="large" />
             </Avatar>
-            <Typography variant="h6" gutterBottom fontWeight="bold" textAlign="center">
+            <Typography
+              variant="h6"
+              gutterBottom
+              fontWeight="bold"
+              textAlign="center"
+            >
               Are you sure you want to delete your account?
             </Typography>
           </Box>
-          <Typography variant="body1" color="text.secondary" textAlign="center" gutterBottom>
-            This action cannot be undone. All your data will be permanently removed from our servers.
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            textAlign="center"
+            gutterBottom
+          >
+            This action cannot be undone. All your data will be permanently
+            removed from our servers.
           </Typography>
           <Alert severity="warning" sx={{ mt: 2 }}>
-            You will lose all your supplier details, listings, and customer relationships.
+            You will lose all your supplier details, listings, and customer
+            relationships.
           </Alert>
         </DialogContent>
-        <DialogActions sx={{ p: 2, px: 3, justifyContent: 'space-between' }}>
-          <Button 
-            onClick={() => setOpenDeleteDialog(false)} 
+        <DialogActions sx={{ p: 2, px: 3, justifyContent: "space-between" }}>
+          <Button
+            onClick={() => setOpenDeleteDialog(false)}
             color="inherit"
             variant="outlined"
-            sx={{ width: '48%' }}
+            sx={{ width: "48%" }}
           >
             Cancel
           </Button>
@@ -525,7 +563,7 @@ const handleLogout = () => {
             variant="contained"
             disabled={isLoading}
             startIcon={isLoading ? <CircularProgress size={20} /> : <Delete />}
-            sx={{ width: '48%' }}
+            sx={{ width: "48%" }}
           >
             Delete Account
           </Button>
@@ -537,13 +575,13 @@ const handleLogout = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
           variant="filled"
-          sx={{ width: '100%', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+          sx={{ width: "100%", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
         >
           {snackbar.message}
         </Alert>
