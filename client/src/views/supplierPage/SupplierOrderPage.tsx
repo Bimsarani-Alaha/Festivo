@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
+import {
+  Box,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Chip,
   Button,
   CircularProgress,
@@ -16,36 +16,63 @@ import {
   Stack
 } from '@mui/material';
 import { getAllSupplierOrders, acceptSupplierOrder, rejectSupplierOrder, SupplierOrder } from '../../api/supplierOrder';
+import { getSupplier } from '../../api/supplierApi'; // Import the getSupplier API
+import { getSupplierDetails } from '../../customHooks/supplierEmailextract';
 
 const SupplierOrdersDashboard: React.FC = () => {
   const [orders, setOrders] = useState<SupplierOrder[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<SupplierOrder[]>([]); // New state for filtered orders
   const [loading, setLoading] = useState<boolean>(true);
+  const supplierDetails = getSupplierDetails();
+  const sEmail = supplierDetails?.email || "Error Loading";
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [supplierCategory, setSupplierCategory] = useState<string | null>(null);
+
+  // Assume supplier email is available (e.g., from context, auth, or props)
+  const supplierEmail = sEmail; // Replace with actual email source
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllSupplierOrders();
-      setOrders(data);
-      setError(null);
-    } catch (err) {
-      setError('Failed to fetch orders. Please try again.');
-      console.error('Error fetching orders:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        // Fetch supplier data
+        const supplierData = await getSupplier(supplierEmail);
+        setSupplierCategory(supplierData.category); // Set supplier category
+
+        // Fetch all orders
+        const data = await getAllSupplierOrders();
+        setOrders(data);
+
+        // Filter orders based on supplier category
+        if (supplierData.category) {
+          const filtered = data.filter(order => order.supplierCategory === supplierData.category);
+          setFilteredOrders(filtered);
+        }
+
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch data. Please try again.');
+        console.error('Error fetching data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleAccept = async (orderId: string) => {
     try {
       setLoading(true);
       await acceptSupplierOrder(orderId);
-      await fetchOrders();
+      const data = await getAllSupplierOrders();
+      setOrders(data);
+      // Re-filter orders after accepting
+      if (supplierCategory) {
+        setFilteredOrders(data.filter(order => order.supplierCategory === supplierCategory));
+      }
       setSuccess('Order accepted successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -60,7 +87,12 @@ const SupplierOrdersDashboard: React.FC = () => {
     try {
       setLoading(true);
       await rejectSupplierOrder(orderId);
-      await fetchOrders();
+      const data = await getAllSupplierOrders();
+      setOrders(data);
+      // Re-filter orders after rejecting
+      if (supplierCategory) {
+        setFilteredOrders(data.filter(order => order.supplierCategory === supplierCategory));
+      }
       setSuccess('Order rejected successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -106,13 +138,13 @@ const SupplierOrdersDashboard: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         Supplier Orders Management
       </Typography>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      
+
       {success && (
         <Alert severity="success" sx={{ mb: 2 }}>
           {success}
@@ -141,17 +173,17 @@ const SupplierOrdersDashboard: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {orders.length === 0 ? (
+                {filteredOrders.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} align="center">
-                      No orders found
+                      No orders found for your category
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => {
+                  filteredOrders.map((order) => {
                     const accepted = isOrderAccepted(order.status);
                     const rejected = isOrderRejected(order.status);
-                    
+
                     return (
                       <TableRow key={order.id}>
                         <TableCell>{order.eventName}</TableCell>
@@ -162,10 +194,10 @@ const SupplierOrdersDashboard: React.FC = () => {
                         <TableCell>{formatDate(order.eventDate)}</TableCell>
                         <TableCell>{order.supplierCategory}</TableCell>
                         <TableCell>
-                          <Chip 
-                            label={order.status} 
-                            color={getStatusColor(order.status)} 
-                            size="small" 
+                          <Chip
+                            label={order.status}
+                            color={getStatusColor(order.status)}
+                            size="small"
                           />
                         </TableCell>
                         <TableCell>
