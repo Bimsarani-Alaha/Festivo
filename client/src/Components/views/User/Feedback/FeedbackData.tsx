@@ -5,7 +5,8 @@ import { usePDF } from 'react-to-pdf';
 
 interface Feedback {
   id: string;
-  rating: number;
+  rating?: number;
+  rate?: number;
   review: string;
   date: string;
 }
@@ -56,15 +57,31 @@ const FeedbackList = () => {
   }, []);
 
   useEffect(() => {
-    const results = feedbackList.filter(feedback =>
-      feedback.review.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      feedback.rating.toString().includes(searchTerm) ||
-      feedback.date.includes(searchTerm)
-    );
+    const results = feedbackList.filter(feedback => {
+      if (!feedback) return false;
+      
+      try {
+        const searchLower = searchTerm.toLowerCase();
+        const reviewMatch = feedback.review?.toLowerCase().includes(searchLower) || false;
+        const ratingMatch = feedback.rating?.toString().includes(searchTerm) || false;
+        const dateMatch = feedback.date ? new Date(feedback.date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }).toLowerCase().includes(searchLower) : false;
+
+        return reviewMatch || ratingMatch || dateMatch;
+      } catch (error) {
+        console.error('Error filtering feedback:', error);
+        return false;
+      }
+    });
     setFilteredFeedback(results);
   }, [searchTerm, feedbackList]);
 
   const handleDelete = async (id: string) => {
+    if (!id) return;
+    
     if (window.confirm('Are you sure you want to delete this feedback?')) {
       try {
         const response = await fetch(`http://localhost:8080/public/deleteFeedback/${id}`, {
@@ -75,8 +92,9 @@ const FeedbackList = () => {
           throw new Error('Failed to delete feedback');
         }
 
-        const updatedList = feedbackList.filter(feedback => feedback.id !== id);
+        const updatedList = feedbackList.filter(feedback => feedback?.id !== id);
         setFeedbackList(updatedList);
+        setFilteredFeedback(updatedList);
         setSuccessMessage('Feedback deleted successfully!');
         setShowSuccess(true);
       } catch (err) {
@@ -89,7 +107,7 @@ const FeedbackList = () => {
   const startEditing = (feedback: Feedback) => {
     setEditingId(feedback.id);
     setEditReview(feedback.review);
-    setEditRating(feedback.rating);
+    setEditRating(feedback.rating || 0);
   };
 
   const cancelEditing = () => {
@@ -243,17 +261,20 @@ const FeedbackList = () => {
                     <tr key={feedback.id}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
+                          {[1, 2, 3, 4, 5].map((star) => (
                             <FaStar
-                              key={i}
-                              className={`h-4 w-4 ${i < feedback.rating ? 'text-yellow-500' : 'text-gray-300'}`}
+                              key={star}
+                              className={`h-5 w-5 ${
+                                star <= (feedback.rating || 0) 
+                                  ? 'text-yellow-500' 
+                                  : 'text-gray-300'
+                              }`}
                             />
                           ))}
-                          <span className="ml-2 text-gray-600">{feedback.rating}/5</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-pre-line text-sm text-gray-500">{feedback.review}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{feedback.date}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(feedback.date).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -287,90 +308,46 @@ const FeedbackList = () => {
           ) : (
             <div className="space-y-6">
               {filteredFeedback.map((feedback) => (
-                <div 
-                  key={feedback.id} 
-                  className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow relative"
-                >
-                  {editingId === feedback.id ? (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
-                        <div className="flex space-x-1">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() => setEditRating(star)}
-                              className={`text-3xl ${editRating >= star ? 'text-yellow-500' : 'text-gray-300'} transition-all hover:scale-110`}
-                            >
-                              ★
-                            </button>
-                          ))}
+                feedback && (
+                  (() => {
+                    const ratingValue = feedback.rate ?? feedback.rating ?? 0;
+                    return (
+                      <div 
+                        key={feedback.id} 
+                        className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow relative"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                          <div className="flex items-center mb-2 sm:mb-0">
+                            <div className="flex space-x-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <FaStar
+                                  key={star}
+                                  className={`h-6 w-6 ${star <= ratingValue ? 'text-yellow-500' : 'text-gray-300'}`}
+                                />
+                              ))}
+                            </div>
+                            <span className="ml-3 text-gray-700 font-medium">
+                              {ratingValue}/5
+                            </span>
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {feedback.date ? new Date(feedback.date).toLocaleDateString() : 'No date'}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 whitespace-pre-line mb-4">{feedback.review || 'No review'}</p>
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => handleDelete(feedback.id)}
+                            className="p-2 text-red-600 hover:text-red-800 rounded-full hover:bg-red-100"
+                            aria-label="Delete feedback"
+                          >
+                            <FaTrash className="h-5 w-5" />
+                          </button>
                         </div>
                       </div>
-                      <div>
-                        <label htmlFor="edit-review" className="block text-sm font-medium text-gray-700 mb-1">
-                          Review
-                        </label>
-                        <textarea
-                          id="edit-review"
-                          value={editReview}
-                          onChange={(e) => setEditReview(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                          rows={3}
-                        />
-                      </div>
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={cancelEditing}
-                          className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-                          aria-label="Cancel editing"
-                        >
-                          <FaTimes className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => saveEdit(feedback.id)}
-                          className="p-2 text-yellow-600 hover:text-yellow-800 rounded-full hover:bg-yellow-100"
-                          aria-label="Save changes"
-                        >
-                          <FaCheck className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                        <div className="flex mb-2 sm:mb-0">
-                          {[...Array(5)].map((_, i) => (
-                            <FaStar
-                              key={i}
-                              className={`h-5 w-5 ${i < feedback.rating ? 'text-yellow-500' : 'text-gray-300'}`}
-                            />
-                          ))}
-                          <span className="ml-2 text-gray-600">{feedback.rating}/5</span>
-                        </div>
-                        <span className="text-sm text-gray-500">{feedback.date}</span>
-                      </div>
-                      <p className="text-gray-700 whitespace-pre-line mb-4">{feedback.review}</p>
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={() => startEditing(feedback)}
-                          className="p-2 text-blue-600 hover:text-blue-800 rounded-full hover:bg-blue-100"
-                          aria-label="Edit feedback"
-                        >
-                          <FaEdit className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(feedback.id)}
-                          className="p-2 text-red-600 hover:text-red-800 rounded-full hover:bg-red-100"
-                          aria-label="Delete feedback"
-                        >
-                          <FaTrash className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
+                    );
+                  })()
+                )
               ))}
             </div>
           )}
