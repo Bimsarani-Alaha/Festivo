@@ -179,6 +179,13 @@ const EventBookingsTable = () => {
     e.preventDefault();
     if (!editFormData.id) return;
 
+    // Validate all fields are filled
+    if (!editFormData.eventName || !editFormData.eventTheme || !editFormData.eventType || 
+        !editFormData.eventDate || !editFormData.noOfGuest || !editFormData.eventPackage) {
+      setError("All fields are required");
+      return;
+    }
+
     try {
       const response = await fetch(
         `http://localhost:8080/public/updateEvent/${editFormData.id}`,
@@ -318,61 +325,90 @@ const EventBookingsTable = () => {
               ref={targetRef}
               style={{ position: "absolute", left: "-9999px" }}
             >
-              <div className="p-6">
-                <h2 className="text-xl font-bold mb-4 text-center">
-                  Event Bookings Report
-                </h2>
-                <p className="text-sm text-gray-500 mb-4 text-center">
-                  Generated on: {new Date().toLocaleDateString()}
-                </p>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <div className="p-8 bg-white">
+                {/* PDF Header */}
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">Festivo Events</h1>
+                  <h2 className="text-2xl font-semibold text-gray-700 mb-4">Event Bookings Report</h2>
+                  <div className="flex justify-between items-center text-sm text-gray-600 border-b-2 border-gray-300 pb-4">
+                    <div>Generated on: {new Date().toLocaleDateString()}</div>
+                    <div>Total Bookings: {filteredBookings.length}</div>
+                  </div>
+                </div>
+
+                {/* PDF Table */}
+                <table className="min-w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Event Name
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Theme
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Date
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Guests
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Package
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredBookings.map((booking) => (
-                      <tr key={booking.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tbody>
+                    {filteredBookings.map((booking, index) => (
+                      <tr key={booking.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {booking.eventName}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {booking.eventTheme}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {booking.eventType}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {new Date(booking.eventDate).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {booking.noOfGuest}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {booking.eventPackage || "None"}
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            booking.eventPackage === "Basic"
+                              ? "bg-blue-100 text-blue-800"
+                              : booking.eventPackage === "Premium"
+                              ? "bg-purple-100 text-purple-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}>
+                            {booking.eventPackage || "None"}
+                          </span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+
+                {/* PDF Footer */}
+                <div className="mt-8 pt-4 border-t-2 border-gray-300">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <div>
+                      <p className="font-semibold">Festivo Events</p>
+                      <p>123 Golden Avenue, Event City</p>
+                      <p>Phone: 0707230078</p>
+                      <p>Email: festivo@gmail.com</p>
+                    </div>
+                    <div className="text-right">
+                      <p>Page 1 of 1</p>
+                      <p>Generated by: System Administrator</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -545,12 +581,6 @@ const EventBookingsTable = () => {
                       </h3>
                       <p className="mt-1">{selectedBooking.noOfGuest}</p>
                     </div>
-                    <div>
-                      <h3 className="font-medium text-gray-700">Package:</h3>
-                      <p className="mt-1">
-                        {selectedBooking.eventPackage || "None"}
-                      </p>
-                    </div>
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-700">
@@ -584,7 +614,7 @@ const EventBookingsTable = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Event Name:
+                        Event Name: <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -597,7 +627,7 @@ const EventBookingsTable = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Theme:
+                        Theme: <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -610,7 +640,7 @@ const EventBookingsTable = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Type:
+                        Type: <span className="text-red-500">*</span>
                       </label>
                       <select
                         name="eventType"
@@ -627,7 +657,7 @@ const EventBookingsTable = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Date:
+                        Date: <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
@@ -636,11 +666,12 @@ const EventBookingsTable = () => {
                         onChange={handleEditFormChange}
                         className="w-full p-2 border border-gray-300 rounded-md"
                         required
+                        min={new Date().toISOString().split('T')[0]}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Number of Guests:
+                        Number of Guests: <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -654,7 +685,7 @@ const EventBookingsTable = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Package:
+                        Package: <span className="text-red-500">*</span>
                       </label>
                       <select
                         name="eventPackage"
@@ -672,13 +703,14 @@ const EventBookingsTable = () => {
                   </div>
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Special Requests:
+                      Special Requests: <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       name="specialRequest"
                       value={editFormData.specialRequest}
                       onChange={handleEditFormChange}
                       className="w-full p-2 border border-gray-300 rounded-md h-24"
+                      required
                     />
                   </div>
                   <div className="mt-6">

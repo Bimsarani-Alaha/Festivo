@@ -230,6 +230,21 @@ function UserManagementPage() {
     if (!editingUser) return;
     
     const { name, value } = e.target;
+    
+    // Validate name to only allow letters and spaces
+    if (name === 'name') {
+      if (!/^[A-Za-z\s]*$/.test(value)) {
+        return;
+      }
+    }
+    
+    // Validate phone number to only allow 10 digits
+    if (name === 'phoneNumber') {
+      if (value.length > 10 || !/^\d*$/.test(value)) {
+        return;
+      }
+    }
+    
     setEditingUser({
       ...editingUser,
       [name]: value
@@ -280,7 +295,7 @@ function UserManagementPage() {
           <form onSubmit={handleUpdate}>
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-                Name
+                Name *
               </label>
               <input
                 type="text"
@@ -290,12 +305,14 @@ function UserManagementPage() {
                 onChange={handleInputChange}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 required
+                pattern="[A-Za-z\s]+"
+                title="Please enter only letters and spaces"
               />
             </div>
 
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-                Email
+                Email *
               </label>
               <input
                 type="email"
@@ -310,7 +327,7 @@ function UserManagementPage() {
 
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phoneNumber">
-                Phone Number
+                Phone Number *
               </label>
               <input
                 type="tel"
@@ -319,12 +336,16 @@ function UserManagementPage() {
                 value={editingUser.phoneNumber || ""}
                 onChange={handleInputChange}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                required
+                pattern="[0-9]{10}"
+                title="Please enter exactly 10 digits"
+                maxLength={10}
               />
             </div>
 
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="gender">
-                Gender
+                Gender *
               </label>
               <select
                 id="gender"
@@ -342,7 +363,7 @@ function UserManagementPage() {
 
             <div className="mb-6">
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
-                Role
+                Role *
               </label>
               <select
                 id="role"
