@@ -5,12 +5,15 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import logo from './logofes.png';
 import { ThemePackage } from '../User/EventBooking/EventBooking'; 
+import Header from '../../../Components/Header';
+import Footer from "../../Footer";
+import { Box, Container, Typography, Button } from "@mui/material";
 
-// Interface definitions for type safety
-interface UserData {
+interface User {
   name?: string;
   email?: string;
   phoneNumber?: string;
+  [key: string]: any;
 }
 
 // Update the EventBookingData interface to include selectedPackage
@@ -187,23 +190,14 @@ const serviceCharge = Math.round(bookingData.selectedPackage.packagePrice * SERV
 const totalAmount = bookingData.selectedPackage.packagePrice + taxAmount + serviceCharge;
 
 
-  // Get logged-in user data from localStorage with fallback values
-  const [userData, setUserData] = useState<UserData>(() => {
+ // Get user data from localStorage
+  const [userData, setUserData] = useState<User>(() => {
     try {
       const storedUser = localStorage.getItem('user');
-      const name = localStorage.getItem('name') || '';
-      const email = localStorage.getItem('email') || '';
-      const phoneNumber = localStorage.getItem('phoneNumber') || '';
-
       if (storedUser) {
-        const user = JSON.parse(storedUser);
-        return {
-          name: user.name || name,
-          email: user.email || email,
-          phoneNumber: user.phoneNumber || phoneNumber
-        };
+        return JSON.parse(storedUser);
       }
-      return { name, email, phoneNumber };
+      return {};
     } catch (error) {
       console.error('Error parsing user data:', error);
       return {};
@@ -211,18 +205,19 @@ const totalAmount = bookingData.selectedPackage.packagePrice + taxAmount + servi
   });
 
   // Initialize form data with user data
-  const [formData, setFormData] = useState<CheckoutFormData>(() => ({
-    name: userData.name || '',
+const [formData, setFormData] = useState<CheckoutFormData>({
+ name: userData.name || '',
     email: userData.email || '',
     phoneNumber: userData.phoneNumber || '',
-    address: '',
-    cardNumber: '',
-    cardType: "Visa",
-    expDate: "",
-    cvv: "",
+  address: '',
+  cardNumber: '',
+  cardType: "Visa",
+  expDate: "",
+  cvv: "",
     orderSummary: `Event: ${location.state?.bookingData?.eventName || 'Birthday Party'}, Package: ${location.state?.bookingData?.eventPackage || 'Premium'}`,
     amount: location.state?.bookingData?.packagePrice || PACKAGE_PRICES.Premium
-  }));
+
+});
 
   // State for form errors, loading, and messages
   const [errors, setErrors] = useState<FormErrors>({});
@@ -232,15 +227,16 @@ const totalAmount = bookingData.selectedPackage.packagePrice + taxAmount + servi
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [countdown, setCountdown] = useState(5);
 
-  // Update form data when user data changes
+// Update form data when userData changes
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
-      name: userData.name || '',
-      email: userData.email || '',
-      phoneNumber: userData.phoneNumber || ''
+      name: userData.name || prev.name,
+      email: userData.email || prev.email,
+      phoneNumber: userData.phoneNumber || prev.phoneNumber
     }));
   }, [userData]);
+
 
 // In the CheckoutPage component, update the useEffect that handles location state changes
 useEffect(() => {
@@ -581,7 +577,12 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   // Main component render
   return (
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Include the Header component at the top */}
+      <Header />
+      
     <div className="min-h-screen bg-gradient-to-b from-yellow-100 to-yellow-50 flex justify-center items-center p-4">
+
       <div className="bg-white shadow-xl rounded-lg p-6 w-full max-w-4xl border-2 border-yellow-400 relative">
         {/* Success Message Overlay - shown when payment is successful */}
         {success.show && (
@@ -1035,7 +1036,10 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
         </form>
       </div>
+      
     </div>
+    <Footer />
+    </Box>
   );
 };
 
