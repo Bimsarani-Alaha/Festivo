@@ -68,14 +68,14 @@ export default function LoginForm() {
           throw new Error('Suppliers are not allowed to log in.');
         }
   
-        if (response.user) {
-          localStorage.setItem('user', JSON.stringify(response.user));
-          localStorage.setItem('name', response.user.name || '');
-          localStorage.setItem('email', response.user.email || '');
-          localStorage.setItem('phoneNumber', response.user.phoneNumber || '');
-          localStorage.setItem('gender', response.user.gender || '');
-        }
-  
+       if (response.user) {
+        // Store all user details in localStorage
+        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem('name', response.user.name || '');
+        localStorage.setItem('email', response.user.email || '');
+        localStorage.setItem('phoneNumber', response.user.phoneNumber || '');
+      }
+      
         console.log('Stored Token:', localStorage.getItem('token'));
         console.log('Stored Role:', localStorage.getItem('role'));
         console.log('Stored User:', localStorage.getItem('user'));

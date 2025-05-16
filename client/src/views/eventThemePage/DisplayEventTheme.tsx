@@ -73,13 +73,18 @@ const DisplayEventTheme: React.FC = () => {
       return;
     }
     
-    navigate("/Eventbooking", { 
-      state: { 
-        selectedTheme: theme,
-        selectedPackage: selectedPackage 
-      } 
-    });
-  };
+  navigate("/Eventbooking", { 
+    state: { 
+      selectedTheme: {
+        ...theme,
+        eventPackage: selectedPackage?.packageName || null,
+        packageDetails: selectedPackage || null
+      },
+      selectedPackage: selectedPackage 
+    } 
+  });
+};
+
   const toggleFavorite = (
     id: string | number,
     event: React.MouseEvent

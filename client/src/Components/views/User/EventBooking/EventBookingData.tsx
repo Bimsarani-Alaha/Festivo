@@ -433,9 +433,7 @@ const EventBookingsTable = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Guests
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Package
-                      </th>
+                      
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
@@ -460,19 +458,7 @@ const EventBookingsTable = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {booking.noOfGuest}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                booking.eventPackage === "Basic"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : booking.eventPackage === "Premium"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                              }`}
-                            >
-                              {booking.eventPackage || "None"}
-                            </span>
-                          </td>
+                          
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex space-x-2">
                               <button
@@ -683,23 +669,7 @@ const EventBookingsTable = () => {
                         min="1"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Package: <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        name="eventPackage"
-                        value={editFormData.eventPackage || ""}
-                        onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
-                      >
-                        <option value="">Select Package</option>
-                        <option value="Basic">Basic</option>
-                        <option value="Premium">Premium</option>
-                        <option value="Luxury">Luxury</option>
-                      </select>
-                    </div>
+                
                   </div>
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">

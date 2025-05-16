@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import logo from './logofes.png';
-import { ThemePackage } from '../User/EventBooking/EventBooking'; // Import the ThemePackage interface
+import { ThemePackage } from '../User/EventBooking/EventBooking'; 
 
 // Interface definitions for type safety
 interface UserData {
@@ -76,6 +76,7 @@ const CheckoutPage: React.FC = () => {
     }
   );
 
+  
   // Function to generate PDF receipt
   const generateReceiptPDF = async (transactionId: string) => {
     const doc = new jsPDF();
@@ -492,93 +493,81 @@ useEffect(() => {
     return !Object.values(newErrors).some(error => error);
   };
 
-  // Form submission handler
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess({show: false, message: ''});
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
+  setSuccess({show: false, message: ''});
 
-    // Validate form before submission
-    if (!validateForm()) {
-      setError("Please fix the errors in the form");
-      return;
-    }
+  if (!validateForm()) {
+    setError("Please fix the errors in the form");
+    return;
+  }
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      // Prepare the data for the backend
-      const paymentData = {
-        name: formData.name,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber,
-        address: formData.address,
-        cardNumber: formData.cardNumber.replace(/\s/g, ''),
-        cardType: formData.cardType,
-        expDate: formData.expDate,
-        cvv: formData.cvv,
-        orderSummary: formData.orderSummary,
-        amount: formData.amount,
-        eventDetails: {
-          eventName: bookingData.eventName,
-          eventTheme: bookingData.eventTheme,
-          eventDate: bookingData.eventDate,
-          eventType: bookingData.eventType,
-          noOfGuest: bookingData.noOfGuest,
-          specialRequest: bookingData.specialRequest,
-          eventPackage: bookingData.eventPackage,
-          packagePrice: bookingData.packagePrice
-        }
-      };
+  try {
+    const paymentData = {
+      name: formData.name,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+      address: formData.address,
+      cardNumber: formData.cardNumber.replace(/\s/g, ''),
+      cardType: formData.cardType,
+      expDate: formData.expDate,
+      cvv: formData.cvv,
+      orderSummary: formData.orderSummary,
+      amount: totalAmount, // Changed from formData.amount to totalAmount
+      eventDetails: {
+        eventName: bookingData.eventName,
+        eventTheme: bookingData.eventTheme,
+        eventDate: bookingData.eventDate,
+        eventType: bookingData.eventType,
+        noOfGuest: bookingData.noOfGuest,
+        specialRequest: bookingData.specialRequest,
+        eventPackage: bookingData.eventPackage,
+        packagePrice: bookingData.selectedPackage.packagePrice,
+        totalAmount: totalAmount // Add totalAmount to eventDetails as well
+      }
+    };
 
-      // Send payment data to backend API
-      const response = await axios.post('http://localhost:8080/public/addPayment', paymentData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+    const response = await axios.post('http://localhost:8080/public/addPayment', paymentData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
+
+    if (response.data) {
+      const transactionId = response.data.transactionId || Date.now().toString();
+      generateReceiptPDF(transactionId);
+      setSuccess({
+        show: true,
+        message: `Payment confirmed for Rs. ${totalAmount.toLocaleString()}`,
+        transactionId
       });
-
-      if (response.data) {
-        const transactionId = response.data.transactionId || Date.now().toString();
-
-        // Generate and download the receipt
-        generateReceiptPDF(transactionId);
-
-        // Show success message
-        setSuccess({
-          show: true,
-          message: `Payment confirmed for Rs. ${formData.amount}`,
-          transactionId
-        });
-        setCountdown(5);
-        console.log('Payment successful:', response.data);
-      } else {
-        throw new Error('No response data received');
-      }
-    } catch (err: any) {
-      // Error handling with user-friendly messages
-      let errorMessage = 'Payment processing failed. Please try again.';
-      
-      if (axios.isAxiosError(err)) {
-        if (err.response) {
-          errorMessage = err.response.data?.message || 
-                         `Server error: ${err.response.status} - ${err.response.statusText}`;
-        } else if (err.request) {
-          errorMessage = 'No response received from server. Please check your connection.';
-        } else {
-          errorMessage = `Request error: ${err.message}`;
-        }
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
-      console.error('Payment error:', err);
-    } finally {
-      setIsLoading(false);
+      setCountdown(5);
+    } else {
+      throw new Error('No response data received');
     }
-  };
+  } catch (err: any) {
+    let errorMessage = 'Payment processing failed. Please try again.';
+    if (axios.isAxiosError(err)) {
+      if (err.response) {
+        errorMessage = err.response.data?.message || 
+                       `Server error: ${err.response.status} - ${err.response.statusText}`;
+      } else if (err.request) {
+        errorMessage = 'No response received from server. Please check your connection.';
+      } else {
+        errorMessage = `Request error: ${err.message}`;
+      }
+    } else if (err instanceof Error) {
+      errorMessage = err.message;
+    }
+    setError(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Helper function to format dates for display
   const formatDate = (dateString: string) => {
@@ -959,7 +948,7 @@ useEffect(() => {
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
       </svg>
-      Confirm Payment Rs. {(totalAmount || 0).toLocaleString()}
+      Confirm Payment Rs. {totalAmount.toLocaleString()}
     </>
   )}
 </button>

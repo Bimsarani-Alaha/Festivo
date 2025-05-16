@@ -28,6 +28,9 @@ interface EventData {
   noOfGuest: number;
   specialRequest: string;
   selectedPackage?: ThemePackage;
+  packageId?: number | string;  // Add this to match your backend
+  packageName?: string;        // Add these fields to make it easier
+  packagePrice?: number;       // for backend processing
 }
 
 const EventBooking = () => {
@@ -37,25 +40,25 @@ const EventBooking = () => {
   const selectedPackageFromTheme = location.state?.selectedPackage as ThemePackage | undefined;
 
 
- // Initialize form state with theme data if available
- const [eventName, setEventName] = useState(selectedTheme?.eventName || 'Birthday');
- const [eventTheme, setEventTheme] = useState(selectedTheme?.themeName || 'Fairy Tale Magic');
- const [eventType, setEventType] = useState<'Indoor' | 'Outdoor' | 'Pool' | ''>('');
- const [guestCount, setGuestCount] = useState(0);
- const [specialRequest, setSpecialRequest] = useState('');
- const [selectedPackage, setSelectedPackage] = useState<ThemePackage | null>(selectedPackageFromTheme || null);
- const [eventDate, setEventDate] = useState('');
- const [isLoading, setIsLoading] = useState(false);
- const [error, setError] = useState('');
- const [minDate, setMinDate] = useState('');
- const [touchedFields, setTouchedFields] = useState({
-   eventName: false,
-   eventTheme: false,
-   eventDate: false,
-   eventType: false,
-   guestCount: false,
-   package: false
- });
+// Initialize form state with theme data if available
+  const [eventName, setEventName] = useState(selectedTheme?.eventName || 'Birthday');
+  const [eventTheme, setEventTheme] = useState(selectedTheme?.themeName || 'Fairy Tale Magic');
+  const [eventType, setEventType] = useState<'Indoor' | 'Outdoor' | 'Pool' | ''>('');
+  const [guestCount, setGuestCount] = useState(0);
+  const [specialRequest, setSpecialRequest] = useState('');
+  const [selectedPackage, setSelectedPackage] = useState<ThemePackage | null>(selectedPackageFromTheme || null);
+  const [eventDate, setEventDate] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [minDate, setMinDate] = useState('');
+  const [touchedFields, setTouchedFields] = useState({
+    eventName: false,
+    eventTheme: false,
+    eventDate: false,
+    eventType: false,
+    guestCount: false,
+    package: false
+  });
 
 
 // Set minimum date to today
@@ -66,8 +69,6 @@ const EventBooking = () => {
     const day = String(today.getDate()).padStart(2, '0');
     setMinDate(`${year}-${month}-${day}`);
   }, []);
-
-
 
   const incrementGuests = () => {
     setGuestCount(prev => prev + 1);
@@ -83,7 +84,7 @@ const EventBooking = () => {
     setTouchedFields(prev => ({ ...prev, [field]: true }));
   };
 
-   const validateForm = () => {
+  const validateForm = () => {
     const errors = [];
     
     if (!eventName.trim()) {
@@ -116,7 +117,6 @@ const EventBooking = () => {
     return errors.length === 0;
   };
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -138,7 +138,11 @@ const EventBooking = () => {
       eventType,
       noOfGuest: guestCount,
       specialRequest,
-      selectedPackage: selectedPackage || undefined
+      selectedPackage: selectedPackage || undefined,
+      // Add these fields to match your backend requirements
+      packageId: selectedPackage?.id,
+      packageName: selectedPackage?.packageName,
+      packagePrice: selectedPackage?.packagePrice
     };
 
     setIsLoading(true);
@@ -218,9 +222,9 @@ const EventBooking = () => {
       <div className="flex-grow p-4 md:p-8 font-sans">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
           {/* Header with dynamic color */}
-          <div className={`bg-gradient-to-r ${gradientClasses.header} text-white p-6`}>
+          <div className={`bg-gradient-to-r from-yellow-600 to-yellow-700 text-white p-6`}>
             <h1 className="text-2xl font-bold">Event Booking Form</h1>
-            <p className={`${gradientClasses.text} mt-1`}>
+            <p className={`text-yellow-100 mt-1`}>
               {selectedTheme ? `Booking for ${selectedTheme.themeName}` : 'Plan your perfect event with us'}
             </p>
           </div>
@@ -243,7 +247,8 @@ const EventBooking = () => {
                     <AttachMoneyIcon className="text-gray-700 mr-1" />
                     <span className="font-medium">Starting from Rs. {selectedTheme.price.toLocaleString()}</span>
                   </div>
-                  {/* Display selected package if available */}
+
+                     {/* Display selected package if available */}
                   {selectedPackage && (
                     <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <h4 className="font-bold text-gray-800">Selected Package:</h4>
@@ -261,7 +266,7 @@ const EventBooking = () => {
             </div>
           )}
 
-          {/* Error Message */}
+         {/* Error Message */}
           {error && (
             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 animate-fade-in">
               <div className="flex items-center">
@@ -283,7 +288,7 @@ const EventBooking = () => {
                   value={eventName}
                   onChange={(e) => setEventName(e.target.value)}
                   onBlur={() => handleBlur('eventName')}
-                  className={`w-full p-3 border rounded-md ${gradientClasses.focus} ${
+                  className={`w-full p-3 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 ${
                     touchedFields.eventName && !eventName.trim() ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
@@ -305,7 +310,7 @@ const EventBooking = () => {
                   value={eventTheme}
                   onChange={(e) => setEventTheme(e.target.value)}
                   onBlur={() => handleBlur('eventTheme')}
-                  className={`w-full p-3 border rounded-md ${gradientClasses.focus} ${
+                  className={`w-full p-3 border rounded-md focus:ring-yellow-500 focus:border-yellow-500 ${
                     touchedFields.eventTheme && !eventTheme.trim() ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
@@ -357,7 +362,7 @@ const EventBooking = () => {
                         checked={eventType === 'Indoor'}
                         onChange={() => setEventType('Indoor')}
                         onBlur={() => handleBlur('eventType')}
-                        className={`text-${themeColor}-600 focus:ring-${themeColor}-500`}
+                        className="text-yellow-600 focus:ring-yellow-500"
                         required
                       />
                       <span className="ml-2">Indoor</span>
@@ -369,7 +374,7 @@ const EventBooking = () => {
                         checked={eventType === 'Outdoor'}
                         onChange={() => setEventType('Outdoor')}
                         onBlur={() => handleBlur('eventType')}
-                        className={`text-${themeColor}-600 focus:ring-${themeColor}-500`}
+                        className="text-yellow-600 focus:ring-yellow-500"
                       />
                       <span className="ml-2">Outdoor</span>
                     </label>
@@ -380,7 +385,7 @@ const EventBooking = () => {
                         checked={eventType === 'Pool'}
                         onChange={() => setEventType('Pool')}
                         onBlur={() => handleBlur('eventType')}
-                        className={`text-${themeColor}-600 focus:ring-${themeColor}-500`}
+                        className="text-yellow-600 focus:ring-yellow-500"
                       />
                       <span className="ml-2">Pool</span>
                     </label>
@@ -434,10 +439,8 @@ const EventBooking = () => {
             </div>
 
             <div className="border-t pt-6">
-        
-
-    {/* Pay Now Button */}
-    <div className="mt-8">
+              {/* confirm Button */}
+              <div className="mt-8">
                 <button 
                   type="submit"
                   className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white py-4 px-6 rounded-lg transition-all duration-300 font-medium text-lg disabled:opacity-50 shadow-lg hover:shadow-xl flex items-center justify-center"
