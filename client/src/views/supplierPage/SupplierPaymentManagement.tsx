@@ -225,7 +225,7 @@ const SupplierPaymentManagement: React.FC = () => {
                   ) : (
                     <TableCell>{payment.productId}</TableCell>
                   )}
-                  <TableCell>${payment.amount.toFixed(2)}</TableCell>
+                  <TableCell>LKR{" "} {payment.amount.toFixed(2)}</TableCell>
                   <TableCell>{payment.paymentType}</TableCell>
                   <TableCell>{payment.paymentStatus}</TableCell>
                   <TableCell>{formatDate(payment.deliveryDate)}</TableCell>

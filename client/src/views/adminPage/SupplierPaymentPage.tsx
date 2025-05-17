@@ -228,7 +228,7 @@ const SupplierPaymentPage: React.FC = () => {
                         <TableCell>
                           {new Date(order.eventDate).toLocaleDateString()}
                         </TableCell>
-                        <TableCell>${order.amount}</TableCell>
+                        <TableCell>Rs{order.amount}</TableCell>
                         <TableCell>{order.status}</TableCell>
                         <TableCell>
                           {order.status !== 'PAID' ? (
@@ -297,7 +297,7 @@ const SupplierPaymentPage: React.FC = () => {
                       value={paymentData.amount}
                       margin="normal"
                       InputProps={{
-                        startAdornment: '$',
+                        startAdornment: 'LKR',
                       }}
                       disabled
                     />

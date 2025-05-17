@@ -617,7 +617,7 @@ const AllEventThemes: React.FC = () => {
                             alignItems: "center",
                           }}
                         >
-                          <AttachMoneyIcon fontSize="small" />
+                          LKR:{" "}
                           {theme.price.toLocaleString()}
                         </Typography>
                       </Box>
