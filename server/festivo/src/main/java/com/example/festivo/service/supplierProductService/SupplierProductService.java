@@ -1,6 +1,5 @@
 package com.example.festivo.service.supplierProductService;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.festivo.dto.supplierProductsDto.SupplierProductRequestDTO;
 import com.example.festivo.entity.suplierEntity.SupplierProductEntity;
@@ -12,7 +11,7 @@ public class SupplierProductService {
 
     private final SupplierProductRepository supplierProductRepository;
 
-    @Autowired
+    
     public SupplierProductService(SupplierProductRepository supplierProductRepository) {
         this.supplierProductRepository = supplierProductRepository;
     }
