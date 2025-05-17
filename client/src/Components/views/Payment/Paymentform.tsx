@@ -8,12 +8,13 @@ import { ThemePackage } from '../User/EventBooking/EventBooking';
 import Header from '../../../Components/Header';
 import Footer from "../../Footer";
 import { Box, Container, Typography, Button } from "@mui/material";
+import {useMediaQuery} from '@mui/material';
 
-interface User {
-  name?: string;
-  email?: string;
-  phoneNumber?: string;
-  [key: string]: any;
+// Add interface for user data
+interface UserData {
+  name: string;
+  email: string;
+  phoneNumber: string;
 }
 
 // Update the EventBookingData interface to include selectedPackage
@@ -191,7 +192,7 @@ const totalAmount = bookingData.selectedPackage.packagePrice + taxAmount + servi
 
 
  // Get user data from localStorage
-  const [userData, setUserData] = useState<User>(() => {
+  const [userData, setUserData] = useState<UserData>(() => {
     try {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
@@ -203,6 +204,16 @@ const totalAmount = bookingData.selectedPackage.packagePrice + taxAmount + servi
       return {};
     }
   });
+ useEffect(() => {
+    // Get user data from localStorage
+    const name = localStorage.getItem('name');
+    const email = localStorage.getItem('email');
+    const phoneNumber = localStorage.getItem('phoneNumber');
+
+    if (name && email && phoneNumber) {
+      setUserData({ name, email, phoneNumber });
+    }
+  }, []);
 
   // Initialize form data with user data
 const [formData, setFormData] = useState<CheckoutFormData>({
@@ -694,7 +705,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <input
                       type="text"
                       name="name"
-                      value={formData.name}
+                      value={userData.name}
                       onChange={(e) => {
                         // Allow letters and spaces only
                         const value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
@@ -724,7 +735,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <input
                       type="email"
                       name="email"
-                      value={formData.email}
+                      value={userData.email}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
                       className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
@@ -744,7 +755,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <input
                       type="tel"
                       name="phoneNumber"
-                      value={formData.phoneNumber}
+                      value={userData.phoneNumber}
                       onChange={(e) => {
                         // Allow only numbers, limit to 10 digits
                         const value = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -765,7 +776,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   </div>
                 </div>
               </div>
-
+ 
               {/* Shipping Address Section */}
               <div className="mb-6">
                 <label className="block text-gray-700 font-medium mb-1">
@@ -1040,6 +1051,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     </div>
     <Footer />
     </Box>
+    
   );
 };
 
