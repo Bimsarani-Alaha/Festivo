@@ -12,7 +12,9 @@ import lombok.NoArgsConstructor;
 @Data
 public class SupplierPaymentRequestDTO {
 
-    private String supplierEmail;          
+    private String supplierEmail;   
+    
+    private String productId;
     private String orderRequestId;         
 
     private BigDecimal amount;             

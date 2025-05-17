@@ -19,13 +19,15 @@ public class SupplierPaymentEntity {
     @Id
     private String id;
 
-    private String supplierEmail;          // Links to SupplierProductEntity
-    private String orderRequestId;         // Links to SupplierReq.id
+    private String supplierEmail;
+    
+    private String productId;
+    private String orderRequestId;         
 
-    private BigDecimal amount;             // Total amount for this request
-    private String paymentType;            // e.g., "COD"
-    private String paymentStatus;          // "pending", "paid"
+    private BigDecimal amount;            
+    private String paymentType;            
+    private String paymentStatus;          
 
     private Date deliveryDate;
-    private Date paymentDate;              // Set when marked as paid
+    private Date paymentDate; 
 }

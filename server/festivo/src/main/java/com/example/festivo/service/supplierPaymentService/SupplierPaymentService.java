@@ -24,6 +24,7 @@ public class SupplierPaymentService {
     public SupplierPaymentEntity createSupplierPayment(SupplierPaymentRequestDTO supplierPaymentDTO){
         SupplierPaymentEntity supplierPayment = new SupplierPaymentEntity();
         supplierPayment.setSupplierEmail(supplierPaymentDTO.getSupplierEmail());
+        supplierPayment.setProductId(supplierPaymentDTO.getOrderRequestId());
         supplierPayment.setOrderRequestId(supplierPaymentDTO.getOrderRequestId());
         supplierPayment.setAmount(supplierPaymentDTO.getAmount());
         supplierPayment.setPaymentDate(supplierPaymentDTO.getPaymentDate());
@@ -31,8 +32,19 @@ public class SupplierPaymentService {
         supplierPayment.setPaymentStatus("Ongoing");
         supplierPayment.setPaymentType(supplierPaymentDTO.getPaymentType());
 
-        return supplierPaymentRepository.save(supplierPayment);
-        
+        return supplierPaymentRepository.save(supplierPayment);        
+    }
+
+    public SupplierPaymentEntity updateSupplierPayment(String id, SupplierPaymentRequestDTO supplierPaymentDTO){
+        return supplierPaymentRepository.findById(id)
+                .map(existingPayment -> {
+                    existingPayment.setSupplierEmail(supplierPaymentDTO.getSupplierEmail());
+                    existingPayment.setPaymentStatus(supplierPaymentDTO.getPaymentStatus());
+                    existingPayment.setDeliveryDate(supplierPaymentDTO.getDeliveryDate());;
+
+                    return supplierPaymentRepository.save(existingPayment);
+                })
+                .orElseThrow(() -> new RuntimeException("Supplier Payment not found with id: " + id));                            
     }
 
 
