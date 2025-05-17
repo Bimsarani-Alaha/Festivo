@@ -12,6 +12,8 @@ public interface SupplierOrderReqRepo extends MongoRepository<SupplierReq, Strin
     
     // Optional case-insensitive search
     List<SupplierReq> findBySupplierCategoryIgnoreCase(String supplierCategory);
+
+    List<SupplierReq> findByStatus(String status);
     
     // Explicitly declare findById (already inherited from MongoRepository)
     Optional<SupplierReq> findById(String id);

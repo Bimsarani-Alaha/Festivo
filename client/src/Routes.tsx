@@ -96,6 +96,7 @@ const AppRoutes = () => {
                     path="/admin/supplierProducts"
                     element={<AdminSupplierProducts/>}
                 />
+                <Route path="/admin/supplierAcceptedProducts"}        
                 
                 
             </Route>

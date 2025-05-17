@@ -1,19 +1,28 @@
 import { Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Toolbar, Divider, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { Dashboard as DashboardIcon, People as PeopleIcon, ShoppingCart as ShoppingCartIcon, BarChart as BarChartIcon, Settings as SettingsIcon } from '@mui/icons-material';
-import ContrastIcon from '@mui/icons-material/Contrast';
-import ExtensionIcon from '@mui/icons-material/Extension';
+import {
+  LayoutDashboard,
+  Users,
+  ShoppingCart,
+  BarChart2,
+  Package,
+  CheckSquare,
+  Palette,
+  CreditCard,
+  MessageSquare,
+} from "lucide-react";
 const drawerWidth = 240;
 
 const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
-  { text: 'Customers', icon: <PeopleIcon />, path: '/UserManagementDashboard' },
-  { text: 'Orders', icon: <ShoppingCartIcon />, path: '/EventBookingsTable' },
-  { text: 'Reports', icon: <BarChartIcon />, path: '/admin/reports' },
-  { text: 'Supplier Products', icon: <ExtensionIcon />, path: '/admin/supplierProducts' },
-  { text: 'Event Theme', icon: <ContrastIcon />, path: '/admin/EventTheme' },
-  { text: 'Payment Details', icon: <BarChartIcon />, path: '/DataTable' },
-  { text: 'Feedback Details', icon: <BarChartIcon />, path: '/FeedbackList' },
+  { text: 'Dashboard', icon: <LayoutDashboard />, path: '/admin/dashboard' },
+  { text: 'Customers', icon: <Users />, path: '/UserManagementDashboard' },
+  { text: 'Orders', icon: <ShoppingCart />, path: '/EventBookingsTable' },
+  { text: 'Reports', icon: <BarChart2 />, path: '/admin/reports' },
+  { text: 'Supplier Products', icon: <Package />, path: '/admin/supplierProducts' },
+  { text: 'Supplier Accept Products', icon: <CheckSquare />, path: '/admin/supplierAcceptedProducts' },
+  { text: 'Event Theme', icon: <Palette />, path: '/admin/EventTheme' },
+  { text: 'Payment Details', icon: <CreditCard />, path: '/DataTable' },
+  { text: 'Feedback Details', icon: <MessageSquare />, path: '/FeedbackList' },
 ];
 
 interface AdminSideBarProps {

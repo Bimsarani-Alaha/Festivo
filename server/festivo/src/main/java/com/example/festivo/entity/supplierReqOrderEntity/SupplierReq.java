@@ -29,5 +29,6 @@ public class SupplierReq {
     private String supplierCategory;
     private String status;
     private String acceptedSupplier;
+    private String amount;
 
 }

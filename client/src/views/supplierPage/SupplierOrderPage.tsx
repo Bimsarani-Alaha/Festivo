@@ -13,39 +13,44 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Stack
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField
 } from '@mui/material';
 import { getAllSupplierOrders, acceptSupplierOrder, rejectSupplierOrder, SupplierOrder } from '../../api/supplierOrder';
-import { getSupplier } from '../../api/supplierApi'; // Import the getSupplier API
+import { getSupplier } from '../../api/supplierApi';
 import { getSupplierDetails } from '../../customHooks/supplierEmailextract';
 
 const SupplierOrdersDashboard: React.FC = () => {
   const [orders, setOrders] = useState<SupplierOrder[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<SupplierOrder[]>([]); // New state for filtered orders
+  const [filteredOrders, setFilteredOrders] = useState<SupplierOrder[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const supplierDetails = getSupplierDetails();
   const sEmail = supplierDetails?.email || "Error Loading";
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [supplierCategory, setSupplierCategory] = useState<string | null>(null);
+  
+  // Dialog state
+  const [openDialog, setOpenDialog] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
 
-  // Assume supplier email is available (e.g., from context, auth, or props)
-  const supplierEmail = sEmail; // Replace with actual email source
+  const supplierEmail = sEmail;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        // Fetch supplier data
         const supplierData = await getSupplier(supplierEmail);
-        setSupplierCategory(supplierData.category); // Set supplier category
+        setSupplierCategory(supplierData.category);
 
-        // Fetch all orders
         const data = await getAllSupplierOrders();
         setOrders(data);
 
-        // Filter orders based on supplier category
         if (supplierData.category) {
           const filtered = data.filter(order => order.supplierCategory === supplierData.category);
           setFilteredOrders(filtered);
@@ -63,16 +68,29 @@ const SupplierOrdersDashboard: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleAccept = async (orderId: string) => {
+  const handleAcceptClick = (orderId: string) => {
+    setSelectedOrder(orderId);
+    setOpenDialog(true);
+  };
+
+  const handleDialogClose = () => {
+    setOpenDialog(false);
+    setAmount('');
+  };
+
+  const handleConfirmAccept = async () => {
+    if (!selectedOrder || !amount) return;
+    
     try {
       setLoading(true);
-      await acceptSupplierOrder(orderId);
+      await acceptSupplierOrder(selectedOrder, supplierEmail, amount);
       const data = await getAllSupplierOrders();
       setOrders(data);
-      // Re-filter orders after accepting
+      
       if (supplierCategory) {
         setFilteredOrders(data.filter(order => order.supplierCategory === supplierCategory));
       }
+      
       setSuccess('Order accepted successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -80,6 +98,7 @@ const SupplierOrdersDashboard: React.FC = () => {
       console.error('Error accepting order:', err);
     } finally {
       setLoading(false);
+      handleDialogClose();
     }
   };
 
@@ -89,10 +108,11 @@ const SupplierOrdersDashboard: React.FC = () => {
       await rejectSupplierOrder(orderId);
       const data = await getAllSupplierOrders();
       setOrders(data);
-      // Re-filter orders after rejecting
+      
       if (supplierCategory) {
         setFilteredOrders(data.filter(order => order.supplierCategory === supplierCategory));
       }
+      
       setSuccess('Order rejected successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -206,7 +226,7 @@ const SupplierOrdersDashboard: React.FC = () => {
                               variant="contained"
                               color="success"
                               size="small"
-                              onClick={() => handleAccept(order.id)}
+                              onClick={() => handleAcceptClick(order.id)}
                               disabled={accepted || rejected}
                             >
                               Accept
@@ -231,6 +251,36 @@ const SupplierOrdersDashboard: React.FC = () => {
           </TableContainer>
         </Paper>
       )}
+
+      {/* Amount Input Dialog */}
+      <Dialog open={openDialog} onClose={handleDialogClose}>
+        <DialogTitle>Enter Amount for Order</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Amount"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            inputProps={{ min: 0 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmAccept} 
+            color="success"
+            disabled={!amount}
+          >
+            Confirm Acceptance
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

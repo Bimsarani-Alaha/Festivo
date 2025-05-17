@@ -19,10 +19,17 @@ export async function getAllSupplierOrders(): Promise<SupplierOrder[]> {
     return res.data;
 }
 
+export async function getAcceptedSupplierOrders(): Promise<SupplierOrder[]> {
+    const res = await axios.get("/public/supplierOrder/get-accepted");
+    return res.data;
+}
+
 // Accept a supplier order
-export async function acceptSupplierOrder(orderId: string): Promise<SupplierOrder> {
+export async function acceptSupplierOrder(orderId: string, acceptedSupplier: string, amount: string): Promise<SupplierOrder> {
     const res = await axios.put(`/public/supplierOrder/status/${orderId}`, {
-        status: 'ACCEPTED'
+        status: 'ACCEPTED',
+        acceptedSupplier,
+        amount
     });
     return res.data;
 }

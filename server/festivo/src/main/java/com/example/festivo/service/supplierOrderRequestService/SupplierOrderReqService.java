@@ -30,6 +30,8 @@ public class SupplierOrderReqService {
         supplierReq.setEventDate(req.getEventDate());
         supplierReq.setEventId(req.getEventId());
         supplierReq.setSupplierCategory(req.getSupplierCategory());
+        supplierReq.setAmount("undefined");
+        supplierReq.setAcceptedSupplier("Not Accepted");
 
         SupplierReq saved = supplierOrderReqRepository.save(supplierReq);
 
@@ -50,12 +52,18 @@ public class SupplierOrderReqService {
             SupplierReq supplierReq = optionalSupplierReq.get();
             
             supplierReq.setStatus(req.getStatus());
+            supplierReq.setAmount(req.getAmount());
+            supplierReq.setAcceptedSupplier(req.getAcceptedSupplier());
             SupplierReq updatedSupplierReq = supplierOrderReqRepository.save(supplierReq);
             
             return updatedSupplierReq;
         } else {
             throw new RuntimeException("Supplier order with ID " + id + " not found");
         }
+    }
+
+    public List<SupplierReq> getAcceptedSupplierOrder() {
+        return supplierOrderReqRepository.findByStatus("ACCEPTED");
     }
     
 
