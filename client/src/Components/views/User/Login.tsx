@@ -80,7 +80,7 @@ export default function LoginForm() {
         console.log('Stored Role:', localStorage.getItem('role'));
         console.log('Stored User:', localStorage.getItem('user'));
   
-        if (response.role === 'ADMIN') {
+        if (response.role === 'ADMIN') { //if a admin login to the page
           navigate('/admin/dashboard');
         } else {
           navigate('/');

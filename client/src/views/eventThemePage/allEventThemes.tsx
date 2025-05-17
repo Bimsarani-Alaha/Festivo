@@ -4,7 +4,6 @@ import {
   EventThemeSchema,
   updateEventTheme,
   deleteEventTheme,
-  PackageNameData,
   ThemePackage
 } from "../../api/eventThemeApi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,13 +43,13 @@ import {
   Save as SaveIcon,
   Close as CloseIcon,
   AttachMoney as AttachMoneyIcon,
-  ColorLens as ColorLensIcon,
   Category as CategoryIcon,
   AddPhotoAlternate as AddPhotoAlternateIcon,
-  EditCalendarOutlined,
+  GetApp as GetAppIcon,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
-import AddOrEditPackageDialog from "./AddOrEditThemePackagesDialog"; // Assuming this component is in the same directory
+import AddOrEditPackageDialog from "./AddOrEditThemePackagesDialog";
+import jsPDF from "jspdf";
 
 // Custom theme based on the color palette
 const theme = createTheme({
@@ -172,24 +171,19 @@ const AllEventThemes: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<EventThemeSchema>>({});
   const [filter, setFilter] = useState<string | null>(null);
-
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [deleteSnackbar, setDeleteSnackbar] = useState(false);
   const [openFailedSnackbar, setOpenFailedSnackbar] = useState(false);
-
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<{
     id: string;
     themeName: string;
   } | null>(null);
-
-  // Package dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<ThemePackage | null>(null);
 
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
-
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -207,9 +201,7 @@ const AllEventThemes: React.FC = () => {
   const fetchThemes = async () => {
     setLoading(true);
     try {
-      const response = await axios.get<EventThemeSchema[]>(
-        "/public/event-theme"
-      );
+      const response = await axios.get<EventThemeSchema[]>("/public/event-theme");
       setThemes(response.data);
       setLoading(false);
     } catch (error) {
@@ -298,7 +290,6 @@ const AllEventThemes: React.FC = () => {
     setEditData({});
   };
 
-  // Package dialog handlers
   const handleOpenPackageDialog = (pkg: ThemePackage | null = null) => {
     setSelectedPackage(pkg);
     setDialogOpen(true);
@@ -313,35 +304,91 @@ const AllEventThemes: React.FC = () => {
     if (!editingId) return;
 
     const currentPackages = editData.themePackage || [];
-    
     let updatedPackages;
-    
+
     if (selectedPackage) {
-      // Update existing package
-      updatedPackages = currentPackages.map(pkg => 
+      updatedPackages = currentPackages.map(pkg =>
         pkg.id === selectedPackage.id ? packageData : pkg
       );
     } else {
-      // Add new package
-      // Check for duplicates
       const isDuplicate = currentPackages.some(
         pkg => pkg.packageName.trim().toLowerCase() === packageData.packageName.trim().toLowerCase()
       );
-      
       if (isDuplicate) {
         alert("You can't add the same package twice.");
         return;
       }
-      
       updatedPackages = [...currentPackages, packageData];
     }
-    
+
     setEditData(prev => ({
       ...prev,
       themePackage: updatedPackages
     }));
-    
     handleClosePackageDialog();
+  };
+
+  // PDF Generation Function
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    let yOffset = 20;
+
+    doc.setFontSize(20);
+    doc.setTextColor(197, 137, 64); // RGB for #C58940
+    doc.text("Event Themes Catalog", 105, yOffset, { align: "center" });
+    yOffset += 10;
+
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(229, 186, 115); // RGB for #E5BA73
+    doc.line(20, yOffset, 190, yOffset);
+    yOffset += 10;
+
+    filteredThemes.forEach((theme, index) => {
+      if (yOffset > 250) {
+        doc.addPage();
+        yOffset = 20;
+      }
+
+      doc.setFontSize(16);
+      doc.setTextColor(67, 53, 32); // RGB for #433520
+      doc.text(`${theme.eventName} - ${theme.themeName}`, 20, yOffset);
+      yOffset += 8;
+
+      doc.setFontSize(12);
+      doc.setTextColor(112, 91, 53); // RGB for #705B35
+      doc.text(`Price: LKR ${theme.price.toLocaleString()}`, 20, yOffset);
+      yOffset += 6;
+
+      if (theme.description) {
+        const descriptionLines = doc.splitTextToSize(theme.description, 170);
+        doc.text(descriptionLines, 20, yOffset);
+        yOffset += descriptionLines.length * 6 + 4;
+      }
+
+      if (theme.themePackage && theme.themePackage.length > 0) {
+        doc.setFontSize(14);
+        doc.setTextColor(67, 53, 32);
+        doc.text("Packages:", 20, yOffset);
+        yOffset += 6;
+
+        theme.themePackage.forEach(pkg => {
+          doc.setFontSize(12);
+          doc.setTextColor(112, 91, 53);
+          doc.text(`${pkg.packageName} - LKR ${pkg.packagePrice.toLocaleString()}`, 25, yOffset);
+          yOffset += 6;
+          const pkgDescLines = doc.splitTextToSize(pkg.description, 165);
+          doc.text(pkgDescLines, 25, yOffset);
+          yOffset += pkgDescLines.length * 6 + 2;
+        });
+      }
+
+      yOffset += 5;
+      doc.setDrawColor(229, 186, 115);
+      doc.line(20, yOffset, 190, yOffset);
+      yOffset += 10;
+    });
+
+    doc.save("Event_Themes_Catalog.pdf");
   };
 
   const eventTypes = ["Birthday", "Proposal", "Gender Reveal"];
@@ -368,11 +415,12 @@ const AllEventThemes: React.FC = () => {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
+                flexWrap: "wrap",
               }}
             >
               <Box>
                 <Typography
-                  variant="h4"
+                   variant="h4"
                   gutterBottom
                   fontWeight={600}
                   color="#433520"
@@ -384,17 +432,27 @@ const AllEventThemes: React.FC = () => {
                   color="#705B35"
                   sx={{ opacity: 0.9 }}
                 >
-                  Browse, edit or delete your event themes
+                  Browse, edit, delete, or download event themes
                 </Typography>
               </Box>
-              <Button
-                component={Link}
-                to="/admin/EventTheme"
-                variant="contained"
-                sx={{ bgcolor: "#C58940", "&:hover": { bgcolor: "#A67535" } }}
-              >
-                Create New Theme
-              </Button>
+              <Box sx={{ display: "flex", gap: 2, mt: isMobile ? 2 : 0 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<GetAppIcon />}
+                  onClick={generatePDF}
+                  sx={{ bgcolor: "#C58940", "&:hover": { bgcolor: "#A67535" } }}
+                >
+                  Download PDF
+                </Button>
+                <Button
+                  component={Link}
+                  to="/admin/EventTheme"
+                  variant="contained"
+                  sx={{ bgcolor: "#C58940", "&:hover": { bgcolor: "#A67535" } }}
+                >
+                  Create New Theme
+                </Button>
+              </Box>
             </Box>
           </Card>
 
@@ -417,7 +475,6 @@ const AllEventThemes: React.FC = () => {
                 Filter by event type:
               </Typography>
             </Box>
-
             <Stack
               direction={isMobile ? "column" : "row"}
               spacing={1}
@@ -511,7 +568,7 @@ const AllEventThemes: React.FC = () => {
                       sx={{
                         position: "relative",
                         width: "100%",
-                        height: 180, // Fixed height for image container
+                        height: 180,
                         overflow: "hidden",
                       }}
                     >
@@ -522,14 +579,13 @@ const AllEventThemes: React.FC = () => {
                         sx={{
                           width: "100%",
                           height: "100%",
-                          objectFit: "cover", // This will maintain aspect ratio while covering the area
+                          objectFit: "cover",
                           position: "absolute",
                           top: 0,
                           left: 0,
                         }}
                       />
                     </Box>
-
                     <CardContent
                       sx={{
                         flexGrow: 1,
@@ -565,7 +621,6 @@ const AllEventThemes: React.FC = () => {
                           {theme.price.toLocaleString()}
                         </Typography>
                       </Box>
-
                       <Typography
                         variant="h6"
                         fontWeight={600}
@@ -574,7 +629,6 @@ const AllEventThemes: React.FC = () => {
                       >
                         {theme.themeName}
                       </Typography>
-
                       {theme.description && (
                         <Typography
                           variant="body2"
@@ -590,7 +644,6 @@ const AllEventThemes: React.FC = () => {
                           {theme.description}
                         </Typography>
                       )}
-
                       {theme.themePackage && theme.themePackage.length > 0 && (
                         <Box sx={{ mt: 2 }}>
                           {theme.themePackage.map((pkg) => (
@@ -620,10 +673,8 @@ const AllEventThemes: React.FC = () => {
                         </Box>
                       )}
                     </CardContent>
-
                     <Box sx={{ mt: "auto" }}>
                       <Divider sx={{ mx: 2, borderColor: "#E5BA73" }} />
-
                       <CardActions
                         sx={{ justifyContent: "space-between", p: 2 }}
                       >
@@ -688,7 +739,6 @@ const AllEventThemes: React.FC = () => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-
         <DialogContent sx={{ p: 3, mt: 2 }}>
           <Stack spacing={3} margin={2}>
             <TextField
@@ -705,7 +755,6 @@ const AllEventThemes: React.FC = () => {
                 ),
               }}
             />
-
             <TextField
               fullWidth
               label="Theme Name"
@@ -729,7 +778,6 @@ const AllEventThemes: React.FC = () => {
                 ),
               }}
             />
-
             <TextField
               fullWidth
               label="Price"
@@ -745,7 +793,6 @@ const AllEventThemes: React.FC = () => {
                 ),
               }}
             />
-
             <TextField
               fullWidth
               label="Image URL"
@@ -760,7 +807,6 @@ const AllEventThemes: React.FC = () => {
                 ),
               }}
             />
-
             <TextField
               fullWidth
               label="Description"
@@ -770,8 +816,6 @@ const AllEventThemes: React.FC = () => {
               value={editData.description || ""}
               onChange={handleChange}
             />
-
-            {/* Theme Packages Section */}
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="subtitle1" fontWeight={600} color="#433520">
@@ -786,7 +830,6 @@ const AllEventThemes: React.FC = () => {
                   Add Package
                 </Button>
               </Box>
-              
               {editData.themePackage && editData.themePackage.length > 0 ? (
                 editData.themePackage.map((pkg) => (
                   <Box
@@ -826,7 +869,6 @@ const AllEventThemes: React.FC = () => {
             </Box>
           </Stack>
         </DialogContent>
-
         <DialogActions sx={{ px: 3, pb: 3 }}>
           <Button onClick={handleCancelEdit} variant="outlined">
             Cancel
@@ -855,8 +897,7 @@ const AllEventThemes: React.FC = () => {
         <DialogTitle sx={{ color: "#433520" }}>Confirm Deletion</DialogTitle>
         <DialogContent>
           <Typography variant="body1" color="#705B35">
-            Are you sure you want to delete this theme? This action cannot be
-            undone.
+            Are you sure you want to delete this theme? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -903,7 +944,6 @@ const AllEventThemes: React.FC = () => {
           Event theme updated successfully!
         </Alert>
       </Snackbar>
-
       <Snackbar
         open={openFailedSnackbar}
         autoHideDuration={4000}
@@ -921,7 +961,6 @@ const AllEventThemes: React.FC = () => {
           Event theme cannot be deleted
         </Alert>
       </Snackbar>
-
       <Snackbar
         open={deleteSnackbar}
         autoHideDuration={4000}

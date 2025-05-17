@@ -206,7 +206,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
     }
   };
 
-  const [openAddOrEditAdditionalDialog, setOpenAddOrEditAdditionalDialog] =
+  const [openAddOrEditAdditionalDialog, setOpenAddOrEditAdditionalDialog] = //in here have the packages
     useState(false);
   const [selectedConsumption, setSelectedConsumption] =
     useState<ThemePackage | null>(null);
