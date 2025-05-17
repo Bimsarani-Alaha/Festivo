@@ -32,6 +32,27 @@ public class SupplierPaymentController {
         return ResponseEntity.ok(payments);
     }
 
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<List<SupplierPaymentEntity>> getSupplierPaymentsByProductId(
+            @PathVariable String productId) {
+        List<SupplierPaymentEntity> payments = supplierPaymentService.getSupplierPaymentByProductId(productId);
+        return ResponseEntity.ok(payments);
+    }
+
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<List<SupplierPaymentEntity>> getSupplierPaymentsByOrderId(
+            @PathVariable String orderId) {
+        List<SupplierPaymentEntity> payments = supplierPaymentService.getSupplierPaymentBySupplierEmail(orderId);
+        return ResponseEntity.ok(payments);
+    }
+
+    @GetMapping("/supplier/{supplierEmail}")
+    public ResponseEntity<List<SupplierPaymentEntity>> getSupplierPaymentsBySupplierEmail(
+            @PathVariable String supplierEmail) {
+        List<SupplierPaymentEntity> payments = supplierPaymentService.getSupplierPaymentBySupplierEmail(supplierEmail);
+        return ResponseEntity.ok(payments);
+    }
+
     @PostMapping
     public ResponseEntity<SupplierPaymentEntity> createSupplierPayment(
             @RequestBody SupplierPaymentRequestDTO supplierPaymentDTO) {

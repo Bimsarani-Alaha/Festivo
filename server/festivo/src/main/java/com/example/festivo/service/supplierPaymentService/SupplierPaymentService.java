@@ -21,10 +21,22 @@ public class SupplierPaymentService {
         return supplierPaymentRepository.findAll();
     }
 
+    public List<SupplierPaymentEntity> getSupplierPaymentByProductId(String productId){
+        return supplierPaymentRepository.findByProductId(productId);
+    }
+
+    public List<SupplierPaymentEntity> getSupplierPaymentBySupplierEmail(String orderId){
+        return supplierPaymentRepository.findByOrderRequestId(orderId);
+    }
+
+    public List<SupplierPaymentEntity> getSupplierPaymentByOrderId(String supplierEmail){
+        return supplierPaymentRepository.findBySupplierEmail(supplierEmail);
+    }
+
     public SupplierPaymentEntity createSupplierPayment(SupplierPaymentRequestDTO supplierPaymentDTO){
         SupplierPaymentEntity supplierPayment = new SupplierPaymentEntity();
         supplierPayment.setSupplierEmail(supplierPaymentDTO.getSupplierEmail());
-        supplierPayment.setProductId(supplierPaymentDTO.getOrderRequestId());
+        supplierPayment.setProductId(supplierPaymentDTO.getProductId());
         supplierPayment.setOrderRequestId(supplierPaymentDTO.getOrderRequestId());
         supplierPayment.setAmount(supplierPaymentDTO.getAmount());
         supplierPayment.setPaymentDate(supplierPaymentDTO.getPaymentDate());

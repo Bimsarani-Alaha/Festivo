@@ -13,6 +13,8 @@ public interface SupplierPaymentRepository extends MongoRepository<SupplierPayme
     // Find all payments by order request ID
     List<SupplierPaymentEntity> findByOrderRequestId(String orderRequestId);
 
+    List<SupplierPaymentEntity> findByProductId(String productId);
+
     // Find all payments by payment status
     List<SupplierPaymentEntity> findByPaymentStatus(String paymentStatus);
 

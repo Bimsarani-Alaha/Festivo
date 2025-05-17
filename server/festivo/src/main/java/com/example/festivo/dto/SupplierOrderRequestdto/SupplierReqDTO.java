@@ -20,5 +20,6 @@ public class SupplierReqDTO {
     private String eventId;
     private String supplierCategory;
     private String status;
+    private String acceptedSupplier;
 
 }
