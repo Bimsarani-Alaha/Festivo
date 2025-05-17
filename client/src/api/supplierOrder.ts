@@ -55,4 +55,6 @@ export interface SupplierOrder {
     eventId: string | null;
     supplierCategory: string;
     status: 'ACCEPTED' | 'REJECTED' | 'ONGOING' | 'accept' | 'reject'; // Added possible status values from the example
+    supplierEmail: string;
+    amount: string;
 }

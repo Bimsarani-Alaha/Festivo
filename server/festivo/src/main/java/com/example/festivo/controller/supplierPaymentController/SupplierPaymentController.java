@@ -19,7 +19,7 @@ import com.example.festivo.service.supplierPaymentService.SupplierPaymentService
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/supplier/supplier-payment")
+@RequestMapping("/public/supplier/supplier-payment")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5176")
 public class SupplierPaymentController {
@@ -53,7 +53,7 @@ public class SupplierPaymentController {
         return ResponseEntity.ok(payments);
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<SupplierPaymentEntity> createSupplierPayment(
             @RequestBody SupplierPaymentRequestDTO supplierPaymentDTO) {
         SupplierPaymentEntity createdPayment = supplierPaymentService.createSupplierPayment(supplierPaymentDTO);

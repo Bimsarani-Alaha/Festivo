@@ -48,7 +48,7 @@ const SupplierPaymentManagement: React.FC = () => {
   
   // Get supplier email from token
     const supplierDetails = getSupplierDetails();
-    const supplierEmail =  "test2@example.com";
+    const supplierEmail =  supplierDetails?.email || "Error Loading";
 
   // Status options for dropdown
   const statusOptions = [

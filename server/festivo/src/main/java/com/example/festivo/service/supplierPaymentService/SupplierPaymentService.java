@@ -41,7 +41,7 @@ public class SupplierPaymentService {
         supplierPayment.setAmount(supplierPaymentDTO.getAmount());
         supplierPayment.setPaymentDate(supplierPaymentDTO.getPaymentDate());
         supplierPayment.setDeliveryDate(supplierPaymentDTO.getDeliveryDate());
-        supplierPayment.setPaymentStatus("Ongoing");
+        supplierPayment.setPaymentStatus(supplierPaymentDTO.getPaymentStatus());
         supplierPayment.setPaymentType(supplierPaymentDTO.getPaymentType());
 
         return supplierPaymentRepository.save(supplierPayment);        
