@@ -45,6 +45,11 @@ public class SupplierOrderReqController {
         return supplierOrderRequestService.getAllSupplierOrder();
     }
 
+    @GetMapping("/get-accepted")
+    public List<SupplierReq> getAcceptedSupplierOrders() {
+        return supplierOrderRequestService.getAcceptedSupplierOrder();
+    }
+
     @GetMapping("/by-category/{category}")
     public ResponseEntity<SupplierResDTO> getSupplierOrdersByCategory(
             @PathVariable String category) {
@@ -69,6 +74,8 @@ public class SupplierOrderReqController {
                             order.getEventDate(),
                             order.getEventId(),
                             order.getSupplierCategory(),
+                            order.getAcceptedSupplier(),
+                            order.getAmount(),
                             order.getStatus()))
                     .collect(Collectors.toList());
 

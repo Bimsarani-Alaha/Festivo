@@ -19,7 +19,7 @@ import com.example.festivo.service.supplierPaymentService.SupplierPaymentService
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/supplier/supplier-payment")
+@RequestMapping("/public/supplier/supplier-payment")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5176")
 public class SupplierPaymentController {
@@ -32,7 +32,28 @@ public class SupplierPaymentController {
         return ResponseEntity.ok(payments);
     }
 
-    @PostMapping
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<List<SupplierPaymentEntity>> getSupplierPaymentsByProductId(
+            @PathVariable String productId) {
+        List<SupplierPaymentEntity> payments = supplierPaymentService.getSupplierPaymentByProductId(productId);
+        return ResponseEntity.ok(payments);
+    }
+
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<List<SupplierPaymentEntity>> getSupplierPaymentsByOrderId(
+            @PathVariable String orderId) {
+        List<SupplierPaymentEntity> payments = supplierPaymentService.getSupplierPaymentBySupplierEmail(orderId);
+        return ResponseEntity.ok(payments);
+    }
+
+    @GetMapping("/supplier/{supplierEmail}")
+    public ResponseEntity<List<SupplierPaymentEntity>> getSupplierPaymentsBySupplierEmail(
+            @PathVariable String supplierEmail) {
+        List<SupplierPaymentEntity> payments = supplierPaymentService.getSupplierPaymentBySupplierEmail(supplierEmail);
+        return ResponseEntity.ok(payments);
+    }
+
+    @PostMapping("/create")
     public ResponseEntity<SupplierPaymentEntity> createSupplierPayment(
             @RequestBody SupplierPaymentRequestDTO supplierPaymentDTO) {
         SupplierPaymentEntity createdPayment = supplierPaymentService.createSupplierPayment(supplierPaymentDTO);
