@@ -4,13 +4,17 @@ import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import logo from './logofes.png';
-import { ThemePackage } from '../User/EventBooking/EventBooking'; // Import the ThemePackage interface
+import { ThemePackage } from '../User/EventBooking/EventBooking'; 
+import Header from '../../../Components/Header';
+import Footer from "../../Footer";
+import { Box, Container, Typography, Button } from "@mui/material";
+import {useMediaQuery} from '@mui/material';
 
-// Interface definitions for type safety
+// Add interface for user data
 interface UserData {
-  name?: string;
-  email?: string;
-  phoneNumber?: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
 }
 
 // Update the EventBookingData interface to include selectedPackage
@@ -76,6 +80,7 @@ const CheckoutPage: React.FC = () => {
     }
   );
 
+  
   // Function to generate PDF receipt
   const generateReceiptPDF = async (transactionId: string) => {
     const doc = new jsPDF();
@@ -186,42 +191,44 @@ const serviceCharge = Math.round(bookingData.selectedPackage.packagePrice * SERV
 const totalAmount = bookingData.selectedPackage.packagePrice + taxAmount + serviceCharge;
 
 
-  // Get logged-in user data from localStorage with fallback values
+ // Get user data from localStorage
   const [userData, setUserData] = useState<UserData>(() => {
     try {
       const storedUser = localStorage.getItem('user');
-      const name = localStorage.getItem('name') || '';
-      const email = localStorage.getItem('email') || '';
-      const phoneNumber = localStorage.getItem('phoneNumber') || '';
-
       if (storedUser) {
-        const user = JSON.parse(storedUser);
-        return {
-          name: user.name || name,
-          email: user.email || email,
-          phoneNumber: user.phoneNumber || phoneNumber
-        };
+        return JSON.parse(storedUser);
       }
-      return { name, email, phoneNumber };
+      return {};
     } catch (error) {
       console.error('Error parsing user data:', error);
       return {};
     }
   });
+ useEffect(() => {
+    // Get user data from localStorage
+    const name = localStorage.getItem('name');
+    const email = localStorage.getItem('email');
+    const phoneNumber = localStorage.getItem('phoneNumber');
+
+    if (name && email && phoneNumber) {
+      setUserData({ name, email, phoneNumber });
+    }
+  }, []);
 
   // Initialize form data with user data
-  const [formData, setFormData] = useState<CheckoutFormData>(() => ({
-    name: userData.name || '',
+const [formData, setFormData] = useState<CheckoutFormData>({
+ name: userData.name || '',
     email: userData.email || '',
     phoneNumber: userData.phoneNumber || '',
-    address: '',
-    cardNumber: '',
-    cardType: "Visa",
-    expDate: "",
-    cvv: "",
+  address: '',
+  cardNumber: '',
+  cardType: "Visa",
+  expDate: "",
+  cvv: "",
     orderSummary: `Event: ${location.state?.bookingData?.eventName || 'Birthday Party'}, Package: ${location.state?.bookingData?.eventPackage || 'Premium'}`,
     amount: location.state?.bookingData?.packagePrice || PACKAGE_PRICES.Premium
-  }));
+
+});
 
   // State for form errors, loading, and messages
   const [errors, setErrors] = useState<FormErrors>({});
@@ -231,15 +238,16 @@ const totalAmount = bookingData.selectedPackage.packagePrice + taxAmount + servi
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [countdown, setCountdown] = useState(5);
 
-  // Update form data when user data changes
+// Update form data when userData changes
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
-      name: userData.name || '',
-      email: userData.email || '',
-      phoneNumber: userData.phoneNumber || ''
+      name: userData.name || prev.name,
+      email: userData.email || prev.email,
+      phoneNumber: userData.phoneNumber || prev.phoneNumber
     }));
   }, [userData]);
+
 
 // In the CheckoutPage component, update the useEffect that handles location state changes
 useEffect(() => {
@@ -492,93 +500,81 @@ useEffect(() => {
     return !Object.values(newErrors).some(error => error);
   };
 
-  // Form submission handler
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess({show: false, message: ''});
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
+  setSuccess({show: false, message: ''});
 
-    // Validate form before submission
-    if (!validateForm()) {
-      setError("Please fix the errors in the form");
-      return;
-    }
+  if (!validateForm()) {
+    setError("Please fix the errors in the form");
+    return;
+  }
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      // Prepare the data for the backend
-      const paymentData = {
-        name: formData.name,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber,
-        address: formData.address,
-        cardNumber: formData.cardNumber.replace(/\s/g, ''),
-        cardType: formData.cardType,
-        expDate: formData.expDate,
-        cvv: formData.cvv,
-        orderSummary: formData.orderSummary,
-        amount: formData.amount,
-        eventDetails: {
-          eventName: bookingData.eventName,
-          eventTheme: bookingData.eventTheme,
-          eventDate: bookingData.eventDate,
-          eventType: bookingData.eventType,
-          noOfGuest: bookingData.noOfGuest,
-          specialRequest: bookingData.specialRequest,
-          eventPackage: bookingData.eventPackage,
-          packagePrice: bookingData.packagePrice
-        }
-      };
+  try {
+    const paymentData = {
+      name: formData.name,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+      address: formData.address,
+      cardNumber: formData.cardNumber.replace(/\s/g, ''),
+      cardType: formData.cardType,
+      expDate: formData.expDate,
+      cvv: formData.cvv,
+      orderSummary: formData.orderSummary,
+      amount: totalAmount, // Changed from formData.amount to totalAmount
+      eventDetails: {
+        eventName: bookingData.eventName,
+        eventTheme: bookingData.eventTheme,
+        eventDate: bookingData.eventDate,
+        eventType: bookingData.eventType,
+        noOfGuest: bookingData.noOfGuest,
+        specialRequest: bookingData.specialRequest,
+        eventPackage: bookingData.eventPackage,
+        packagePrice: bookingData.selectedPackage.packagePrice,
+        totalAmount: totalAmount // Add totalAmount to eventDetails as well
+      }
+    };
 
-      // Send payment data to backend API
-      const response = await axios.post('http://localhost:8080/public/addPayment', paymentData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+    const response = await axios.post('http://localhost:8080/public/addPayment', paymentData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
+
+    if (response.data) {
+      const transactionId = response.data.transactionId || Date.now().toString();
+      generateReceiptPDF(transactionId);
+      setSuccess({
+        show: true,
+        message: `Payment confirmed for Rs. ${totalAmount.toLocaleString()}`,
+        transactionId
       });
-
-      if (response.data) {
-        const transactionId = response.data.transactionId || Date.now().toString();
-
-        // Generate and download the receipt
-        generateReceiptPDF(transactionId);
-
-        // Show success message
-        setSuccess({
-          show: true,
-          message: `Payment confirmed for Rs. ${formData.amount}`,
-          transactionId
-        });
-        setCountdown(5);
-        console.log('Payment successful:', response.data);
-      } else {
-        throw new Error('No response data received');
-      }
-    } catch (err: any) {
-      // Error handling with user-friendly messages
-      let errorMessage = 'Payment processing failed. Please try again.';
-      
-      if (axios.isAxiosError(err)) {
-        if (err.response) {
-          errorMessage = err.response.data?.message || 
-                         `Server error: ${err.response.status} - ${err.response.statusText}`;
-        } else if (err.request) {
-          errorMessage = 'No response received from server. Please check your connection.';
-        } else {
-          errorMessage = `Request error: ${err.message}`;
-        }
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
-      console.error('Payment error:', err);
-    } finally {
-      setIsLoading(false);
+      setCountdown(5);
+    } else {
+      throw new Error('No response data received');
     }
-  };
+  } catch (err: any) {
+    let errorMessage = 'Payment processing failed. Please try again.';
+    if (axios.isAxiosError(err)) {
+      if (err.response) {
+        errorMessage = err.response.data?.message || 
+                       `Server error: ${err.response.status} - ${err.response.statusText}`;
+      } else if (err.request) {
+        errorMessage = 'No response received from server. Please check your connection.';
+      } else {
+        errorMessage = `Request error: ${err.message}`;
+      }
+    } else if (err instanceof Error) {
+      errorMessage = err.message;
+    }
+    setError(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Helper function to format dates for display
   const formatDate = (dateString: string) => {
@@ -592,7 +588,12 @@ useEffect(() => {
 
   // Main component render
   return (
+    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      {/* Include the Header component at the top */}
+      <Header />
+      
     <div className="min-h-screen bg-gradient-to-b from-yellow-100 to-yellow-50 flex justify-center items-center p-4">
+
       <div className="bg-white shadow-xl rounded-lg p-6 w-full max-w-4xl border-2 border-yellow-400 relative">
         {/* Success Message Overlay - shown when payment is successful */}
         {success.show && (
@@ -704,7 +705,7 @@ useEffect(() => {
                     <input
                       type="text"
                       name="name"
-                      value={formData.name}
+                      value={userData.name}
                       onChange={(e) => {
                         // Allow letters and spaces only
                         const value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
@@ -734,7 +735,7 @@ useEffect(() => {
                     <input
                       type="email"
                       name="email"
-                      value={formData.email}
+                      value={userData.email}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
                       className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent ${
@@ -754,7 +755,7 @@ useEffect(() => {
                     <input
                       type="tel"
                       name="phoneNumber"
-                      value={formData.phoneNumber}
+                      value={userData.phoneNumber}
                       onChange={(e) => {
                         // Allow only numbers, limit to 10 digits
                         const value = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -775,7 +776,7 @@ useEffect(() => {
                   </div>
                 </div>
               </div>
-
+ 
               {/* Shipping Address Section */}
               <div className="mb-6">
                 <label className="block text-gray-700 font-medium mb-1">
@@ -959,7 +960,7 @@ useEffect(() => {
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
       </svg>
-      Confirm Payment Rs. {(totalAmount || 0).toLocaleString()}
+      Confirm Payment Rs. {totalAmount.toLocaleString()}
     </>
   )}
 </button>
@@ -1046,7 +1047,11 @@ useEffect(() => {
           </div>
         </form>
       </div>
+      
     </div>
+    <Footer />
+    </Box>
+    
   );
 };
 

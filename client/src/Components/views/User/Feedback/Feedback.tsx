@@ -87,19 +87,28 @@ const FeedbackPage = () => {
                 {/* Rating Section */}
                 <div className="mb-8">
                   <label className="block text-lg font-medium text-gray-700 mb-4">How would you rate your experience?</label>
-                  <div className="flex space-x-1">
+                  <div className="flex space-x-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
                         type="button"
                         onClick={() => setRating(star)}
-                        className={`text-4xl ${rating && rating >= star ? 'text-yellow-500' : 'text-gray-300'} transition-all hover:scale-110 focus:outline-none`}
+                        className={`text-4xl transition-all hover:scale-110 focus:outline-none ${
+                          rating && star <= rating 
+                            ? 'text-yellow-500 hover:text-yellow-600' 
+                            : 'text-gray-300 hover:text-gray-400'
+                        }`}
                         aria-label={`Rate ${star} star${star !== 1 ? 's' : ''}`}
                       >
                         ★
                       </button>
                     ))}
                   </div>
+                  {rating && (
+                    <p className="mt-2 text-sm text-gray-600">
+                      You rated {rating} {rating === 1 ? 'star' : 'stars'}
+                    </p>
+                  )}
                 </div>
 
                 {/* Review Textarea */}

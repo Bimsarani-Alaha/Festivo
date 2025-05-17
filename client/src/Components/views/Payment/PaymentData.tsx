@@ -5,6 +5,20 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { usePDF } from 'react-to-pdf';
 
+interface EventBookingData {
+  eventName: string;
+  eventTheme: string;
+  eventDate: string;
+  eventType: 'Indoor' | 'Outdoor' | 'Pool' | '';
+  noOfGuest: number;
+  specialRequest: string;
+  selectedPackage?: {
+    packageId: number | string;
+    packageName: string;
+    packagePrice: number;
+  };
+}
+
 interface DataItem {
   id: string;
   name: string;
@@ -16,7 +30,8 @@ interface DataItem {
   expDate: string;
   cvv: number | null;
   orderSummery: string;
-  amount: number; // This should now contain the totalAmount from checkout
+  amount: number;
+  eventBooking?: EventBookingData; // Add event booking data
 }
 
 interface DataTableProps {
@@ -79,43 +94,122 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
     setViewModalOpen(true);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'phoneNumber' || name === 'amount' ? Number(value) : value
-    }));
+const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  
+  // Perform validation based on field name
+  let error = '';
+  if (name === 'name') {
+    error = validateName(value);
+  } else if (name === 'phoneNumber') {
+    error = validatePhone(value);
+  } else if (name === 'expDate') {
+    error = validateExpDate(value);
+  } else if (name === 'email') {
+    error = validateEmail(value);
+  }
+  
+  setErrors(prev => ({ ...prev, [name]: error }));
+  
+  setFormData(prev => ({
+    ...prev,
+    [name]: name === 'phoneNumber' || name === 'amount' ? Number(value) : value
+  }));
+};
+
+  // Add these validation functions at the top of your component
+const validateName = (name: string) => {
+  if (!name) return 'Name is required';
+  if (/[0-9]/.test(name)) return 'Name should not contain numbers';
+  return '';
+};
+
+const validatePhone = (phone: string | number | null) => {
+  if (!phone) return 'Phone number is required';
+  const phoneStr = phone.toString();
+  if (!/^\d+$/.test(phoneStr)) return 'Phone should contain only numbers';
+  if (phoneStr.length !== 9) return 'Phone must be 10 digits';
+  return '';
+};
+
+const validateEmail = (email: string) => {
+  if (!email) return 'Email is required';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Invalid email format';
+  return '';
+};
+
+
+const validateExpDate = (expDate: string) => {
+  if (!expDate) return 'Expiration date is required';
+  if (!/^\d{2}\/\d{2}$/.test(expDate)) return 'Format must be MM/YY';
+  
+  const [month, year] = expDate.split('/').map(Number);
+  if (month < 1 || month > 12) return 'Month must be 01-12';
+  
+  const currentYear = new Date().getFullYear() % 100;
+  const currentMonth = new Date().getMonth() + 1;
+  
+  if (year < currentYear || (year === currentYear && month < currentMonth)) {
+    return 'Card is expired';
+  }
+  
+  return '';
+};
+
+// Update the state to track validation errors
+const [errors, setErrors] = useState<Record<string, string>>({
+  name: '',
+  phoneNumber: '',
+  expDate: '',
+  email: '' // Add email to errors state
+});
+
+
+  // Update the handleSubmit to check for errors before submitting
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!editingItem) return;
+
+  // Validate all fields before submitting
+  const validationErrors = {
+    name: validateName(formData.name || ''),
+    phoneNumber: validatePhone(formData.phoneNumber || ''),
+    expDate: validateExpDate(formData.expDate || ''),
+    email: validateEmail(formData.email || '') // Add email validation
+
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingItem) return;
+  setErrors(validationErrors);
 
-    try {
-      setLoading(true);
-      await axios.put(`http://localhost:8080/public/updatePayment/${editingItem.id}`, formData);
-      setSuccessMessage('Payment record updated successfully!');
-      await fetchData();
-      setTimeout(() => {
-        setEditingItem(null);
-      }, 1500);
-    } catch (err) {
-      setError('Failed to update payment record. Please try again.');
-      console.error('Error updating data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Check if there are any errors
+  if (Object.values(validationErrors).some(error => error)) {
+    return;
+  }
+
+  try {
+    setLoading(true);
+    await axios.put(`http://localhost:8080/public/updatePayment/${editingItem.id}`, formData);
+    setSuccessMessage('Payment record updated successfully!');
+    await fetchData();
+    setTimeout(() => {
+      setEditingItem(null);
+    }, 1500);
+  } catch (err) {
+    setError('Failed to update payment record. Please try again.');
+    console.error('Error updating data:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
-  const formatPhoneNumber = (phoneNumber: number | null): string => {
-    if (!phoneNumber) return 'N/A';
-    const numStr = phoneNumber.toString();
-    return `(${numStr.substring(0, 3)}) ${numStr.substring(3, 6)}-${numStr.substring(6)}`;
-  };
+const formatPhoneNumber = (phoneNumber: number | null): string => {
+  if (!phoneNumber) return 'N/A';
+  return phoneNumber.toString();
+};
 
   const maskCardNumber = (cardNumber: number | null): string => {
     if (!cardNumber) return 'N/A';
@@ -189,6 +283,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
   };
 
   return (
+
     <div className="container mx-auto px-4 py-8">
       {/* PDF content */}
       <div ref={targetRef} className="p-4" style={{ position: 'absolute', left: '-9999px' }}>
@@ -238,11 +333,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                 <p className="text-sm">{selectedItem.cvv ? '•••' : 'N/A'}</p>
               </div>
             </div>
-            
-            <div className="mb-4">
-              <p className="text-sm font-medium text-gray-500">Order Summary</p>
-              <p className="text-sm">{selectedItem.orderSummery || 'N/A'}</p>
-            </div>
+          
             
             <div className="border-t pt-4">
               <p className="text-sm font-medium text-gray-500">Total Amount</p>
@@ -337,6 +428,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                     </div>
                   </div>
                 </div>
+                
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Information</h3>
                   <div className="space-y-4">
@@ -360,12 +452,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
                         {selectedItem.cvv ? '•••' : 'N/A'}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Order Summary</p>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedItem.orderSummery || 'N/A'}
-                      </p>
-                    </div>
+                    
                     <div>
                       <p className="text-sm text-gray-500">Total Amount</p>
                       <p className="mt-1 text-lg font-bold text-gray-900">
@@ -401,155 +488,210 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
         </div>
       )}
 
-      {/* Edit Modal */}
       {editingItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
-            <div className="flex justify-between items-center border-b p-4">
-              <h2 className="text-xl font-semibold">Edit Payment Record</h2>
-              <button 
-                onClick={() => setEditingItem(null)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name || ''}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email || ''}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phoneNumber">
-                    Phone Number
-                  </label>
-                  <input
-                    type="number"
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    value={formData.phoneNumber || ''}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="address">
-                    Address
-                  </label>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    value={formData.address || ''}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cardType">
-                    Card Type
-                  </label>
-                  <select
-                    id="cardType"
-                    name="cardType"
-                    value={formData.cardType || ''}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  >
-                    <option value="">Select Card Type</option>
-                    <option value="Visa">Visa</option>
-                    <option value="Mastercard">Mastercard</option>
-                    <option value="American Express">American Express</option>
-                    <option value="Discover">Discover</option>
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="expDate">
-                    Expiration Date
-                  </label>
-                  <input
-                    type="text"
-                    id="expDate"
-                    name="expDate"
-                    placeholder="MM/YY"
-                    value={formData.expDate || ''}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="orderSummery">
-                    Order Summary
-                  </label>
-                  <input
-                    type="text"
-                    id="orderSummery"
-                    name="orderSummery"
-                    value={formData.orderSummery || ''}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="amount">
-                    Total Amount (Rs.)
-                  </label>
-                  <input
-                    type="number"
-                    id="amount"
-                    name="amount"
-                    value={formData.amount || ''}
-                    onChange={handleInputChange}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end mt-4">
-                <button
-                  type="button"
-                  onClick={() => setEditingItem(null)}
-                  className="mr-2 px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  disabled={loading}
-                >
-                  {loading ? 'Updating...' : 'Update'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+      <div className="flex justify-between items-center border-b p-4">
+        <h2 className="text-xl font-semibold">Edit Payment Record</h2>
+        <button 
+          onClick={() => setEditingItem(null)}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
+      </div>
+      <form onSubmit={handleSubmit} className="p-4">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {/* Name Field */}
+    <div className="mb-4">
+      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+        Name
+      </label>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        value={formData.name || ''}
+        onChange={(e) => {
+          const value = e.target.value;
+          // Prevent numbers
+          if (/^[A-Za-z\s]*$/.test(value)) {
+            handleInputChange(e);
+          }
+        }}
+        className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+          errors.name ? 'border-red-500' : ''
+        }`}
+        required
+      />
+      {errors.name && (
+        <p className="text-red-500 text-xs italic mt-1">{errors.name}</p>
       )}
+    </div>
+
+    {/* Email Field */}
+<div className="mb-4">
+  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+    Email *
+  </label>
+  <input
+    type="email"
+    id="email"
+    name="email"
+    value={formData.email || ''}
+    onChange={(e) => {
+      handleInputChange(e);
+      // Validate email on change
+      setErrors(prev => ({
+        ...prev,
+        email: validateEmail(e.target.value)
+      }));
+    }}
+    className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+      errors.email ? 'border-red-500' : ''
+    }`}
+    required
+  />
+  {errors.email && (
+    <p className="text-red-500 text-xs italic mt-1">{errors.email}</p>
+  )}
+</div>
+
+    {/* Phone Number Field */}
+    <div className="mb-4">
+      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phoneNumber">
+        Phone Number
+      </label>
+      <input
+        type="text"
+        id="phoneNumber"
+        name="phoneNumber"
+        value={formData.phoneNumber || ''}
+        onChange={handleInputChange}
+        maxLength={10}
+        className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+          errors.phoneNumber ? 'border-red-500' : ''
+        }`}
+        required
+      />
+      {errors.phoneNumber && (
+        <p className="text-red-500 text-xs italic mt-1">{errors.phoneNumber}</p>
+      )}
+    </div>
+
+    {/* Address Field */}
+    <div className="mb-4">
+      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="address">
+        Address
+      </label>
+      <input
+        type="text"
+        id="address"
+        name="address"
+        value={formData.address || ''}
+        onChange={handleInputChange}
+        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+      />
+    </div>
+
+    {/* Card Type Field */}
+    <div className="mb-4">
+      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cardType">
+        Card Type
+      </label>
+      <select
+        id="cardType"
+        name="cardType"
+        value={formData.cardType || ''}
+        onChange={handleInputChange}
+        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        required
+      >
+        <option value="">Select Card Type</option>
+        <option value="Visa">Visa</option>
+        <option value="Mastercard">Mastercard</option>
+        <option value="American Express">American Express</option>
+        <option value="Discover">Discover</option>
+      </select>
+    </div>
+
+    {/* Expiration Date Field */}
+    <div className="mb-4">
+      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="expDate">
+        Expiration Date
+      </label>
+      <input
+        type="text"
+        id="expDate"
+        name="expDate"
+        placeholder="MM/YY"
+        value={formData.expDate || ''}
+        onChange={(e) => {
+          let value = e.target.value.replace(/\D/g, '');
+          if (value.length > 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2, 4);
+          }
+          const [month, year] = value.split('/');
+          const isValidMonth = !month || (parseInt(month) >= 1 && parseInt(month) <= 12);
+          handleInputChange({
+            ...e,
+            target: {
+              ...e.target,
+              value: value
+            }
+          });
+          errors.expDate = value.length === 5 && !isValidMonth ? 'Invalid month' : '';
+        }}
+        maxLength={5}
+        className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+          errors.expDate ? 'border-red-500' : ''
+        }`}
+        required
+      />
+      {errors.expDate && (
+        <p className="text-red-500 text-xs italic mt-1">{errors.expDate}</p>
+      )}
+    </div>
+
+    {/* Amount Field */}
+    <div className="mb-4">
+      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="amount">
+        Total Amount (Rs.)
+      </label>
+      <input
+        type="number"
+        id="amount"
+        name="amount"
+        value={formData.amount || ''}
+        onChange={handleInputChange}
+        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        required
+        min="0"
+      />
+    </div>
+  </div>
+
+  <div className="flex justify-end mt-4">
+    <button
+      type="button"
+      onClick={() => setEditingItem(null)}
+      className="mr-2 px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      disabled={loading || Object.values(errors).some(error => error)}
+    >
+      {loading ? 'Updating...' : 'Update'}
+    </button>
+  </div>
+</form>
+
+    </div>
+  </div>
+)}
 
       {/* Data Table */}
       {loading ? (

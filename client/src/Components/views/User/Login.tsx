@@ -20,7 +20,14 @@ interface User {
 interface LoginResponse {
   token: string;
   role: string;
-  user?: User;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  gender: string;
+  refreshToken: string;
+  expirationTime: string;
+  message: string;
+  statusCode: number;
 }
 
 export default function LoginForm() {
@@ -68,17 +75,16 @@ export default function LoginForm() {
           throw new Error('Suppliers are not allowed to log in.');
         }
   
-        if (response.user) {
-          localStorage.setItem('user', JSON.stringify(response.user));
-          localStorage.setItem('name', response.user.name || '');
-          localStorage.setItem('email', response.user.email || '');
-          localStorage.setItem('phoneNumber', response.user.phoneNumber || '');
-          localStorage.setItem('gender', response.user.gender || '');
-        }
-  
-        console.log('Stored Token:', localStorage.getItem('token'));
-        console.log('Stored Role:', localStorage.getItem('role'));
-        console.log('Stored User:', localStorage.getItem('user'));
+        // Store user details directly from response
+        localStorage.setItem('name', response.name || '');
+        localStorage.setItem('email', response.email || '');
+        localStorage.setItem('phoneNumber', response.phoneNumber || '');
+        
+        console.log('Stored user data:', {
+          name: localStorage.getItem('name'),
+          email: localStorage.getItem('email'),
+          phoneNumber: localStorage.getItem('phoneNumber')
+        });
   
         if (response.role === 'ADMIN') { //if a admin login to the page
           navigate('/admin/dashboard');

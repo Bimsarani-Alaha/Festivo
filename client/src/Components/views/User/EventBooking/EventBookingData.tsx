@@ -62,6 +62,7 @@ const EventBookingsTable = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showSupplierSuccess, setShowSupplierSuccess] = useState(false);
+  const [editFormErrors, setEditFormErrors] = useState<{[key: string]: string}>({});
 
   // PDF generation hook
   const { toPDF, targetRef } = usePDF({
@@ -107,15 +108,15 @@ const EventBookingsTable = () => {
     fetchEvents();
   }, []);
 
-  // Filter bookings based on search term
-  const filteredBookings = bookings.filter((booking) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      (booking.eventName?.toLowerCase() || "").includes(term) ||
-      (booking.eventTheme?.toLowerCase() || "").includes(term) ||
-      (booking.eventPackage?.toLowerCase() || "").includes(term)
-    );
-  });
+// Filter bookings based on search term
+const filteredBookings = bookings.filter((booking) => {
+  const term = searchTerm.toLowerCase();
+  return (
+    booking.eventName?.toLowerCase().includes(term) ||
+    booking.eventTheme?.toLowerCase().includes(term) ||
+    (booking.eventPackage?.toLowerCase() || "").includes(term)
+  );
+});
 
   // Delete event
   const handleDelete = async (id: string) => {
@@ -179,21 +180,62 @@ const EventBookingsTable = () => {
 
   // Handle form input changes
   const handleEditFormChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setEditFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    // Clear error for this field when user starts typing
+    if (editFormErrors[name]) {
+      setEditFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!editFormData.eventName.trim()) {
+      errors.eventName = "Event name is required";
+    }
+    
+    if (!editFormData.eventTheme.trim()) {
+      errors.eventTheme = "Event theme is required";
+    }
+    
+    if (!editFormData.eventType) {
+      errors.eventType = "Event type is required";
+    }
+    
+    if (!editFormData.eventDate) {
+      errors.eventDate = "Event date is required";
+    }
+    
+    if (!editFormData.noOfGuest || editFormData.noOfGuest < 1) {
+      errors.noOfGuest = "Number of guests must be at least 1";
+    }
+    
+    if (!editFormData.specialRequest.trim()) {
+      errors.specialRequest = "Special request is required";
+    }
+
+    setEditFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   // Submit updated event
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editFormData.id) return;
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       const response = await fetch(
@@ -215,6 +257,7 @@ const EventBookingsTable = () => {
       setIsEditing(false);
       setSuccessMessage("Booking updated successfully!");
       setShowSuccess(true);
+      setEditFormErrors({});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update event");
       console.error("Error updating event:", err);
@@ -244,15 +287,23 @@ const EventBookingsTable = () => {
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FaSearch className="text-gray-400" />
-                    </div>
+    </div>
+    <input
+      type="text"
+      placeholder="Search bookings..."
+      className="pl-10 pr-4 py-2 border rounded-md w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+    {searchTerm && (
+      <button
+        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+        onClick={() => setSearchTerm("")}
+      >
+        <FaTimes className="text-gray-400 hover:text-gray-600" />
+      </button>
+    )}
 
-                    <input
-                      type="text"
-                      placeholder="Search bookings..."
-                      className="pl-10 pr-4 py-2 border rounded-md w-full"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
                   </div>
                   <Controller
                     name="supplierCategory"
@@ -355,61 +406,77 @@ const EventBookingsTable = () => {
               ref={targetRef}
               style={{ position: "absolute", left: "-9999px" }}
             >
-              <div className="p-6">
-                <h2 className="text-xl font-bold mb-4 text-center">
-                  Event Bookings Report
-                </h2>
-                <p className="text-sm text-gray-500 mb-4 text-center">
-                  Generated on: {new Date().toLocaleDateString()}
-                </p>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <div className="p-8 bg-white">
+                {/* PDF Header */}
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">Festivo Events</h1>
+                  <h2 className="text-2xl font-semibold text-gray-700 mb-4">Event Bookings Report</h2>
+                  <div className="flex justify-between items-center text-sm text-gray-600 border-b-2 border-gray-300 pb-4">
+                    <div>Generated on: {new Date().toLocaleDateString()}</div>
+                    <div>Total Bookings: {filteredBookings.length}</div>
+                  </div>
+                </div>
+
+                {/* PDF Table */}
+                <table className="min-w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Event Name
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Theme
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Date
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Guests
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Package
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredBookings.map((booking) => (
-                      <tr key={booking.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tbody>
+                    {filteredBookings.map((booking, index) => (
+                      <tr key={booking.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {booking.eventName}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {booking.eventTheme}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {booking.eventType}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {new Date(booking.eventDate).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {booking.noOfGuest}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {booking.eventPackage || "None"}
-                        </td>
+                        
                       </tr>
                     ))}
                   </tbody>
                 </table>
+
+                {/* PDF Footer */}
+                <div className="mt-8 pt-4 border-t-2 border-gray-300">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <div>
+                      <p className="font-semibold">Festivo Events</p>
+                      <p>123 Golden Avenue, Event City</p>
+                      <p>Phone: 0707230078</p>
+                      <p>Email: festivo@gmail.com</p>
+                    </div>
+                    <div className="text-right">
+                      <p>Page 1 of 1</p>
+                      <p>Generated by: System Administrator</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -434,9 +501,7 @@ const EventBookingsTable = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Guests
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Package
-                      </th>
+                      
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
@@ -461,19 +526,7 @@ const EventBookingsTable = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {booking.noOfGuest}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                booking.eventPackage === "Basic"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : booking.eventPackage === "Premium"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                              }`}
-                            >
-                              {booking.eventPackage || "None"}
-                            </span>
-                          </td>
+                          
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex space-x-2">
                               <button
@@ -577,12 +630,6 @@ const EventBookingsTable = () => {
                       </h3>
                       <p className="mt-1">{selectedBooking.noOfGuest}</p>
                     </div>
-                    <div>
-                      <h3 className="font-medium text-gray-700">Package:</h3>
-                      <p className="mt-1">
-                        {selectedBooking.eventPackage || "None"}
-                      </p>
-                    </div>
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-700">
@@ -606,7 +653,10 @@ const EventBookingsTable = () => {
                 <div className="flex justify-between items-start">
                   <h2 className="text-xl font-bold mb-4">Edit Booking</h2>
                   <button
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditFormErrors({});
+                    }}
                     className="text-gray-500 hover:text-gray-700"
                   >
                     <FaTimes />
@@ -616,102 +666,111 @@ const EventBookingsTable = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Event Name:
+                        Event Name: <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         name="eventName"
                         value={editFormData.eventName}
                         onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
+                        className={`w-full p-2 border ${
+                          editFormErrors.eventName ? 'border-red-500' : 'border-gray-300'
+                        } rounded-md`}
                       />
+                      {editFormErrors.eventName && (
+                        <p className="mt-1 text-xs text-red-500">{editFormErrors.eventName}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Theme:
+                        Theme: <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         name="eventTheme"
                         value={editFormData.eventTheme}
                         onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
+                        className={`w-full p-2 border ${
+                          editFormErrors.eventTheme ? 'border-red-500' : 'border-gray-300'
+                        } rounded-md`}
                       />
+                      {editFormErrors.eventTheme && (
+                        <p className="mt-1 text-xs text-red-500">{editFormErrors.eventTheme}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Type:
+                        Type: <span className="text-red-500">*</span>
                       </label>
                       <select
                         name="eventType"
                         value={editFormData.eventType}
                         onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
+                        className={`w-full p-2 border ${
+                          editFormErrors.eventType ? 'border-red-500' : 'border-gray-300'
+                        } rounded-md`}
                       >
                         <option value="">Select Type</option>
                         <option value="Indoor">Indoor</option>
                         <option value="Outdoor">Outdoor</option>
                         <option value="Pool">Pool</option>
                       </select>
+                      {editFormErrors.eventType && (
+                        <p className="mt-1 text-xs text-red-500">{editFormErrors.eventType}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Date:
+                        Date: <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
                         name="eventDate"
                         value={editFormData.eventDate}
                         onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
+                        className={`w-full p-2 border ${
+                          editFormErrors.eventDate ? 'border-red-500' : 'border-gray-300'
+                        } rounded-md`}
+                        min={new Date().toISOString().split('T')[0]}
                       />
+                      {editFormErrors.eventDate && (
+                        <p className="mt-1 text-xs text-red-500">{editFormErrors.eventDate}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Number of Guests:
+                        Number of Guests: <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
                         name="noOfGuest"
                         value={editFormData.noOfGuest}
                         onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
+                        className={`w-full p-2 border ${
+                          editFormErrors.noOfGuest ? 'border-red-500' : 'border-gray-300'
+                        } rounded-md`}
                         min="1"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Package:
-                      </label>
-                      <select
-                        name="eventPackage"
-                        value={editFormData.eventPackage || ""}
-                        onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
-                      >
-                        <option value="">Select Package</option>
-                        <option value="Basic">Basic</option>
-                        <option value="Premium">Premium</option>
-                        <option value="Luxury">Luxury</option>
-                      </select>
+                      {editFormErrors.noOfGuest && (
+                        <p className="mt-1 text-xs text-red-500">{editFormErrors.noOfGuest}</p>
+                      )}
                     </div>
                   </div>
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Special Requests:
+                      Special Requests: <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       name="specialRequest"
                       value={editFormData.specialRequest}
                       onChange={handleEditFormChange}
-                      className="w-full p-2 border border-gray-300 rounded-md h-24"
+                      className={`w-full p-2 border ${
+                        editFormErrors.specialRequest ? 'border-red-500' : 'border-gray-300'
+                      } rounded-md h-24`}
                     />
+                    {editFormErrors.specialRequest && (
+                      <p className="mt-1 text-xs text-red-500">{editFormErrors.specialRequest}</p>
+                    )}
                   </div>
                   <div className="mt-6">
                     <button
