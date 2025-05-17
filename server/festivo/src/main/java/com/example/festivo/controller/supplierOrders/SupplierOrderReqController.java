@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.festivo.dto.SupplierOrderRequestdto.SupplierReqDTO;
@@ -46,6 +45,11 @@ public class SupplierOrderReqController {
         return supplierOrderRequestService.getAllSupplierOrder();
     }
 
+    @GetMapping("/get-accepted")
+    public List<SupplierReq> getAcceptedSupplierOrders() {
+        return supplierOrderRequestService.getAcceptedSupplierOrder();
+    }
+
     @GetMapping("/by-category/{category}")
     public ResponseEntity<SupplierResDTO> getSupplierOrdersByCategory(
             @PathVariable String category) {
@@ -70,6 +74,8 @@ public class SupplierOrderReqController {
                             order.getEventDate(),
                             order.getEventId(),
                             order.getSupplierCategory(),
+                            order.getAcceptedSupplier(),
+                            order.getAmount(),
                             order.getStatus()))
                     .collect(Collectors.toList());
 

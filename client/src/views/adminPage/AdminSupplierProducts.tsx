@@ -1,6 +1,7 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { fetchAllSuplierProducts } from '../../api/supplierApi';
+import supplierPaymentApi from '../../api/supplierPayment'
 import {
   Card,
   CardContent,
@@ -14,20 +15,101 @@ import {
   Divider,
   Paper,
   alpha,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Snackbar,
+  InputAdornment
 } from '@mui/material';
 import { 
   ShoppingBag, 
   CurrencyRupee, 
   Inventory, 
   Person,
-  ArrowForward
+  ArrowForward,
+  CheckCircle,
+  Error,
+  CalendarToday
 } from '@mui/icons-material';
+import { format, addDays } from 'date-fns';
+
+interface SupplierProduct {
+  id: string;
+  supplierEmail: string;
+  productName: string;
+  price: number;
+  quantity: string;
+  description: string;
+  imageUrl: string;
+}
 
 const AdminSupplierProducts: React.FC = () => {
-  const { data: supplierData, isLoading, isError } = useQuery({
+  const [selectedProduct, setSelectedProduct] = useState<SupplierProduct | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [paymentType, setPaymentType] = useState('CARD');
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as 'success' | 'error'
+  });
+
+  const { data: supplierData, isLoading, isError, refetch } = useQuery<SupplierProduct[]>({
     queryKey: ['product-data'],
     queryFn: fetchAllSuplierProducts,
   });
+
+  const paymentMutation = useMutation({
+    mutationFn: supplierPaymentApi.createSupplierPayment,
+    onSuccess: () => {
+      setSnackbar({
+        open: true,
+        message: 'Payment created successfully!',
+        severity: 'success'
+      });
+      setOpenDialog(false);
+      refetch();
+    },
+    onError: () => {
+      setSnackbar({
+        open: true,
+        message: 'Failed to create payment. Please try again.',
+        severity: 'error'
+      });
+    }
+  });
+
+  const handleBuyNow = (product: SupplierProduct) => {
+    setSelectedProduct(product);
+    setOpenDialog(true);
+  };
+
+  const handlePaymentSubmit = () => {
+    if (!selectedProduct) return;
+
+    const paymentData = {
+      supplierEmail: selectedProduct.supplierEmail,
+      productId: selectedProduct.id,
+      orderRequestId: `ORD-${Date.now()}`,
+      amount: selectedProduct.price,
+      paymentType: paymentType,
+      paymentStatus: 'PENDING',
+      deliveryDate: addDays(new Date(), 3).toISOString(),
+      paymentDate: new Date().toISOString()
+    };
+
+    paymentMutation.mutate(paymentData);
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({...snackbar, open: false});
+  };
+
+  const isValidImage = (url: string) =>
+    url.startsWith('http') || url.startsWith('https');
 
   if (isLoading) {
     return (
@@ -68,9 +150,6 @@ const AdminSupplierProducts: React.FC = () => {
       </Box>
     );
   }
-
-  const isValidImage = (url: string) =>
-    url.startsWith('http') || url.startsWith('https');
 
   return (
     <Box p={4} sx={{ backgroundColor: '#FAF8F1', minHeight: '100vh' }}>
@@ -120,7 +199,7 @@ const AdminSupplierProducts: React.FC = () => {
       </Paper>
 
       <Stack spacing={3}>
-        {supplierData?.map((product: any) => (
+        {supplierData?.map((product) => (
           <Card 
             key={product.id}
             sx={{ 
@@ -215,7 +294,7 @@ const AdminSupplierProducts: React.FC = () => {
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Inventory sx={{ color: '#C58940' }} />
                       <Typography variant="body2">
-                        <strong>Quantity:</strong> {product.quantity} units
+                        <strong>Quantity:</strong> {product.quantity}
                       </Typography>
                     </Stack>
                     
@@ -229,6 +308,24 @@ const AdminSupplierProducts: React.FC = () => {
                     )}
                   </Stack>
                 </Box>
+
+                <Button
+                  variant="contained"
+                  endIcon={<ArrowForward />}
+                  onClick={() => handleBuyNow(product)}
+                  sx={{
+                    backgroundColor: '#C58940',
+                    color: '#FAF8F1',
+                    fontWeight: 'bold',
+                    '&:hover': {
+                      backgroundColor: '#E5BA73',
+                      boxShadow: `0 4px 8px ${alpha('#C58940', 0.3)}`
+                    },
+                    mt: 2
+                  }}
+                >
+                  Buy Now
+                </Button>
               </CardContent>
             </Box>
           </Card>
@@ -256,6 +353,145 @@ const AdminSupplierProducts: React.FC = () => {
           </Typography>
         </Paper>
       )}
+
+      {/* Payment Dialog */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ backgroundColor: '#FAF8F1', color: '#C58940' }}>
+          Confirm Purchase
+        </DialogTitle>
+        <DialogContent sx={{ backgroundColor: '#FAF8F1', pt: 3 }}>
+          {selectedProduct && (
+            <Stack spacing={3}>
+              <Typography variant="h6" sx={{ color: '#C58940' }}>
+                {selectedProduct.productName}
+              </Typography>
+              
+              <TextField
+                label="Supplier Email"
+                value={selectedProduct.supplierEmail}
+                InputProps={{
+                  readOnly: true,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Person sx={{ color: '#C58940' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                fullWidth
+              />
+              
+              <TextField
+                label="Product ID"
+                value={selectedProduct.id}
+                InputProps={{
+                  readOnly: true,
+                }}
+                fullWidth
+              />
+              
+              <TextField
+                label="Amount (LKR)"
+                value={selectedProduct.price}
+                InputProps={{
+                  readOnly: true,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CurrencyRupee sx={{ color: '#C58940' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                fullWidth
+              />
+              
+              <TextField
+                select
+                label="Payment Type"
+                value={paymentType}
+                onChange={(e) => setPaymentType(e.target.value)}
+                fullWidth
+              >
+                <MenuItem value="CARD">Credit/Debit Card</MenuItem>
+                <MenuItem value="BANK_TRANSFER">Bank Transfer</MenuItem>
+                <MenuItem value="CASH">Cash on Delivery</MenuItem>
+              </TextField>
+              
+              <TextField
+                label="Payment Date"
+                value={format(new Date(), 'yyyy-MM-dd')}
+                InputProps={{
+                  readOnly: true,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CalendarToday sx={{ color: '#C58940' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                fullWidth
+              />
+              
+              <TextField
+                label="Estimated Delivery Date"
+                value={format(addDays(new Date(), 3), 'yyyy-MM-dd')}
+                InputProps={{
+                  readOnly: true,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CalendarToday sx={{ color: '#C58940' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                fullWidth
+              />
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ backgroundColor: '#FAF8F1', p: 3 }}>
+          <Button 
+            onClick={() => setOpenDialog(false)}
+            sx={{ color: '#C58940' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handlePaymentSubmit}
+            disabled={paymentMutation.isPending}
+            startIcon={paymentMutation.isPending ? <CircularProgress size={20} /> : <CheckCircle />}
+            sx={{
+              backgroundColor: '#C58940',
+              color: '#FAF8F1',
+              '&:hover': {
+                backgroundColor: '#E5BA73',
+              },
+              '&:disabled': {
+                backgroundColor: alpha('#C58940', 0.5),
+              }
+            }}
+          >
+            Confirm Payment
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          variant="filled"
+          icon={snackbar.severity === 'success' ? <CheckCircle /> : <Error />}
+          sx={{
+            backgroundColor: snackbar.severity === 'success' ? '#4CAF50' : '#F44336'
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -28,5 +28,7 @@ public class SupplierReq {
     private String eventId;
     private String supplierCategory;
     private String status;
+    private String acceptedSupplier;
+    private String amount;
 
 }

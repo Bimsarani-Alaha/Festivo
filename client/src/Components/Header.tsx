@@ -167,7 +167,7 @@ const Header = () => {
                   border: "2px solid #E6CCB2",
                 }}
               />
-              {sub != null && role == "ADMIN" ? (
+              {sub != null && role === "ADMIN" ? (
                 <Typography
                   variant="body2"
                   sx={{
@@ -184,6 +184,26 @@ const Header = () => {
                       }}
                     >
                       Admin Dashboard
+                    </Button>
+                  </Link>
+                </Typography>
+              ) : sub != null && role === "SUPPLIER" ? (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    ml: 1,
+                    color: "#7D5A50",
+                    fontWeight: 500,
+                  }}
+                >
+                  <Button onClick={handleLogout}>{sub}</Button>
+                  <Link to="/supplier/SupplierPage">
+                    <Button
+                      sx={{
+                        color: "black",
+                      }}
+                    >
+                      Supplier Dashboard
                     </Button>
                   </Link>
                 </Typography>

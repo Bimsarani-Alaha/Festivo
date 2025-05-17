@@ -2,8 +2,6 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { createTheme } from '@mui/material/styles';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
@@ -11,6 +9,13 @@ import logo from '../../assets/logoremasted.png';
 import AddProductPage from '../SupplierProducts/AddProductPage';
 import SupplierOrders from './SupplierOrderPage';
 import ProfileMenu from '../../Components/views/Supplier/ProfileMenu';
+import {
+  PackageCheck,
+  PlusCircle,
+  CreditCard,
+} from 'lucide-react';
+import SupplierPaymentManagement from './SupplierPaymentManagement';
+
 
 
 function AppTitle() {
@@ -30,18 +35,18 @@ const NAVIGATION: Navigation = [
   {
     segment: 'orders',
     title: 'Orders',
-    icon: <ShoppingCartIcon />,
+    icon: <PackageCheck />
   },
   {
     segment: 'add-items',
     title: 'Add Items',
-    icon: <ShoppingCartIcon />
+    icon: <PlusCircle />
   },
   {
-    segment: 'reports',
-    title: 'Reports',
-    icon: <BarChartIcon />,
-  },
+    segment: 'payment',
+    title: 'Payment',
+    icon: <CreditCard />
+  }
 ];
 
 const themeColors = {
@@ -117,8 +122,8 @@ function OrdersPage() {
   return <SupplierOrders />;
 }
 
-function ReportsPage() {
-  return <Typography variant="h4">Reports Overview</Typography>;
+function PaymentPage() {
+  return <SupplierPaymentManagement />;
 }
 
 function AddItemPage() {
@@ -126,7 +131,7 @@ function AddItemPage() {
 }
 
 function NotFoundPage() {
-  return <Typography variant="h4">Here Your Products</Typography>;
+  return <Typography variant="h4">Page Not Found</Typography>;
 }
 
 function DemoPageContent({ pathname }: { pathname: string }) {
@@ -139,8 +144,8 @@ function DemoPageContent({ pathname }: { pathname: string }) {
     case '/add-items':
       ContentComponent = AddItemPage;
       break;
-    case '/reports':
-      ContentComponent = ReportsPage;
+    case '/payment':
+      ContentComponent = PaymentPage;
       break;
     default:
       ContentComponent = NotFoundPage;

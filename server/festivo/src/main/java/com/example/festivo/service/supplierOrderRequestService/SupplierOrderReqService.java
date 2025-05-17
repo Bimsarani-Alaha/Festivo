@@ -3,14 +3,10 @@ package com.example.festivo.service.supplierOrderRequestService;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
-import com.example.festivo.controller.supplierOrders.SupplierOrderRequestService;
 import com.example.festivo.dto.SupplierOrderRequestdto.SupplierReqDTO;
 import com.example.festivo.dto.SupplierOrderRequestdto.SupplierResDTO;
-import com.example.festivo.entity.suplierEntity.SupplierEntity;
 import com.example.festivo.entity.supplierReqOrderEntity.SupplierReq;
 import com.example.festivo.repository.supplierOrderReqRepository.SupplierOrderReqRepo;
 
@@ -34,6 +30,8 @@ public class SupplierOrderReqService {
         supplierReq.setEventDate(req.getEventDate());
         supplierReq.setEventId(req.getEventId());
         supplierReq.setSupplierCategory(req.getSupplierCategory());
+        supplierReq.setAmount("undefined");
+        supplierReq.setAcceptedSupplier("Not Accepted");
 
         SupplierReq saved = supplierOrderReqRepository.save(supplierReq);
 
@@ -54,12 +52,18 @@ public class SupplierOrderReqService {
             SupplierReq supplierReq = optionalSupplierReq.get();
             
             supplierReq.setStatus(req.getStatus());
+            supplierReq.setAmount(req.getAmount());
+            supplierReq.setAcceptedSupplier(req.getAcceptedSupplier());
             SupplierReq updatedSupplierReq = supplierOrderReqRepository.save(supplierReq);
             
             return updatedSupplierReq;
         } else {
             throw new RuntimeException("Supplier order with ID " + id + " not found");
         }
+    }
+
+    public List<SupplierReq> getAcceptedSupplierOrder() {
+        return supplierOrderReqRepository.findByStatus("ACCEPTED");
     }
     
 

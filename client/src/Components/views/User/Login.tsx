@@ -86,7 +86,7 @@ export default function LoginForm() {
           phoneNumber: localStorage.getItem('phoneNumber')
         });
   
-        if (response.role === 'ADMIN') {
+        if (response.role === 'ADMIN') { //if a admin login to the page
           navigate('/admin/dashboard');
         } else {
           navigate('/');

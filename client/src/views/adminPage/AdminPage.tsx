@@ -39,6 +39,7 @@ import AdminSideBarComponent from "../../Components/AdminSideBarComponent";
 import { useNavigate } from "react-router-dom";
 import HomeIcon from "@mui/icons-material/Home";
 import { Link } from "react-router-dom";
+import ChatComponent from "./chatComponent";
 
 // Dashboard data
 const salesData = [
@@ -214,6 +215,8 @@ export default function AdminDashboard(props: AdminDashboardProps) {
           </Typography>
 
           {/* Charts */}
+
+          <ChatComponent/>
 
           {/* Recent Orders */}
         </Container>
