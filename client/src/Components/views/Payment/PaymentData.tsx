@@ -94,7 +94,6 @@ const DataTable: React.FC<DataTableProps> = ({ onDelete }) => {
     setViewModalOpen(true);
   };
 
-// Update the handleInputChange function to include validation
 const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
   const { name, value } = e.target;
   
@@ -106,6 +105,8 @@ const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectEle
     error = validatePhone(value);
   } else if (name === 'expDate') {
     error = validateExpDate(value);
+  } else if (name === 'email') {
+    error = validateEmail(value);
   }
   
   setErrors(prev => ({ ...prev, [name]: error }));
@@ -127,9 +128,16 @@ const validatePhone = (phone: string | number | null) => {
   if (!phone) return 'Phone number is required';
   const phoneStr = phone.toString();
   if (!/^\d+$/.test(phoneStr)) return 'Phone should contain only numbers';
-  if (phoneStr.length !== 10) return 'Phone must be 10 digits';
+  if (phoneStr.length !== 9) return 'Phone must be 10 digits';
   return '';
 };
+
+const validateEmail = (email: string) => {
+  if (!email) return 'Email is required';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Invalid email format';
+  return '';
+};
+
 
 const validateExpDate = (expDate: string) => {
   if (!expDate) return 'Expiration date is required';
@@ -152,7 +160,8 @@ const validateExpDate = (expDate: string) => {
 const [errors, setErrors] = useState<Record<string, string>>({
   name: '',
   phoneNumber: '',
-  expDate: ''
+  expDate: '',
+  email: '' // Add email to errors state
 });
 
 
@@ -165,7 +174,9 @@ const handleSubmit = async (e: React.FormEvent) => {
   const validationErrors = {
     name: validateName(formData.name || ''),
     phoneNumber: validatePhone(formData.phoneNumber || ''),
-    expDate: validateExpDate(formData.expDate || '')
+    expDate: validateExpDate(formData.expDate || ''),
+    email: validateEmail(formData.email || '') // Add email validation
+
   };
 
   setErrors(validationErrors);
@@ -195,11 +206,10 @@ const handleSubmit = async (e: React.FormEvent) => {
     setSearchTerm(event.target.value);
   };
 
-  const formatPhoneNumber = (phoneNumber: number | null): string => {
-    if (!phoneNumber) return 'N/A';
-    const numStr = phoneNumber.toString();
-    return `(${numStr.substring(0, 3)}) ${numStr.substring(3, 6)}-${numStr.substring(6)}`;
-  };
+const formatPhoneNumber = (phoneNumber: number | null): string => {
+  if (!phoneNumber) return 'N/A';
+  return phoneNumber.toString();
+};
 
   const maskCardNumber = (cardNumber: number | null): string => {
     if (!cardNumber) return 'N/A';
@@ -273,6 +283,7 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
   };
 
   return (
+
     <div className="container mx-auto px-4 py-8">
       {/* PDF content */}
       <div ref={targetRef} className="p-4" style={{ position: 'absolute', left: '-9999px' }}>
@@ -519,30 +530,32 @@ Last 4 Digits: ${item.cardNumber ? item.cardNumber.toString().slice(-4) : 'N/A'}
     </div>
 
     {/* Email Field */}
-    <div className="mb-4">
-      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-        Email
-      </label>
-      <input
-        type="email"
-        id="email"
-        name="email"
-        value={formData.email || ''}
-        onChange={(e) => {
-          const value = e.target.value;
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          handleInputChange(e);
-          errors.email = !emailRegex.test(value) ? 'Invalid email format' : '';
-        }}
-        className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
-          errors.email ? 'border-red-500' : ''
-        }`}
-        required
-      />
-      {errors.email && (
-        <p className="text-red-500 text-xs italic mt-1">{errors.email}</p>
-      )}
-    </div>
+<div className="mb-4">
+  <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+    Email *
+  </label>
+  <input
+    type="email"
+    id="email"
+    name="email"
+    value={formData.email || ''}
+    onChange={(e) => {
+      handleInputChange(e);
+      // Validate email on change
+      setErrors(prev => ({
+        ...prev,
+        email: validateEmail(e.target.value)
+      }));
+    }}
+    className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+      errors.email ? 'border-red-500' : ''
+    }`}
+    required
+  />
+  {errors.email && (
+    <p className="text-red-500 text-xs italic mt-1">{errors.email}</p>
+  )}
+</div>
 
     {/* Phone Number Field */}
     <div className="mb-4">

@@ -107,15 +107,15 @@ const EventBookingsTable = () => {
     fetchEvents();
   }, []);
 
-  // Filter bookings based on search term
-  const filteredBookings = bookings.filter((booking) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      (booking.eventName?.toLowerCase() || "").includes(term) ||
-      (booking.eventTheme?.toLowerCase() || "").includes(term) ||
-      (booking.eventPackage?.toLowerCase() || "").includes(term)
-    );
-  });
+// Filter bookings based on search term
+const filteredBookings = bookings.filter((booking) => {
+  const term = searchTerm.toLowerCase();
+  return (
+    booking.eventName?.toLowerCase().includes(term) ||
+    booking.eventTheme?.toLowerCase().includes(term) ||
+    (booking.eventPackage?.toLowerCase() || "").includes(term)
+  );
+});
 
   // Delete event
   const handleDelete = async (id: string) => {
@@ -271,15 +271,23 @@ const EventBookingsTable = () => {
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FaSearch className="text-gray-400" />
-                    </div>
+    </div>
+    <input
+      type="text"
+      placeholder="Search bookings..."
+      className="pl-10 pr-4 py-2 border rounded-md w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+    {searchTerm && (
+      <button
+        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+        onClick={() => setSearchTerm("")}
+      >
+        <FaTimes className="text-gray-400 hover:text-gray-600" />
+      </button>
+    )}
 
-                    <input
-                      type="text"
-                      placeholder="Search bookings..."
-                      className="pl-10 pr-4 py-2 border rounded-md w-full"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
                   </div>
                   <Controller
                     name="supplierCategory"
@@ -391,9 +399,6 @@ const EventBookingsTable = () => {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
                         Guests
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2 border-gray-300">
-                        Package
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -414,17 +419,7 @@ const EventBookingsTable = () => {
                         <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
                           {booking.noOfGuest}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-800 border-b border-gray-200">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            booking.eventPackage === "Basic"
-                              ? "bg-blue-100 text-blue-800"
-                              : booking.eventPackage === "Premium"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}>
-                            {booking.eventPackage || "None"}
-                          </span>
-                        </td>
+                        
                       </tr>
                     ))}
                   </tbody>
