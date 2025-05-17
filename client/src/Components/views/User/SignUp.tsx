@@ -9,6 +9,7 @@ type FormData = {
   gender: string;
   phoneNumber: string;
   password: string;
+  confirmPassword: string;
   role: "USER";
 };
 
@@ -18,6 +19,7 @@ type FormErrors = {
   gender?: string;
   phoneNumber?: string;
   password?: string;
+  confirmPassword?: string;
 };
 
 const SignUp = () => {
@@ -28,6 +30,7 @@ const SignUp = () => {
     gender: "",
     phoneNumber: "",
     password: "",
+    confirmPassword: "",
     role: "USER",
   });
 
@@ -38,10 +41,20 @@ const SignUp = () => {
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    
+    // Special handling for name field to only allow letters and spaces
+    if (name === "name") {
+      const lettersOnlyValue = value.replace(/[^a-zA-Z\s]/g, '');
+      setFormData({
+        ...formData,
+        [name]: lettersOnlyValue
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
 
     if (errors[name as keyof FormErrors]) {
       setErrors({
@@ -56,7 +69,12 @@ const SignUp = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.name.trim()) newErrors.name = "Full name is required";
+    if (!formData.name.trim()) {
+      newErrors.name = "Full name is required";
+    } else if (!/^[a-zA-Z\s]+$/.test(formData.name)) {
+      newErrors.name = "Full name should only contain letters";
+    }
+    
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       newErrors.email = "Please enter a valid email";
     }
@@ -66,6 +84,9 @@ const SignUp = () => {
     }
     if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
+    }
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     setErrors(newErrors);
@@ -81,7 +102,9 @@ const SignUp = () => {
     setApiError("");
 
     try {
-      await UserService.register(formData);
+      // Remove confirmPassword from the data being sent to the API
+      const { confirmPassword, ...userData } = formData;
+      await UserService.register(userData);
       setShowSuccessModal(true);
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -140,6 +163,8 @@ const SignUp = () => {
               onChange={handleChange}
               className={`w-full px-4 py-3 pl-10 border ${errors.name ? 'border-red-500' : 'border-[#C58940]'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C58940] bg-white placeholder-[#BCAAA4] text-[#5D4037]`} 
               placeholder="👤 Full Name"
+              pattern="[a-zA-Z\s]*"
+              title="Only letters and spaces are allowed"
             />
             {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
           </div>
@@ -208,6 +233,19 @@ const SignUp = () => {
               placeholder="🔒 Password (min 8 chars)"
             />
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+          </div>
+
+          <div className="relative">
+            <input 
+              type="password" 
+              id="confirmPassword" 
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className={`w-full px-4 py-3 pl-10 border ${errors.confirmPassword ? 'border-red-500' : 'border-[#C58940]'} rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C58940] bg-white placeholder-[#BCAAA4] text-[#5D4037]`} 
+              placeholder="🔒 Confirm Password"
+            />
+            {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
           </div>
 
           <button 

@@ -9,7 +9,8 @@ import {
   Typography,
   Stack,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Avatar
 } from '@mui/material';
 import Header from '../../Components/Header';
 import Footer from '../../Components/Footer';
@@ -17,6 +18,14 @@ import { Link } from 'react-router-dom';
 import Birthday from '../../assets/birthday.jpg';
 import Proposal from '../../assets/proposal 1.jpg';
 import GenderReveal from '../../assets/gender 2.jpg';
+import { useEffect, useState } from 'react';
+
+// Add interface for user data
+interface UserData {
+  name: string;
+  email: string;
+  phoneNumber: string;
+}
 
 const staticThemes = [
   {
@@ -39,11 +48,24 @@ const staticThemes = [
 const Home = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    // Get user data from localStorage
+    const name = localStorage.getItem('name');
+    const email = localStorage.getItem('email');
+    const phoneNumber = localStorage.getItem('phoneNumber');
+
+    if (name && email && phoneNumber) {
+      setUserData({ name, email, phoneNumber });
+    }
+  }, []);
 
   return (
     <Box sx={{ bgcolor: '#FAF8F1', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
 
+     
       <Box
         sx={{
           bgcolor: '#FFF5D6',
