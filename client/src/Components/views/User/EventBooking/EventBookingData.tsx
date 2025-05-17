@@ -61,6 +61,7 @@ const EventBookingsTable = () => {
   });
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showSupplierSuccess, setShowSupplierSuccess] = useState(false);
 
   // PDF generation hook
   const { toPDF, targetRef } = usePDF({
@@ -149,15 +150,30 @@ const EventBookingsTable = () => {
 
   const supplierCategory = watch("supplierCategory");
 
-  const handleToSupplier = (booking: BookingData) => {
-    alert("Are you sure you want to send this order to the supplier?");
+  const handleToSupplier = async (booking: BookingData) => {
+    if (!supplierCategory) {
+      setError("Please select a supplier category first");
+      return;
+    }
 
-    if (supplierCategory) {
-      const updatedBooking = {
-        ...booking,
-        supplierCategory: supplierCategory,
-      };
-      sendOrderToSupplier(updatedBooking);
+    if (window.confirm("Are you sure you want to send this order to the supplier?")) {
+      try {
+        const updatedBooking = {
+          ...booking,
+          supplierCategory: supplierCategory,
+        };
+        
+        await sendOrderToSupplier(updatedBooking);
+        
+        setSuccessMessage(`Order successfully sent to ${supplierCategory} supplier!`);
+        setShowSupplierSuccess(true);
+        
+        // Reset the supplier category selection
+        reset({ supplierCategory: "" });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to send order to supplier");
+        console.error("Error sending order to supplier:", err);
+      }
     }
   };
 
@@ -296,6 +312,27 @@ const EventBookingsTable = () => {
                     <p className="mb-6">{successMessage}</p>
                     <button
                       onClick={() => setShowSuccess(false)}
+                      className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      OK
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Supplier Success Message Popup */}
+            {showSupplierSuccess && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                      <FaTruck className="text-green-600 text-2xl" />
+                    </div>
+                    <h2 className="text-xl font-bold mb-2">Order Sent!</h2>
+                    <p className="mb-6">{successMessage}</p>
+                    <button
+                      onClick={() => setShowSupplierSuccess(false)}
                       className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors"
                     >
                       OK
@@ -462,18 +499,13 @@ const EventBookingsTable = () => {
                               >
                                 <FaTrash />
                               </button>
-
-                              {supplierCategory && (
-                                <button
-                                  onClick={() =>
-                                    booking.id && handleToSupplier(booking)
-                                  }
-                                  className="text-red-600 hover:text-red-800 p-1"
-                                  title="Send to Supplier"
-                                >
-                                  <FaTruck />
-                                </button>
-                              )}
+                              <button
+                                onClick={() => handleToSupplier(booking)}
+                                className="text-green-600 hover:text-green-800 p-1"
+                                title="Send to Supplier"
+                              >
+                                <FaTruck />
+                              </button>
                             </div>
                           </td>
                         </tr>

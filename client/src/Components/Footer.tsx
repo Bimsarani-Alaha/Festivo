@@ -19,7 +19,7 @@ const Footer = () => {
   return (
     <Box 
       sx={{ 
-        bgcolor: '#FAF3E0', 
+        bgcolor: '#FAF3E0', //box of footer
         py: 6,
         borderTopLeftRadius: 16,
         borderTopRightRadius: 16,
