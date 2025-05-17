@@ -61,6 +61,7 @@ const EventBookingsTable = () => {
   });
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [editFormErrors, setEditFormErrors] = useState<{[key: string]: string}>({});
 
   // PDF generation hook
   const { toPDF, targetRef } = usePDF({
@@ -163,15 +164,52 @@ const EventBookingsTable = () => {
 
   // Handle form input changes
   const handleEditFormChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setEditFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    // Clear error for this field when user starts typing
+    if (editFormErrors[name]) {
+      setEditFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  // Validate form
+  const validateForm = () => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!editFormData.eventName.trim()) {
+      errors.eventName = "Event name is required";
+    }
+    
+    if (!editFormData.eventTheme.trim()) {
+      errors.eventTheme = "Event theme is required";
+    }
+    
+    if (!editFormData.eventType) {
+      errors.eventType = "Event type is required";
+    }
+    
+    if (!editFormData.eventDate) {
+      errors.eventDate = "Event date is required";
+    }
+    
+    if (!editFormData.noOfGuest || editFormData.noOfGuest < 1) {
+      errors.noOfGuest = "Number of guests must be at least 1";
+    }
+    
+    if (!editFormData.specialRequest.trim()) {
+      errors.specialRequest = "Special request is required";
+    }
+
+    setEditFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   // Submit updated event
@@ -179,10 +217,7 @@ const EventBookingsTable = () => {
     e.preventDefault();
     if (!editFormData.id) return;
 
-    // Validate all fields are filled
-    if (!editFormData.eventName || !editFormData.eventTheme || !editFormData.eventType || 
-        !editFormData.eventDate || !editFormData.noOfGuest || !editFormData.eventPackage) {
-      setError("All fields are required");
+    if (!validateForm()) {
       return;
     }
 
@@ -206,6 +241,7 @@ const EventBookingsTable = () => {
       setIsEditing(false);
       setSuccessMessage("Booking updated successfully!");
       setShowSuccess(true);
+      setEditFormErrors({});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update event");
       console.error("Error updating event:", err);
@@ -590,7 +626,10 @@ const EventBookingsTable = () => {
                 <div className="flex justify-between items-start">
                   <h2 className="text-xl font-bold mb-4">Edit Booking</h2>
                   <button
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditFormErrors({});
+                    }}
                     className="text-gray-500 hover:text-gray-700"
                   >
                     <FaTimes />
@@ -607,9 +646,13 @@ const EventBookingsTable = () => {
                         name="eventName"
                         value={editFormData.eventName}
                         onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
+                        className={`w-full p-2 border ${
+                          editFormErrors.eventName ? 'border-red-500' : 'border-gray-300'
+                        } rounded-md`}
                       />
+                      {editFormErrors.eventName && (
+                        <p className="mt-1 text-xs text-red-500">{editFormErrors.eventName}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -620,9 +663,13 @@ const EventBookingsTable = () => {
                         name="eventTheme"
                         value={editFormData.eventTheme}
                         onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
+                        className={`w-full p-2 border ${
+                          editFormErrors.eventTheme ? 'border-red-500' : 'border-gray-300'
+                        } rounded-md`}
                       />
+                      {editFormErrors.eventTheme && (
+                        <p className="mt-1 text-xs text-red-500">{editFormErrors.eventTheme}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -632,14 +679,18 @@ const EventBookingsTable = () => {
                         name="eventType"
                         value={editFormData.eventType}
                         onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
+                        className={`w-full p-2 border ${
+                          editFormErrors.eventType ? 'border-red-500' : 'border-gray-300'
+                        } rounded-md`}
                       >
                         <option value="">Select Type</option>
                         <option value="Indoor">Indoor</option>
                         <option value="Outdoor">Outdoor</option>
                         <option value="Pool">Pool</option>
                       </select>
+                      {editFormErrors.eventType && (
+                        <p className="mt-1 text-xs text-red-500">{editFormErrors.eventType}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -650,10 +701,14 @@ const EventBookingsTable = () => {
                         name="eventDate"
                         value={editFormData.eventDate}
                         onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
+                        className={`w-full p-2 border ${
+                          editFormErrors.eventDate ? 'border-red-500' : 'border-gray-300'
+                        } rounded-md`}
                         min={new Date().toISOString().split('T')[0]}
                       />
+                      {editFormErrors.eventDate && (
+                        <p className="mt-1 text-xs text-red-500">{editFormErrors.eventDate}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -664,12 +719,15 @@ const EventBookingsTable = () => {
                         name="noOfGuest"
                         value={editFormData.noOfGuest}
                         onChange={handleEditFormChange}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                        required
+                        className={`w-full p-2 border ${
+                          editFormErrors.noOfGuest ? 'border-red-500' : 'border-gray-300'
+                        } rounded-md`}
                         min="1"
                       />
+                      {editFormErrors.noOfGuest && (
+                        <p className="mt-1 text-xs text-red-500">{editFormErrors.noOfGuest}</p>
+                      )}
                     </div>
-                
                   </div>
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -679,9 +737,13 @@ const EventBookingsTable = () => {
                       name="specialRequest"
                       value={editFormData.specialRequest}
                       onChange={handleEditFormChange}
-                      className="w-full p-2 border border-gray-300 rounded-md h-24"
-                      required
+                      className={`w-full p-2 border ${
+                        editFormErrors.specialRequest ? 'border-red-500' : 'border-gray-300'
+                      } rounded-md h-24`}
                     />
+                    {editFormErrors.specialRequest && (
+                      <p className="mt-1 text-xs text-red-500">{editFormErrors.specialRequest}</p>
+                    )}
                   </div>
                   <div className="mt-6">
                     <button
