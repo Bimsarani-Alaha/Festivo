@@ -510,7 +510,7 @@ const CreateEventPage: React.FC<CreateEventPageProps> = ({
                                   variant="body2"
                                   color="text.secondary"
                                 >
-                                  <strong>Price:</strong> ${row.packagePrice}
+                                  <strong>Price:</strong> LKR: {row.packagePrice}
                                 </Typography>
                                 <Typography
                                   variant="body2"

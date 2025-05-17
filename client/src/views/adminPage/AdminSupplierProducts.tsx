@@ -396,7 +396,6 @@ const AdminSupplierProducts: React.FC = () => {
                   readOnly: true,
                   startAdornment: (
                     <InputAdornment position="start">
-                      <CurrencyRupee sx={{ color: '#C58940' }} />
                     </InputAdornment>
                   ),
                 }}

@@ -41,49 +41,6 @@ import HomeIcon from "@mui/icons-material/Home";
 import { Link } from "react-router-dom";
 import ChatComponent from "./chatComponent";
 
-// Dashboard data
-const salesData = [
-  { month: "Jan", sales: 4000 },
-  { month: "Feb", sales: 3000 },
-  { month: "Mar", sales: 5000 },
-  { month: "Apr", sales: 2780 },
-  { month: "May", sales: 1890 },
-  { month: "Jun", sales: 2390 },
-  { month: "Jul", sales: 3490 },
-];
-
-const userTypeData = [
-  { name: "New", value: 400 },
-  { name: "Returning", value: 300 },
-  { name: "Premium", value: 200 },
-];
-
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28"];
-
-const recentOrders = [
-  {
-    id: "1",
-    customer: "John Doe",
-    product: "Product A",
-    status: "Delivered",
-    amount: "$120.00",
-  },
-  {
-    id: "2",
-    customer: "Jane Smith",
-    product: "Product B",
-    status: "Processing",
-    amount: "$85.50",
-  },
-  {
-    id: "3",
-    customer: "Robert Johnson",
-    product: "Product C",
-    status: "Shipped",
-    amount: "$210.75",
-  },
-];
-
 const drawerWidth = 240;
 
 interface AdminDashboardProps {
@@ -192,11 +149,6 @@ export default function AdminDashboard(props: AdminDashboardProps) {
         handleDrawerToggle={handleDrawerToggle}
       />
       <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-        aria-label="mailbox folders"
-      ></Box>
-      <Box
         component="main"
         sx={{
           flexGrow: 1,
@@ -208,17 +160,7 @@ export default function AdminDashboard(props: AdminDashboardProps) {
       >
         <Toolbar />
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          {/* KPI Cards */}
-
-          <Typography variant="h4"sx={{ flexGrow: 1 }} textAlign={"center"}>
-            Welcome To Admin Dashboard
-          </Typography>
-
-          {/* Charts */}
-
           <ChatComponent/>
-
-          {/* Recent Orders */}
         </Container>
       </Box>
     </Box>
