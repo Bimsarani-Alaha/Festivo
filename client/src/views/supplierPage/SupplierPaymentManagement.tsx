@@ -61,8 +61,6 @@ const SupplierPaymentManagement: React.FC = () => {
   // Payment type options
   const paymentTypeOptions = [
     { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
-    { value: 'CREDIT_CARD', label: 'Credit Card' },
-    { value: 'PAYPAL', label: 'PayPal' },
     { value: 'CASH', label: 'Cash' }
   ];
 
@@ -213,7 +211,6 @@ const SupplierPaymentManagement: React.FC = () => {
                 <TableCell>Status</TableCell>
                 <TableCell>Delivery Date</TableCell>
                 <TableCell>Payment Date</TableCell>
-                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -230,15 +227,6 @@ const SupplierPaymentManagement: React.FC = () => {
                   <TableCell>{payment.paymentStatus}</TableCell>
                   <TableCell>{formatDate(payment.deliveryDate)}</TableCell>
                   <TableCell>{formatDate(payment.paymentDate)}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleEditClick(payment)}
-                    >
-                      Edit
-                    </Button>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -54,6 +54,7 @@ interface SupplierPaymentRequest {
   paymentStatus: string;
   eventDate: string;
   paymentDate: string;
+  deliveryDate: Date | string;
 }
 
 const SupplierPaymentPage: React.FC = () => {
@@ -74,6 +75,7 @@ const SupplierPaymentPage: React.FC = () => {
     paymentStatus: 'PAID',
     eventDate: '',
     paymentDate: format(new Date(), 'yyyy-MM-dd'),
+    deliveryDate: format(new Date(), 'yyyy-MM-dd'),
   });
 
   useEffect(() => {
@@ -114,6 +116,7 @@ const SupplierPaymentPage: React.FC = () => {
     setSelectedOrder(order);
     setPaymentData({
       supplierEmail: order.supplierEmail || '',
+      deliveryDate: order.eventDate || new Date(),
       eventId: order.eventId || '',
       orderRequestId: order.id,
       amount: order.amount || '0',
@@ -312,8 +315,6 @@ const SupplierPaymentPage: React.FC = () => {
                     margin="normal"
                   >
                     <MenuItem value="BANK_TRANSFER">Bank Transfer</MenuItem>
-                    <MenuItem value="CREDIT_CARD">Credit Card</MenuItem>
-                    <MenuItem value="PAYPAL">PayPal</MenuItem>
                     <MenuItem value="CASH">Cash</MenuItem>
                   </TextField>
                   <TextField

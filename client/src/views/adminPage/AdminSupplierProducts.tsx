@@ -409,7 +409,6 @@ const AdminSupplierProducts: React.FC = () => {
                 onChange={(e) => setPaymentType(e.target.value)}
                 fullWidth
               >
-                <MenuItem value="CARD">Credit/Debit Card</MenuItem>
                 <MenuItem value="BANK_TRANSFER">Bank Transfer</MenuItem>
                 <MenuItem value="CASH">Cash on Delivery</MenuItem>
               </TextField>
