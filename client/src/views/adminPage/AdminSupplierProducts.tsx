@@ -96,7 +96,7 @@ const AdminSupplierProducts: React.FC = () => {
       orderRequestId: `ORD-${Date.now()}`,
       amount: selectedProduct.price,
       paymentType: paymentType,
-      paymentStatus: 'PENDING',
+      paymentStatus: 'PAID',
       deliveryDate: addDays(new Date(), 3).toISOString(),
       paymentDate: new Date().toISOString()
     };
