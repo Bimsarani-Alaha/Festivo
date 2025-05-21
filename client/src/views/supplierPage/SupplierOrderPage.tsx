@@ -52,7 +52,9 @@ const SupplierOrdersDashboard: React.FC = () => {
         setOrders(data);
 
         if (supplierData.category) {
-          const filtered = data.filter(order => order.supplierCategory === supplierData.category);
+          const filtered = data
+            .filter(order => order.supplierCategory === supplierData.category)
+            .sort((a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()); // Newest first
           setFilteredOrders(filtered);
         }
 
@@ -66,7 +68,7 @@ const SupplierOrdersDashboard: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [supplierEmail]);
 
   const handleAcceptClick = (orderId: string) => {
     setSelectedOrder(orderId);
@@ -88,7 +90,11 @@ const SupplierOrdersDashboard: React.FC = () => {
       setOrders(data);
       
       if (supplierCategory) {
-        setFilteredOrders(data.filter(order => order.supplierCategory === supplierCategory));
+        setFilteredOrders(
+          data
+            .filter(order => order.supplierCategory === supplierCategory)
+            .sort((a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime())
+        );
       }
       
       setSuccess('Order accepted successfully!');
@@ -110,7 +116,11 @@ const SupplierOrdersDashboard: React.FC = () => {
       setOrders(data);
       
       if (supplierCategory) {
-        setFilteredOrders(data.filter(order => order.supplierCategory === supplierCategory));
+        setFilteredOrders(
+          data
+            .filter(order => order.supplierCategory === supplierCategory)
+            .sort((a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime())
+        );
       }
       
       setSuccess('Order rejected successfully!');

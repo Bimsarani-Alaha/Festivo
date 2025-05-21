@@ -199,7 +199,7 @@ const AdminSupplierProducts: React.FC = () => {
       </Paper>
 
       <Stack spacing={3}>
-        {supplierData?.map((product) => (
+        {supplierData?.slice().reverse().map((product)=> (
           <Card 
             key={product.id}
             sx={{ 
