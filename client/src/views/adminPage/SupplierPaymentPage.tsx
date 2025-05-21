@@ -40,7 +40,7 @@ interface SupplierOrder {
   eventDate: Date | string;
   eventId: string | null;
   supplierCategory: string;
-  status: 'ACCEPTED' | 'REJECTED' | 'ONGOING' | 'accept' | 'reject'| 'PAID';
+  status: 'ACCEPTED' | 'REJECTED' | 'ONGOING' | 'accept' | 'reject' | 'PAID';
   amount: string; // Kept as string to match API response
   supplierEmail?: string;
 }
@@ -65,7 +65,7 @@ const SupplierPaymentPage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<SupplierOrder | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState<boolean>(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  
+
   const [paymentData, setPaymentData] = useState<SupplierPaymentRequest>({
     supplierEmail: '',
     eventId: '',
@@ -98,9 +98,14 @@ const SupplierPaymentPage: React.FC = () => {
           amount: order.amount || '0', // Keep as string
           supplierEmail: order.acceptedSupplier || '', // Using acceptedSupplier field from the response
         }));
-        setOrders(validatedOrders.filter((order: SupplierOrder) => 
-          ['ACCEPTED', 'accept'].includes(order.status)
-        ));
+        setOrders(
+          validatedOrders
+            .filter((order: SupplierOrder) => ['ACCEPTED', 'accept'].includes(order.status))
+            .sort((a: SupplierOrder, b: SupplierOrder) =>
+              new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
+            )
+
+        );
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch accepted orders');
@@ -122,8 +127,8 @@ const SupplierPaymentPage: React.FC = () => {
       amount: order.amount || '0',
       paymentType: 'BANK_TRANSFER',
       paymentStatus: 'PAID',
-      eventDate: typeof order.eventDate === 'string' 
-        ? order.eventDate 
+      eventDate: typeof order.eventDate === 'string'
+        ? order.eventDate
         : format(order.eventDate, 'yyyy-MM-dd'),
       paymentDate: format(new Date(), 'yyyy-MM-dd'),
     });
@@ -141,18 +146,18 @@ const SupplierPaymentPage: React.FC = () => {
   const handlePaymentSubmit = async () => {
     try {
       setPaymentError(null);
-      
+
       const payload = {
         ...paymentData,
         paymentDate: format(new Date(), 'yyyy-MM-dd'),
         status: 'PAID',
       };
-      
+
       const response = await axios.post("public/supplier/supplier-payment/create", payload);
-      
+
       // Update order status to PAID
       if (selectedOrder) {
-        
+
         // Refresh orders list
         const res = await axios.get("/public/supplierOrder/get-accepted");
         const validatedOrders = res.data.map((order: any) => ({
@@ -160,11 +165,18 @@ const SupplierPaymentPage: React.FC = () => {
           amount: order.amount || '0',
           supplierEmail: order.acceptedSupplier || '',
         }));
-        setOrders(validatedOrders.filter((order: SupplierOrder) => 
-          ['ACCEPTED', 'accept'].includes(order.status)
-        ));
+        setOrders(
+          validatedOrders
+            .filter((order: SupplierOrder) =>
+              ['ACCEPTED', 'accept'].includes(order.status)
+            )
+            .sort((a: SupplierOrder, b: SupplierOrder) =>
+              new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime()
+            )
+        );
+
       }
-      
+
       setPaymentSuccess(true);
       setTimeout(() => {
         setOpenDialog(false);
@@ -198,7 +210,7 @@ const SupplierPaymentPage: React.FC = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           Supplier Payments
         </Typography>
-        
+
         <Card sx={{ mb: 4 }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
@@ -235,8 +247,8 @@ const SupplierPaymentPage: React.FC = () => {
                         <TableCell>{order.status}</TableCell>
                         <TableCell>
                           {order.status !== 'PAID' ? (
-                            <Button 
-                              variant="contained" 
+                            <Button
+                              variant="contained"
                               color="primary"
                               onClick={() => handlePaymentInit(order)}
                             >
@@ -344,9 +356,9 @@ const SupplierPaymentPage: React.FC = () => {
             {!paymentSuccess && (
               <>
                 <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-                <Button 
-                  onClick={handlePaymentSubmit} 
-                  variant="contained" 
+                <Button
+                  onClick={handlePaymentSubmit}
+                  variant="contained"
                   color="primary"
                 >
                   Confirm Payment
